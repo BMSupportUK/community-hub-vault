@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e:install": "playwright install --with-deps chromium"
+    "test:e2e:install": "playwright install --with-deps chromium",
+    "test": "bun test --isolate --path-ignore-patterns 'tests/e2e/**' tests/ src/"
   },
   "dependencies": {
     "@capacitor/geolocation": "^8.2.0",

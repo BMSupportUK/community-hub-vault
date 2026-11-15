@@ -1,12 +1,13 @@
 import { test, expect } from "bun:test";
 import { enablerReferenceUsed, confirmationActive, confirmCodeState, makeConfirmCode, normalizeConfirmCode, CONFIRM_TTL_MS } from "../src/lib/enabler-confirm-code";
 
-test("reference use includes either ticket or order binding, without exposing its scope", () => {
-  const unused = { used_at: null, bound_ticket_id: null, bound_order_id: null };
+test("reference counts as used only after an install-kind use", () => {
+  const unused = { kind: "install", used_at: null, bound_ticket_id: null, bound_order_id: null };
   expect(enablerReferenceUsed(unused)).toBe(false);
-  expect(enablerReferenceUsed({ ...unused, bound_ticket_id: "ticket" })).toBe(true);
-  expect(enablerReferenceUsed({ ...unused, bound_order_id: "order" })).toBe(true);
+  expect(enablerReferenceUsed({ ...unused, bound_ticket_id: "ticket" })).toBe(false);
+  expect(enablerReferenceUsed({ ...unused, bound_order_id: "order" })).toBe(false);
   expect(enablerReferenceUsed({ ...unused, used_at: "2026-10-27T08:07:00Z" })).toBe(true);
+  expect(enablerReferenceUsed({ ...unused, kind: "share", used_at: "2026-10-27T08:07:00Z" })).toBe(false);
 });
 
 const now = new Date("2026-10-26T12:00:00Z");
