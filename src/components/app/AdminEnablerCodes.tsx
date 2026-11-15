@@ -16,7 +16,7 @@ function Choice<T extends string>({ value, options, onChange }: { value: T | nul
   return (
     <div className="flex flex-wrap gap-2">
       {(Object.keys(options) as T[]).map((k) => (
-        <Button key={k} type="button" size="sm" variant={value === k ? "default" : "outline"} onClick={() => onChange(k)}>{options[k]}</Button>
+        <Button key={k} type="button" size="sm" className={value === k ? "" : "border-foreground/30 bg-background text-foreground hover:border-primary"} variant={value === k ? "default" : "outline"} onClick={() => onChange(k)}>{options[k]}</Button>
       ))}
     </div>
   );
@@ -119,12 +119,12 @@ export function AdminEnablerCodes() {
     <Tabs defaultValue="issue" className="w-full min-w-0">
       <TabsList className="h-10"><TabsTrigger value="issue" className="px-5">Issue a code</TabsTrigger><TabsTrigger value="log" className="px-5">Log</TabsTrigger></TabsList>
       <TabsContent value="issue">
-        <section className="space-y-6 py-5">
+        <section className="space-y-6 rounded-lg border-2 border-primary/70 bg-card p-5 text-card-foreground sm:p-7">
           <div>
             <h2 className="font-display text-xl font-semibold">Installer PIN & website code</h2>
           </div>
           <label className="block space-y-2"><span className="text-sm font-medium">Reference name (required)</span>
-            <Input className="h-11 bg-background/80" required value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Who is this for?" /></label>
+            <Input className="h-11 border-foreground/30 bg-background" required value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Who is this for?" /></label>
           <div className="grid gap-6 border-y border-border/70 py-6 sm:grid-cols-2">
           <div className="space-y-1.5"><span className="text-sm font-medium">Installer app</span><Choice value={installer} options={INSTALLER_LABEL} onChange={(v) => { setInstaller(v); if (v === "direct") setPurpose("install"); }} /></div>
           <div className="space-y-1.5"><span className="text-sm font-medium">Device (required)</span><Choice value={device} options={DEVICE_LABEL} onChange={setDevice} /></div>
@@ -135,7 +135,7 @@ export function AdminEnablerCodes() {
               {appsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : !apps.length ? <p className="text-sm text-muted-foreground">No apps available.</p> : null}
               <div className="grid gap-2 sm:grid-cols-2">
                 {apps.map((a) => (
-                  <label key={a.path} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-md border px-4 py-3 text-sm transition-colors ${picked.has(a.path) ? "border-primary bg-primary/15" : "border-border bg-background/75 hover:border-primary/60"}`}>
+                  <label key={a.path} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-md border px-4 py-3 text-sm transition-colors ${picked.has(a.path) ? "border-primary bg-primary/15" : "border-foreground/30 bg-background hover:border-primary/60"}`}>
                     <input className="size-4 shrink-0 accent-primary" type="checkbox" checked={picked.has(a.path)} onChange={(e) => setPicked((s) => { const n = new Set(s); if (e.target.checked) n.add(a.path); else n.delete(a.path); return n; })} />
                     {a.name}
                   </label>
