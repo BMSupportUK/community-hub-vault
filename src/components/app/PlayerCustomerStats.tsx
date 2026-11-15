@@ -10,6 +10,13 @@ const colors = ['var(--accent)', 'var(--success)', 'var(--warning)', 'var(--dest
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit' });
 const label = (day: string) => new Date(`${day}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 const tone = { strong: 'bg-success', ok: 'bg-primary', weak: 'bg-warning', very_weak: 'bg-destructive', none: 'bg-muted' } as const;
+/** One labelled fact shown as its own neat pill. */
+function Pill({ label, children, strong }: { label?: string; children: ReactNode; strong?: boolean }) {
+ return <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs shadow-sm">
+  {label && <span className="text-muted-foreground">{label}</span>}
+  <span className={strong ? 'font-semibold' : undefined}>{children}</span>
+ </span>;
+}
 function Bars({ strength, title }: { strength: Strength; title?: string }) {
  if (strength.level === 'none') return <span className="text-xs text-muted-foreground" title={title}>{strength.label}</span>;
  return <span className="inline-flex items-center gap-2" title={title}><span className="inline-flex items-end gap-0.5" aria-hidden="true">{[1,2,3,4].map(n=><span key={n} className={`w-1.5 rounded-sm ${n <= strength.bars ? tone[strength.level] : 'bg-muted'}`} style={{ height: `${n*4}px` }} />)}</span><span className="text-xs font-semibold">{strength.label}</span></span>;
@@ -61,7 +68,14 @@ function Stats({ userId }: { userId: string }) {
    const reading = data.rows.find(row => row.device_id === device.id && row.title === device.watching_title && row.login === device.iptv_username && row.day === days[0]);
    const speed = reading ? latestConnectionReading(reading, device) : null;
    const rel = playbackReliability(device, data.reliabilityEvents), rating = channelLinkRating((device as { net_ping_ms?: number | null }).net_ping_ms, rel);
-   return <div key={device.id} className="flex flex-wrap items-center gap-3 text-sm"><strong className="break-words">{device.watching_title}</strong><Bars strength={rel} title="Reported stalls and reconnects in this viewing session; reports may arrive after the interruption." />{rating && <span className="text-xs font-semibold">Channel connection: {rating} · Ping {(device as { net_ping_ms?: number | null }).net_ping_ms} ms</span>}{speed !== null ? <span className="text-xs text-muted-foreground">Stream download: {mbps(speed)} · Updated {time(reading?.speed_latest_at ?? device.last_seen_at)} UK</span> : <span className="text-xs text-muted-foreground">Waiting for a fresh download reading</span>}</div>;
+   return <div key={device.id} className="flex flex-wrap items-center gap-2 text-sm">
+    <Pill strong><span className="break-words">{device.watching_title}</span></Pill>
+    <Pill label="Playback"><Bars strength={rel} title="Reported stalls and reconnects in this viewing session; reports may arrive after the interruption." /></Pill>
+    {rating && <Pill label="Channel connection" strong>{rating} · Ping {(device as { net_ping_ms?: number | null }).net_ping_ms} ms</Pill>}
+    {speed !== null
+     ? <Pill label="Stream download">{mbps(speed)} · Updated {time(reading?.speed_latest_at ?? device.last_seen_at)} UK</Pill>
+     : <Pill label="Stream download">Waiting for a fresh reading</Pill>}
+   </div>;
   })}
   {!data.devices.some(device => device.watching_title && !device.watching_preview) && <p className="text-sm text-muted-foreground">Not watching now</p>}
  </div><ConnectionHistory userId={userId} buffers={data.buffers} /><Tabs value={day} onValueChange={setDay}>
@@ -95,19 +109,21 @@ function ConnectionHistory({ userId, buffers }: { userId: string; buffers: { dev
  return <div className="space-y-2 border-b border-border py-3">
   <h3 className="text-sm font-semibold">Full-screen connections · newest first</h3>
   {!data?.rows.length ? <p className="text-sm text-muted-foreground">{data ? 'No full-screen connections recorded yet.' : 'Loading…'}</p> :
-  <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="p-2">Started · UK</th><th className="p-2">Watched</th><th className="p-2">Channel connection</th><th className="p-2">Ping (low–high)</th><th className="p-2">Download</th><th className="p-2">Buffering</th><th className="p-2">Device / login</th></tr></thead>
-  <tbody>{data.rows.map(r => {
-   const from = Date.parse(r.started_at), to = Date.parse(r.last_seen_at) + 60000;
+  <ul className="space-y-2">{data.rows.map(r => {
+    const from = Date.parse(r.started_at), to = Date.parse(r.last_seen_at) + 60000;
    const ev = buffers.filter(b => b.device_id === r.device_id && b.content_name === r.title && Date.parse(b.occurred_at) >= from && Date.parse(b.occurred_at) <= to);
    const recon = ev.filter(e => e.reconnected).length;
    const rel: Strength = recon >= 3 ? { level: 'very_weak', bars: 1, label: '' } : ev.length >= 3 || recon >= 2 ? { level: 'weak', bars: 2, label: '' } : ev.length ? { level: 'ok', bars: 3, label: '' } : { level: 'strong', bars: 4, label: '' };
    const rating = channelLinkRating(r.ping_last, rel);
-   return <tr key={r.id} className="border-b border-border"><td className="whitespace-nowrap p-2">{t(r.started_at)}</td><td className="p-2"><strong className="break-words">{r.title}</strong><span className="block text-xs text-muted-foreground">{r.kind}</span></td>
-    <td className="p-2 font-semibold">{rating ?? 'No ping'}</td>
-    <td className="whitespace-nowrap p-2">{r.ping_last != null ? `${r.ping_last} ms` : '—'}{r.ping_min != null && r.ping_max != null && <span className="block text-xs text-muted-foreground">{r.ping_min}–{r.ping_max} ms</span>}</td>
-    <td className="whitespace-nowrap p-2">{r.speed_last_kbps ? mbps(r.speed_last_kbps) : '—'}</td>
-    <td className="whitespace-nowrap p-2">{ev.length ? `${ev.length}×` : 'None'}</td>
-    <td className="p-2">{r.login || '—'}</td></tr>; })}</tbody></table></div>}
+   return <li key={r.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 p-2">
+    <Pill label="Started · UK">{t(r.started_at)}</Pill>
+    <Pill strong><span className="break-words">{r.title}</span><span className="text-muted-foreground">· {r.kind}</span></Pill>
+    <Pill label="Channel connection" strong>{rating ?? 'No ping'}</Pill>
+    <Pill label="Ping">{r.ping_last != null ? `${r.ping_last} ms` : '—'}{r.ping_min != null && r.ping_max != null && <span className="text-muted-foreground"> (low–high {r.ping_min}–{r.ping_max} ms)</span>}</Pill>
+    <Pill label="Download">{r.speed_last_kbps ? mbps(r.speed_last_kbps) : '—'}</Pill>
+    <Pill label="Buffering">{ev.length ? `${ev.length}×` : 'None'}</Pill>
+    <Pill label="Device / login">{r.login || '—'}</Pill>
+   </li>; })}</ul>}
   {pages > 1 && <nav className="flex flex-wrap gap-1" aria-label="Connection history pages">{Array.from({ length: pages }, (_, i) => <button key={i} type="button" onClick={() => setPage(i)} aria-current={i === page ? 'page' : undefined} className={`min-w-8 rounded-md border px-2 py-1 text-xs ${i === page ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'}`}>{i + 1}</button>)}</nav>}
  </div>;
 }
