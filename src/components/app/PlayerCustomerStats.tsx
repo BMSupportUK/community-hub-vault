@@ -91,7 +91,7 @@ function Stats({ userId }: { userId: string }) {
     </div></TabsContent>
     <TabsContent value="details"><ConnectionHistory key={`${userId}:${d}`} userId={userId} day={d} buffers={data.buffers} /></TabsContent>
    </Tabs>
-   <div className="overflow-x-auto border-t border-border pt-3"><table className="w-full text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="p-3">IP</th><th className="p-3">Location</th><th className="p-3">Flags</th></tr></thead><tbody>{[...new Map(rows.map(r=>[`${r.last_ip}:${r.geo_city}:${r.vpn_status}`,r])).values()].map(r=><tr key={r.id} className="border-t border-border"><td className="p-3 font-mono text-xs">{r.last_ip || 'Unknown'}</td><td className="p-3">{[r.geo_city,r.geo_country].filter(Boolean).join(', ') || 'Unknown'}</td><td className="p-3">{r.vpn_status==='yes'?'VPN':r.vpn_status==='no'?'No VPN':'Unknown'}</td></tr>)}</tbody></table></div>
+   <div className="border-t border-border pt-3">{(() => { const ips = [...new Map(rows.map(r=>[`${r.last_ip}:${r.geo_city}:${r.vpn_status}`,r])).values()]; return ips.length ? <ul className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">{ips.map(r=><li key={r.id} className="flex h-full flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3"><span className="min-w-0 break-all font-mono text-sm font-semibold">{r.last_ip || 'Unknown'}</span><dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs"><div className="min-w-0"><dt className="text-muted-foreground">Location</dt><dd className="truncate font-semibold">{[r.geo_city,r.geo_country].filter(Boolean).join(', ') || 'Unknown'}</dd></div><div className="min-w-0"><dt className="text-muted-foreground">Flags</dt><dd className="font-semibold">{r.vpn_status==='yes'?'VPN':r.vpn_status==='no'?'No VPN':'Unknown'}</dd></div></dl></li>)}</ul> : <p className="text-sm text-muted-foreground">No connection addresses recorded on this day.</p>; })()}</div>
   </TabsContent>)}
  </Tabs></>;
 }
@@ -110,19 +110,24 @@ function ConnectionHistory({ userId, day, buffers }: { userId: string; day: stri
  return <div className="space-y-2 border-b border-border py-3">
   <h3 className="text-sm font-semibold">Full-screen connections · newest first</h3>
   {isError ? <p role="alert" className="text-sm text-destructive">Could not load connection history.</p> : !data?.rows.length ? <p className="text-sm text-muted-foreground">{data ? 'No full-screen connections recorded on this day.' : 'Loading…'}</p> :
-  <ul className="space-y-2">{data.rows.map(r => {
+  <ul className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">{data.rows.map(r => {
     const from = Date.parse(r.started_at), to = Date.parse(r.last_seen_at) + 60000;
    const ev = buffers.filter(b => b.device_id === r.device_id && b.content_name === r.title && Date.parse(b.occurred_at) >= from && Date.parse(b.occurred_at) <= to);
    const snapshot = readChannelLinkSnapshot(r.channel_link_snapshot);
    const rating = channelLinkRating(snapshot);
-   return <li key={r.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 p-2">
-    <Pill label="Started · UK">{t(r.started_at)}</Pill>
-    <Pill strong><span className="break-words">{r.title}</span><span className="text-muted-foreground">· {r.kind}</span></Pill>
-    <Pill label="Channel connection" strong>{rating ?? 'Not reported by box'}</Pill>
-    <Pill label="Ping">{r.ping_last != null ? `${r.ping_last} ms` : '—'}{r.ping_min != null && r.ping_max != null && <span className="text-muted-foreground"> (low–high {r.ping_min}–{r.ping_max} ms)</span>}</Pill>
-    <Pill label="Download">{r.speed_last_kbps ? mbps(r.speed_last_kbps) : '—'}</Pill>
-    <Pill label="Buffering">{ev.length ? `${ev.length}×` : 'None'}</Pill>
-    <Pill label="Device / login">{r.login || '—'}</Pill>
+   return <li key={r.id} className="flex h-full flex-col gap-2 rounded-lg border border-border bg-muted/30 p-3">
+    <div className="flex min-w-0 items-start justify-between gap-2">
+     <span className="min-w-0 break-words text-sm font-semibold">{r.title}</span>
+     <span className="shrink-0 rounded-full border border-border bg-card px-2 py-0.5 text-xs text-muted-foreground">{r.kind}</span>
+    </div>
+    <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+     <div className="min-w-0"><dt className="text-muted-foreground">Started · UK</dt><dd className="font-semibold tabular-nums">{t(r.started_at)}</dd></div>
+     <div className="min-w-0"><dt className="text-muted-foreground">Channel connection</dt><dd className="font-semibold">{rating ?? 'Not reported by box'}</dd></div>
+     <div className="min-w-0"><dt className="text-muted-foreground">Ping</dt><dd className="font-semibold tabular-nums">{r.ping_last != null ? `${r.ping_last} ms` : '—'}{r.ping_min != null && r.ping_max != null && <span className="font-normal text-muted-foreground"> (low–high {r.ping_min}–{r.ping_max} ms)</span>}</dd></div>
+     <div className="min-w-0"><dt className="text-muted-foreground">Download</dt><dd className="font-semibold tabular-nums">{r.speed_last_kbps ? mbps(r.speed_last_kbps) : '—'}</dd></div>
+     <div className="min-w-0"><dt className="text-muted-foreground">Buffering</dt><dd className="font-semibold tabular-nums">{ev.length ? `${ev.length}×` : 'None'}</dd></div>
+     <div className="min-w-0"><dt className="text-muted-foreground">Device / login</dt><dd className="truncate font-semibold">{r.login || '—'}</dd></div>
+    </dl>
    </li>; })}</ul>}
   {pages > 1 && <nav className="flex flex-wrap gap-1" aria-label="Connection history pages">{Array.from({ length: pages }, (_, i) => <Button key={i} type="button" size="sm" variant={i === page ? 'default' : 'outline'} onClick={() => setPage(i)} aria-current={i === page ? 'page' : undefined} className="min-w-8">{i + 1}</Button>)}</nav>}
  </div>;
