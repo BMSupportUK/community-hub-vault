@@ -46,6 +46,7 @@ const Body = z.discriminatedUnion("action", [
     broadband_test: z.object({ down: z.number().int().positive().max(2000000), up: z.number().int().positive().max(2000000), measured_at: z.number().int().positive(), method: z.literal("cloudflare-adaptive-v1") }).optional(),
     up_kbps: z.number().int().min(0).max(2000000).optional(),
     ping_ms: z.number().int().min(0).max(60000).optional(),
+    channel_link: z.object({ ping_ms: z.number().int().min(-1).max(60000), stalls: z.number().int().min(0).max(100000), reconnects: z.number().int().min(0).max(100000), delivery_ratio: z.number().finite().min(-1).max(1000000), since: z.number().int().positive() }).optional(),
     bitrate_kbps: z.number().int().min(0).max(200000).optional(),
     watching: z.object({
       kind: z.string().transform((k) => k === "episode" ? "series" : k === "movie" ? "film" : ["live", "film", "series", "catchup"].includes(k) ? k : "live"),
@@ -897,6 +898,9 @@ export const Route = createFileRoute("/api/public/player")({
           net_down_kbps: null, net_up_kbps: null, net_measured_at: null,
         });
         if (body.ping_ms != null) Object.assign(fields, { net_ping_ms: body.ping_ms });
+        const exactLink = body.channel_link && body.watching && !body.watching.preview && body.channel_link.since === body.watching.since
+          ? { ...body.channel_link, reported_at: new Date(now).toISOString() } : null;
+        Object.assign(fields, { channel_link_snapshot: exactLink });
         await supabaseAdmin.from("player_devices").update(fields).eq("id", device.id);
         // Weekly viewing hours: credit the gap since the last check-in to what was playing then.
         // Live TV previews are never credited — only real playback counts.
@@ -921,6 +925,8 @@ export const Route = createFileRoute("/api/public/player")({
           // PostgreSQL accepts null owner/ping values; generated RPC types omit that nullability.
           const { error } = await supabaseAdmin.rpc("record_player_connection_session", session as never);
           if (error) console.error('[player poll] connection recording failed', error.code);
+          else if (exactLink) await supabaseAdmin.from('player_connection_sessions').update({ channel_link_snapshot: exactLink })
+            .eq('device_id', session._device).eq('started_at', session._started).eq('title', session._title);
         }
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({

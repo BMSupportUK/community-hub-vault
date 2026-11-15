@@ -110,6 +110,19 @@ public class BackupPlayerActivity extends Activity {
             }, "channel-ping").start();
         }
         String rating = link.rating(now);
+        // Publish one atomic snapshot from the same ChannelLink instance driving the on-box pill.
+        SharedPreferences savedLink = getSharedPreferences("bmplayer", MODE_PRIVATE);
+        long since = savedLink.getLong("np_since", 0);
+        if (since > 0 && !savedLink.getBoolean("np_preview", false)) {
+            try {
+                org.json.JSONObject snapshot = new org.json.JSONObject().put("since", since)
+                        .put("ping_ms", link.pingMs()).put("stalls", link.stalls(now))
+                        .put("reconnects", link.reconnects(now)).put("delivery_ratio", link.deliveryRatio());
+                String encoded = snapshot.toString();
+                if (!encoded.equals(savedLink.getString("channel_link_snapshot", null)))
+                    savedLink.edit().putString("channel_link_snapshot", encoded).apply();
+            } catch (org.json.JSONException ignored) { }
+        }
         linkNote.setText(link.label(now));
         linkNote.setBackgroundColor("Poor".equals(rating) ? 0xE0B91C1C : "Fair".equals(rating) ? 0xE0B45309
                 : "Checking".equals(rating) ? 0xB30B1220 : 0xE0166534);

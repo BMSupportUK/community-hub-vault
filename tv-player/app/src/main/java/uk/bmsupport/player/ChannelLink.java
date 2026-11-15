@@ -41,4 +41,7 @@ final class ChannelLink {
     }
     int pingMs() { return ping; }
     int kbps() { return kbps; }
+    int stalls(long now) { return recent(stalls, now); }
+    int reconnects(long now) { return recent(reconnects, now); }
+    double deliveryRatio() { return ratio; }
 }

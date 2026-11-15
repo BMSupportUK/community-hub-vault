@@ -2556,6 +2556,13 @@
       "when": 1794750296597,
       "tag": "0364_player_connection_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 365,
+      "version": "7",
+      "when": 1794752182956,
+      "tag": "0365_player_exact_channel_link_snapshot",
+      "breakpoints": true
     }
   ]
 }

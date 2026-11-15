@@ -6181,6 +6181,7 @@ export type Database = {
       }
       player_connection_sessions: {
         Row: {
+          channel_link_snapshot: Json | null
           device_id: string
           id: string
           kind: string | null
@@ -6196,6 +6197,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          channel_link_snapshot?: Json | null
           device_id: string
           id?: string
           kind?: string | null
@@ -6211,6 +6213,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          channel_link_snapshot?: Json | null
           device_id?: string
           id?: string
           kind?: string | null
@@ -6308,6 +6311,7 @@ export type Database = {
       player_devices: {
         Row: {
           app_version: string | null
+          channel_link_snapshot: Json | null
           claim_away: boolean
           claim_ip: string | null
           claim_mobile: boolean
@@ -6357,6 +6361,7 @@ export type Database = {
         }
         Insert: {
           app_version?: string | null
+          channel_link_snapshot?: Json | null
           claim_away?: boolean
           claim_ip?: string | null
           claim_mobile?: boolean
@@ -6406,6 +6411,7 @@ export type Database = {
         }
         Update: {
           app_version?: string | null
+          channel_link_snapshot?: Json | null
           claim_away?: boolean
           claim_ip?: string | null
           claim_mobile?: boolean

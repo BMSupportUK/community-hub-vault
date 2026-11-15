@@ -3,7 +3,7 @@ import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-quer
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { customerStatsDays, customerStatsSegments, playbackReliability, latestConnectionReading, mbps, channelLinkRating, type Strength } from '@/lib/player-customer-stats';
+import { customerStatsDays, customerStatsSegments, playbackReliability, latestConnectionReading, mbps, channelLinkRating, readChannelLinkSnapshot, type Strength } from '@/lib/player-customer-stats';
 import { viewingDuration } from '@/lib/player-watch-activity';
 import { Button } from '@/components/ui/button';
 import { connectionDayRange, CONNECTION_HISTORY_PAGE_SIZE } from '@/lib/player-connection-session';
@@ -52,7 +52,7 @@ function Stats({ userId }: { userId: string }) {
   const ids = (owned.data ?? []).map(d => d.id);
   const [stats, devices, buffers] = await Promise.all([
    supabase.from('player_customer_daily_stats').select('*').eq('user_id', userId).gte('day', days[6]).lte('day', days[0]).order('last_watched_at', { ascending: false }),
-   supabase.from('player_devices').select('id,watching_title,watching_preview,watching_since,last_seen_at,iptv_username,net_ping_ms').eq('user_id', userId).gte('last_seen_at', new Date(Date.now()-180000).toISOString()),
+   supabase.from('player_devices').select('id,watching_title,watching_preview,watching_since,last_seen_at,iptv_username,net_ping_ms,channel_link_snapshot').eq('user_id', userId).gte('last_seen_at', new Date(Date.now()-180000).toISOString()),
    supabase.from('player_buffer_events').select('device_id,content_name,stall_ms,occurred_at,reconnected').in('device_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']).gte('occurred_at', new Date(Date.now()-8*86400000).toISOString()).order('occurred_at', { ascending: false }).limit(2000),
   ]);
   if (stats.error) throw new Error('Could not load customer viewing statistics.');
@@ -67,11 +67,11 @@ function Stats({ userId }: { userId: string }) {
   {data.devices.filter(device => device.watching_title && !device.watching_preview).map(device => {
    const reading = data.rows.find(row => row.device_id === device.id && row.title === device.watching_title && row.login === device.iptv_username && row.day === days[0]);
    const speed = reading ? latestConnectionReading(reading, device) : null;
-   const rel = playbackReliability(device, data.reliabilityEvents), rating = channelLinkRating((device as { net_ping_ms?: number | null }).net_ping_ms, rel);
+   const rel = playbackReliability(device, data.reliabilityEvents), snapshot = readChannelLinkSnapshot(device.channel_link_snapshot), rating = channelLinkRating(snapshot);
    return <div key={device.id} className="flex flex-wrap items-center gap-2 text-sm">
     <Pill strong><span className="break-words">{device.watching_title}</span></Pill>
     <Pill label="Playback"><Bars strength={rel} title="Reported stalls and reconnects in this viewing session; reports may arrive after the interruption." /></Pill>
-    {rating && <Pill label="Channel connection" strong>{rating} · Ping {(device as { net_ping_ms?: number | null }).net_ping_ms} ms</Pill>}
+    <Pill label="Channel connection" strong>{rating ?? 'Awaiting box rating'}{snapshot && snapshot.ping_ms > 0 ? ` · Ping ${snapshot.ping_ms} ms` : ''}</Pill>
     {speed !== null
      ? <Pill label="Stream download">{mbps(speed)} · Updated {time(reading?.speed_latest_at ?? device.last_seen_at)} UK</Pill>
      : <Pill label="Stream download">Waiting for a fresh reading</Pill>}
@@ -113,13 +113,12 @@ function ConnectionHistory({ userId, day, buffers }: { userId: string; day: stri
   <ul className="space-y-2">{data.rows.map(r => {
     const from = Date.parse(r.started_at), to = Date.parse(r.last_seen_at) + 60000;
    const ev = buffers.filter(b => b.device_id === r.device_id && b.content_name === r.title && Date.parse(b.occurred_at) >= from && Date.parse(b.occurred_at) <= to);
-   const recon = ev.filter(e => e.reconnected).length;
-   const rel: Strength = recon >= 3 ? { level: 'very_weak', bars: 1, label: '' } : ev.length >= 3 || recon >= 2 ? { level: 'weak', bars: 2, label: '' } : ev.length ? { level: 'ok', bars: 3, label: '' } : { level: 'strong', bars: 4, label: '' };
-   const rating = channelLinkRating(r.ping_last, rel);
+   const snapshot = readChannelLinkSnapshot(r.channel_link_snapshot);
+   const rating = channelLinkRating(snapshot);
    return <li key={r.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 p-2">
     <Pill label="Started · UK">{t(r.started_at)}</Pill>
     <Pill strong><span className="break-words">{r.title}</span><span className="text-muted-foreground">· {r.kind}</span></Pill>
-    <Pill label="Channel connection" strong>{rating ?? 'No ping'}</Pill>
+    <Pill label="Channel connection" strong>{rating ?? 'Not reported by box'}</Pill>
     <Pill label="Ping">{r.ping_last != null ? `${r.ping_last} ms` : '—'}{r.ping_min != null && r.ping_max != null && <span className="text-muted-foreground"> (low–high {r.ping_min}–{r.ping_max} ms)</span>}</Pill>
     <Pill label="Download">{r.speed_last_kbps ? mbps(r.speed_last_kbps) : '—'}</Pill>
     <Pill label="Buffering">{ev.length ? `${ev.length}×` : 'None'}</Pill>

@@ -771,6 +771,13 @@ public class MainActivity extends Activity {
         if (tested != null && tested.down > 0 && tested.up > 0) b.put("broadband_test", new JSONObject().put("down", tested.down).put("up", tested.up)
                 .put("measured_at", tested.measuredAt).put("method", "cloudflare-adaptive-v1"));
         if (since > 0 && lastPingMs > 0) b.put("ping_ms", lastPingMs);
+        String exact = prefs.getString("channel_link_snapshot", null);
+        if (since > 0 && !prefs.getBoolean("np_preview", false) && exact != null) {
+            try {
+                JSONObject snapshot = new JSONObject(exact);
+                if (snapshot.optLong("since", 0) == since) b.put("channel_link", snapshot);
+            } catch (Exception ignored) { }
+        }
         return b;
     }
 
@@ -781,7 +788,7 @@ public class MainActivity extends Activity {
         long since = System.currentTimeMillis();
         prefs.edit().putString("np_kind", it.kind).putString("np_title", it.name == null ? "" : it.name)
                 .putString("np_cat", "").putString("np_player", vlc ? "VLC" : "BM Player").putLong("np_since", since)
-                .putBoolean("np_preview", preview).apply();
+                .putBoolean("np_preview", preview).remove("channel_link_snapshot").apply();
         io.execute(() -> {
             String cat = ""; try { cat = categoryName(it); } catch (Exception ignored) {}
             if (prefs.getLong("np_since", 0) == since) prefs.edit().putString("np_cat", cat == null ? "" : cat).apply();

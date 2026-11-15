@@ -24,4 +24,17 @@ public class ChannelLinkTest {
         assertEquals("Excellent", l.rating(121_000));
         l.reconnected(200_000); assertEquals("Poor", l.rating(201_000));
     }
+    @Test public void snapshotUsesExactlyThePillsTwoMinuteWindow() {
+        ChannelLink l = new ChannelLink(); l.ping(38); l.stalled(0); l.reconnected(1000);
+        assertEquals(38, l.pingMs());
+        assertEquals(1, l.stalls(120_000)); assertEquals(1, l.reconnects(120_000));
+        assertEquals("Poor", l.rating(120_000));
+        assertEquals(0, l.stalls(120_001)); assertEquals(1, l.reconnects(120_001));
+        assertEquals(0, l.reconnects(121_001)); assertEquals("Excellent", l.rating(121_001));
+    }
+    @Test public void snapshotIncludesExactSmoothedDeliveryRatio() {
+        ChannelLink l = new ChannelLink(); l.ping(38);
+        l.bytes(0, 0, 0); l.bytes(800_000, 1_000_000, 6000);
+        assertEquals(0.8, l.deliveryRatio(), 0.00001); assertEquals("Poor", l.rating(6000));
+    }
 }

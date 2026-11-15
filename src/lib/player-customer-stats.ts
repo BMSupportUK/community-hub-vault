@@ -54,11 +54,20 @@ export function latestConnectionReading(
  if (!Number.isFinite(at) || !Number.isFinite(seen) || now - at > 180000 || now - seen > 180000 || at > now || seen > now) return null;
  return row.speed_latest_kbps && row.speed_latest_kbps > 0 ? row.speed_latest_kbps : null;
 }
-/** Same bands as the BM Player pill: ping to the channel's own server plus reported playback reliability. */
-export function channelLinkRating(pingMs: number | null | undefined, reliability: Strength): string | null {
- if (pingMs == null || pingMs <= 0) return null;
- if (pingMs > 400 || reliability.level === 'very_weak') return 'Poor';
- if (pingMs > 200 || reliability.level === 'weak' || reliability.level === 'ok') return 'Fair';
- if (pingMs > 80) return 'Good';
+export type ChannelLinkSnapshot = { ping_ms: number; stalls: number; reconnects: number; delivery_ratio: number };
+/** Exact ChannelLink.java thresholds, using the same two-minute snapshot as the box. */
+export function channelLinkRating(snapshot: ChannelLinkSnapshot | null): string | null {
+ if (!snapshot) return null;
+ const { ping_ms: ping, stalls, reconnects, delivery_ratio: ratio } = snapshot;
+ if (ping < 0 && ratio < 0 && stalls === 0 && reconnects === 0) return 'Checking';
+ if (reconnects > 0 || stalls >= 3 || ping > 400 || (ratio >= 0 && ratio < 0.9)) return 'Poor';
+ if (stalls >= 1 || ping > 200 || (ratio >= 0 && ratio < 0.98)) return 'Fair';
+ if (ping > 80) return 'Good';
  return 'Excellent';
+}
+export function readChannelLinkSnapshot(value: unknown): ChannelLinkSnapshot | null {
+ if (!value || typeof value !== 'object') return null;
+ const s = value as Record<string, unknown>;
+ if (typeof s.ping_ms !== 'number' || typeof s.stalls !== 'number' || typeof s.reconnects !== 'number' || typeof s.delivery_ratio !== 'number') return null;
+ return { ping_ms: s.ping_ms, stalls: s.stalls, reconnects: s.reconnects, delivery_ratio: s.delivery_ratio };
 }

@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Align website ratings with the box's exact two-minute ping/stall/reconnect/delivery snapshot; prepare atomic playback-bound player reporting. 15 website tests and six Android ChannelLink tests pass; website build OK.
+- [ ] Verify exact ratings end-to-end on the box; requires a new public BM Player build and website publication. Neither release was requested; no physical box is connected. Older apps show awaiting box rating rather than an invented Excellent rating.
+
 - [x] Move full-screen history into Details, retaining five-per-page UK-day records; record the current full-screen start without waiting for metrics and exclude previews. 22 focused tests pass.
 - [ ] Verify populated Details on the signed-in customer screen; existing account security gate prevents access, and a physical player is unavailable for new-start verification.
 
