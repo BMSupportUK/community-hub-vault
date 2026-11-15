@@ -9,6 +9,19 @@ final class BufferBlame {
 
     private BufferBlame() {}
 
+    /** A new channel starts: forget the previous channel's readings. */
+    static void reset() { pingMs = -1; channelKbps = -1; }
+
+    /** Times a fresh TCP connection to the playing stream's server (blocking; run off the main thread). */
+    static int ping(String host, int port) {
+        if (host == null || host.isEmpty() || port <= 0) return -1;
+        long t0 = android.os.SystemClock.elapsedRealtime();
+        try (java.net.Socket sk = new java.net.Socket()) {
+            sk.connect(new java.net.InetSocketAddress(host, port), 5000);
+            return (int) Math.max(1, android.os.SystemClock.elapsedRealtime() - t0);
+        } catch (Exception e) { return 5000; }
+    }
+
     /** broadbandKbps <= 0 means no recent speed test. */
     static String judge(String cause, int ping, int channel, int broadbandKbps) {
         if ("audio_drop".equals(cause) || "provider_cut".equals(cause) || "advert_switch".equals(cause)) return STREAM;

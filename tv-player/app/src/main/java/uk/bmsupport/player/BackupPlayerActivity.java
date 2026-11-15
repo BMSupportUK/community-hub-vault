@@ -138,6 +138,7 @@ public class BackupPlayerActivity extends Activity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(this instanceof BackupStageActivity ? Color.TRANSPARENT : Color.BLACK);
+        BufferBlame.reset();
         layout = new VLCVideoLayout(this);
         root.addView(layout, new FrameLayout.LayoutParams(-1, -1));
         note = new TextView(this);

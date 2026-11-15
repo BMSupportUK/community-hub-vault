@@ -77,6 +77,15 @@ public class PlayerActivity extends Activity {
             ui.postDelayed(this, 1000);
         }
     };
+    /** Pings the playing stream's own server every 15s so buffering reports can say who is at fault. */
+    private final Runnable blamePing = new Runnable() {
+        @Override public void run() {
+            SharedPreferences p = prefs(PlayerActivity.this);
+            String host = p.getString("np_host", ""); int port = p.getInt("np_port", 0);
+            new Thread(() -> { int ms = BufferBlame.ping(host, port); if (ms > 0) BufferBlame.pingMs = BufferBlame.pingMs < 0 ? ms : (BufferBlame.pingMs * 2 + ms) / 3; }, "blame-ping").start();
+            ui.postDelayed(this, 15000);
+        }
+    };
     private final Runnable saveTick = new Runnable() {
         @Override public void run() { saveProgress(false); ui.postDelayed(this, 5000); }
     };
@@ -226,6 +235,7 @@ public class PlayerActivity extends Activity {
         cuEnd = getIntent().getLongExtra("catchup_end", 0);
         listenA(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
+            @Override public void onBandwidthEstimate(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, int loadMs, long bytes, long bitrate) { if (bitrate > 0) BufferBlame.channelKbps = (int) (bitrate / 1000); }
             // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
             @Override public void onAudioInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
             @Override public void onVideoInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch(); }
@@ -379,6 +389,8 @@ public class PlayerActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        BufferBlame.reset();
+        ui.postDelayed(blamePing, 2000);
         StreamClaim.attach(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
@@ -626,6 +638,7 @@ public class PlayerActivity extends Activity {
         }
         listenA(new androidx.media3.exoplayer.analytics.AnalyticsListener() {
             @Override public void onVideoDecoderInitialized(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime eventTime, String decoderName, long initializedTimestampMs, long initializationDurationMs) { activeDecoder = decoderName; }
+            @Override public void onBandwidthEstimate(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, int loadMs, long bytes, long bitrate) { if (bitrate > 0) BufferBlame.channelKbps = (int) (bitrate / 1000); }
             // Adverts stitched into a live channel change sound/picture format; mark the switch so it is waited out, not reconnected.
             @Override public void onAudioInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch("sound"); }
             @Override public void onVideoInputFormatChanged(androidx.media3.exoplayer.analytics.AnalyticsListener.EventTime e, androidx.media3.common.Format f, androidx.media3.exoplayer.DecoderReuseEvaluation r) { markSwitch("picture"); }
@@ -1236,6 +1249,7 @@ public class PlayerActivity extends Activity {
     @Override protected void onStop() { saveProgress(false); super.onStop(); if (player != null) player.pause(); }
 
     @Override protected void onDestroy() {
+        ui.removeCallbacks(blamePing);
         StreamClaim.detach(this);
         // Viewer gave up on a live channel that never showed a picture: tell the Sports Guide so it gets crossed.
         if ("live".equals(kind()) && !everReady && !handedOver && !blackSent && isFinishing()
