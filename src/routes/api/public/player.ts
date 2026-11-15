@@ -405,17 +405,17 @@ export const Route = createFileRoute("/api/public/player")({
           const { data: cfg } = await supabaseAdmin.from("player_vpn_configs").select("provider_id, cred_cipher, enabled, server, reselect_at, user_id").eq("device_id", device.id).maybeSingle();
           if (!cfg || cfg.user_id !== device.user_id) return json({ vpn: null });
           if (!cfg.enabled) return json({ vpn: { enabled: false } });
-          const { data: prov } = await supabaseAdmin.from("vpn_providers").select("id, name, picker, host_template").eq("id", cfg.provider_id).single();
-          const { unlockVpnCreds, chooseVpnServer } = await import("@/lib/box-vpn.server");
-          let server: { host: string; load: number | null; config_url: string | null } | null = cfg.server ? { host: cfg.server, load: null, config_url: null } : null;
-          if (!server || cfg.reselect_at) {
-            server = prov ? await chooseVpnServer(prov, { cc: device.geo_country, city: device.geo_city }, cfg.reselect_at && cfg.server ? cfg.server : null) : null;
-            await supabaseAdmin.from("player_vpn_configs").update({ server: server?.host ?? null, reselect_at: null, status: "connecting" }).eq("device_id", device.id);
+          const { data: prov } = await supabaseAdmin.from("vpn_providers").select("id, name, picker, auth_kind").eq("id", cfg.provider_id).single();
+          if (!prov) return json({ vpn: { enabled: true, error: "Provider not available" } });
+          const { unlockVpnCreds, buildBoxVpn } = await import("@/lib/box-vpn.server");
+          const built = await buildBoxVpn(prov, (await unlockVpnCreds(cfg.cred_cipher)).username, { cc: device.geo_country, city: device.geo_city }, cfg.reselect_at ? cfg.server : null);
+          if ("error" in built) {
+            await supabaseAdmin.from("player_vpn_configs").update({ status: "failed", status_detail: built.error, reselect_at: null }).eq("device_id", device.id);
+            return json({ vpn: { enabled: true, error: built.error } });
           }
-          if (!server || !prov) return json({ vpn: { enabled: true, error: "No server found for this provider" } });
-          const creds = await unlockVpnCreds(cfg.cred_cipher);
-          if (prov.picker === "nordvpn" && !server.config_url) server.config_url = `https://downloads.nordcdn.com/configs/files/ovpn_udp/servers/${server.host}.udp.ovpn`;
-          return json({ vpn: { enabled: true, provider: prov.id, provider_name: prov.name, host: server.host, load: server.load, config_url: server.config_url, ...creds } });
+          if (built.server !== cfg.server || cfg.reselect_at) await supabaseAdmin.from("player_vpn_configs").update({ server: built.server, reselect_at: null, status: "connecting", status_detail: null }).eq("device_id", device.id);
+          // "rev" changes whenever the server changes, so the box knows to reconnect.
+          return json({ vpn: { enabled: true, provider: prov.id, provider_name: prov.name, server: built.server, load: built.load, config: built.config } });
         }
 
         if (body.action === "vpn_status") {

@@ -20,25 +20,42 @@ export async function unlockVpnCreds(cipher: string): Promise<{ username: string
   return { username: o.u, password: o.p };
 }
 
-/** Asks the provider for its servers and picks the closest, least busy one for this box's area. */
-export async function chooseVpnServer(provider: { id: string; picker: string; host_template: string | null }, place: { cc?: string | null; city?: string | null }, avoid?: string | null) {
-  const { pickBestServer, hostFromTemplate, NORD_COUNTRY } = await import("./vpn-picker");
+type Provider = { id: string; picker: string; auth_kind: string };
+type Place = { cc?: string | null; city?: string | null };
+
+/** Builds this box's WireGuard setup: closest, least busy server for token/key providers; the customer's own file otherwise. */
+export async function buildBoxVpn(provider: Provider, secret: string, place: Place, avoid?: string | null): Promise<{ server: string; config: string; load: number | null } | { error: string }> {
+  const { pickBestServer, wgConfig, checkWgFile, NORD_COUNTRY } = await import("./vpn-picker");
   const cc = (place.cc ?? "gb").toLowerCase();
+  if (provider.auth_kind === "wg_config") {
+    const f = checkWgFile(secret);
+    return f.ok ? { server: f.server, config: secret, load: null } : { error: f.error };
+  }
   try {
-    if (provider.picker === "nordvpn") {
+    if (provider.auth_kind === "nord_token") {
+      const cr = await fetch("https://api.nordvpn.com/v1/users/services/credentials", { headers: { Authorization: `Basic ${btoa(`token:${secret}`)}` } });
+      if (!cr.ok) return { error: "NordVPN did not accept the access token. Make a new one and send it again." };
+      const privateKey = ((await cr.json()) as { nordlynx_private_key?: string }).nordlynx_private_key;
+      if (!privateKey) return { error: "NordVPN did not return a key for this account." };
       const id = NORD_COUNTRY[cc] ?? NORD_COUNTRY.gb;
-      const r = await fetch(`https://api.nordvpn.com/v1/servers/recommendations?filters[servers_technologies][identifier]=openvpn_udp&filters[country_id]=${id}&limit=20`);
-      const list = (await r.json()) as { hostname: string; load: number; locations?: { country?: { code?: string; city?: { name?: string } } }[] }[];
-      const best = pickBestServer(list.filter((s) => s.hostname !== avoid).map((s) => ({ host: s.hostname, load: s.load, cc: s.locations?.[0]?.country?.code ?? cc, city: s.locations?.[0]?.country?.city?.name })), place);
-      if (best) return { host: best.host, load: best.load ?? null, config_url: `https://downloads.nordcdn.com/configs/files/ovpn_udp/servers/${best.host}.udp.ovpn` };
+      const r = await fetch(`https://api.nordvpn.com/v1/servers/recommendations?filters[servers_technologies][identifier]=wireguard_udp&filters[country_id]=${id}&limit=25`);
+      type S = { hostname: string; station: string; load: number; locations?: { country?: { code?: string; city?: { name?: string } } }[]; technologies?: { identifier: string; metadata?: { name: string; value: string }[] }[] };
+      const list = (await r.json()) as S[];
+      const keyOf = (s: S) => s.technologies?.find((t) => t.identifier === "wireguard_udp")?.metadata?.find((m) => m.name === "public_key")?.value;
+      const usable = list.filter((s) => s.hostname !== avoid && keyOf(s));
+      const best = pickBestServer(usable.map((s) => ({ host: s.hostname, load: s.load, cc: s.locations?.[0]?.country?.code ?? cc, city: s.locations?.[0]?.country?.city?.name })), place);
+      const s = best && usable.find((x) => x.hostname === best.host);
+      if (!s) return { error: "No NordVPN server found near you." };
+      return { server: s.hostname, load: s.load, config: wgConfig({ privateKey, address: "10.5.0.2/32", dns: "103.86.96.100", publicKey: keyOf(s)!, endpoint: `${s.station}:51820` }) };
     }
-    if (provider.picker === "surfshark") {
+    if (provider.auth_kind === "private_key") {
       const r = await fetch("https://api.surfshark.com/v4/server/clusters/generic");
-      const list = (await r.json()) as { connectionName: string; load: number; countryCode: string; location: string }[];
-      const best = pickBestServer(list.filter((s) => s.connectionName !== avoid).map((s) => ({ host: s.connectionName, load: s.load, cc: s.countryCode, city: s.location })), place);
-      if (best) return { host: best.host, load: best.load ?? null, config_url: null };
+      const list = ((await r.json()) as { connectionName: string; load: number; countryCode: string; location: string; pubKey?: string }[]).filter((s) => s.pubKey && s.connectionName !== avoid);
+      const best = pickBestServer(list.map((s) => ({ host: s.connectionName, load: s.load, cc: s.countryCode, city: s.location })), place);
+      const s = best && list.find((x) => x.connectionName === best.host);
+      if (!s) return { error: "No Surfshark server found near you." };
+      return { server: s.connectionName, load: s.load, config: wgConfig({ privateKey: secret.trim(), address: "10.14.0.2/16", dns: "162.252.172.57", publicKey: s.pubKey!, endpoint: `${s.connectionName}:51820` }) };
     }
-  } catch { /* provider list unreachable: fall back to the provider's own nearest address */ }
-  const template = provider.host_template ?? (provider.picker === "protonvpn" ? "node-{cc}-01.protonvpn.net" : null);
-  return template ? { host: hostFromTemplate(template, place), load: null, config_url: null } : null;
+  } catch { return { error: "The VPN provider could not be reached. The box will try again." }; }
+  return { error: "This provider isn't set up yet." };
 }

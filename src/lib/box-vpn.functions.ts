@@ -19,17 +19,18 @@ export const myBoxVpn = createServerFn({ method: 'GET' }).middleware([requireSup
 });
 
 export const sendVpnToBox = createServerFn({ method: 'POST' }).middleware([requireSupabaseAuth])
-  .inputValidator(z.object({ deviceId: z.string().uuid(), providerId: z.string().min(1).max(40), username: z.string().trim().min(1).max(200), password: z.string().min(1).max(200) }))
+  .inputValidator(z.object({ deviceId: z.string().uuid(), providerId: z.string().min(1).max(40), secret: z.string().trim().min(20).max(8000) }))
   .handler(async ({ data, context }) => {
     const box = await ownBox(context, data.deviceId);
     if (!box) return { ok: false, error: 'That box is not on your account.' };
     if (!['android', 'firetv', 'phone'].includes(box.platform)) return { ok: false, error: 'VPN on your box works on Android boxes, Fire TV and phones only.' };
-    const { data: prov } = await context.supabase.from('vpn_providers').select('id, enabled').eq('id', data.providerId).maybeSingle();
+    const { data: prov } = await context.supabase.from('vpn_providers').select('id, enabled, auth_kind').eq('id', data.providerId).maybeSingle();
     if (!prov?.enabled) return { ok: false, error: 'Pick a VPN provider from the list.' };
+    if (prov.auth_kind === 'wg_config') { const { checkWgFile } = await import('./vpn-picker'); const f = checkWgFile(data.secret); if (!f.ok) return { ok: false, error: f.error }; }
     const { lockVpnCreds } = await import('./box-vpn.server');
     const { supabaseAdmin } = await import('@/integrations/supabase/client.server');
     const { error } = await supabaseAdmin.from('player_vpn_configs').upsert({
-      device_id: box.id, user_id: context.userId, provider_id: prov.id, cred_cipher: await lockVpnCreds(data.username, data.password),
+      device_id: box.id, user_id: context.userId, provider_id: prov.id, cred_cipher: await lockVpnCreds(data.secret, ''),
       enabled: true, server: null, status: 'sent', status_detail: null, reselect_at: new Date().toISOString(), updated_at: new Date().toISOString(),
     });
     if (error) return { ok: false, error: 'Could not send to your box. Please try again.' };

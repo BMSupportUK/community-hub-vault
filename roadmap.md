@@ -192,5 +192,6 @@
 - [x] Published BM Player 5.52 (363): improved broadband speed test (longer measurements, clearer progress) so Settings shows a real broadband figure; buffering notices restored on the live player. 356 tests pass; public APK byte-identical to signed build (SHA-256 acfbc43fac2db3d5b20549be40ec75b0a09fb79b57078a319d4c97993283d3c0). Real-box speed-test check unavailable.
 
 - [x] VPN on your box: provider list (9), locked VPN details, best-server picker (closest, then fewest connections), Link Device 3rd column, box collect/report endpoints. 4 picker tests pass.
-- [ ] BM Player 5.62 built-in VPN connection: blocked, needs an OpenVPN engine that can't be built here; awaiting user choice (WireGuard route or open provider's app).
+- [x] BM Player 5.62 (373) built-in WireGuard VPN, released; NordVPN token / Surfshark key auto-pick best server, others paste a WireGuard file.
+- [ ] Try VPN on a real box with a real VPN account: no box or VPN account available here.
 - [ ] Owner Tools VPN providers on/off list (admins can already be given it; screen not built yet).

@@ -11,3 +11,4 @@
 -keep class com.google.zxing.** { *; }
 -keepclasseswithmembernames class * { native <methods>; }
 -dontwarn **
+-keep class com.wireguard.** { *; }

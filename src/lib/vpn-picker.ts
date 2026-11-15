@@ -21,3 +21,18 @@ export function hostFromTemplate(template: string, place: VpnPlace): string {
 
 /** NordVPN country ids for the areas our customers are in. */
 export const NORD_COUNTRY: Record<string, number> = { gb: 227, ie: 108, us: 228, es: 202, fr: 74, de: 81, nl: 153, pt: 175, it: 106, ca: 38, au: 13 };
+
+/** A WireGuard setup the box can switch on directly. */
+export function wgConfig(o: { privateKey: string; address: string; dns: string; publicKey: string; endpoint: string }): string {
+  return `[Interface]\nPrivateKey = ${o.privateKey}\nAddress = ${o.address}\nDNS = ${o.dns}\n\n[Peer]\nPublicKey = ${o.publicKey}\nAllowedIPs = 0.0.0.0/0\nEndpoint = ${o.endpoint}\nPersistentKeepalive = 25\n`;
+}
+
+/** Accepts a pasted provider WireGuard file only if it has the parts the box needs; returns its server name. */
+export function checkWgFile(text: string): { ok: true; server: string } | { ok: false; error: string } {
+  const t = text.replace(/\r/g, "");
+  if (!/^\s*\[Interface\]/m.test(t) || !/^\s*\[Peer\]/m.test(t)) return { ok: false, error: "That isn't a WireGuard file. It should start with [Interface]." };
+  if (!/^\s*PrivateKey\s*=\s*\S{40,}/m.test(t)) return { ok: false, error: "The file is missing its PrivateKey line." };
+  const ep = t.match(/^\s*Endpoint\s*=\s*(\S+)/m);
+  if (!ep || !/^\s*PublicKey\s*=\s*\S{40,}/m.test(t)) return { ok: false, error: "The file is missing its server (Endpoint/PublicKey)." };
+  return { ok: true, server: ep[1].replace(/:\d+$/, "") };
+}

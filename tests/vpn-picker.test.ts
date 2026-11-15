@@ -21,3 +21,17 @@ describe("VPN best server", () => {
     expect(hostFromTemplate("{cc}.windscribe.com", { cc: "IE" })).toBe("ie.windscribe.com");
   });
 });
+
+import { checkWgFile, wgConfig } from "../src/lib/vpn-picker";
+describe("WireGuard files", () => {
+  const key = "a".repeat(43) + "=";
+  test("built setup sends all traffic through the chosen server", () => {
+    const c = wgConfig({ privateKey: key, address: "10.5.0.2/32", dns: "103.86.96.100", publicKey: key, endpoint: "uk1.example:51820" });
+    expect(c).toContain("AllowedIPs = 0.0.0.0/0");
+    expect(c).toContain("Endpoint = uk1.example:51820");
+  });
+  test("a pasted file needs a private key and server", () => {
+    expect(checkWgFile(`[Interface]\nPrivateKey = ${key}\n[Peer]\nPublicKey = ${key}\nEndpoint = uk-lon.example.net:51820`)).toEqual({ ok: true, server: "uk-lon.example.net" });
+    expect(checkWgFile("username: bob").ok).toBe(false);
+  });
+});

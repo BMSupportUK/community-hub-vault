@@ -872,6 +872,7 @@ public class MainActivity extends Activity {
             String pb = pollBody().toString();
             JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", pb));
             lastPingMs = streamPingMs();
+            if (hasLogin()) BoxVpn.sync(this, prefs.getString("token", ""));
             Checkin.setSlow(r.optInt("slow", 1));
             JSONObject mt = r.optJSONObject("maintenance");
             boolean down = mt != null && mt.optBoolean("enabled");
@@ -3167,6 +3168,7 @@ public class MainActivity extends Activity {
     /** VLC reports where the customer stopped, so VLC playback also keeps watched progress. */
     @Override protected void onActivityResult(int req, int res, Intent data) {
         super.onActivityResult(req, res, data);
+        if (req == BoxVpn.VPN_REQUEST) { BoxVpn.permissionAnswered(this, prefs.getString("token", ""), res == RESULT_OK); return; }
         if (req == VOICE_REQUEST) {
             String kind = voiceKind; voiceKind = null;
             if (res != RESULT_OK || data == null || kind == null) return;

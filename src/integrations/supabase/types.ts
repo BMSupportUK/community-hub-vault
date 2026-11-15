@@ -9498,6 +9498,7 @@ export type Database = {
       }
       vpn_providers: {
         Row: {
+          auth_kind: string
           created_at: string
           credentials_help: string | null
           enabled: boolean
@@ -9508,6 +9509,7 @@ export type Database = {
           sort: number
         }
         Insert: {
+          auth_kind?: string
           created_at?: string
           credentials_help?: string | null
           enabled?: boolean
@@ -9518,6 +9520,7 @@ export type Database = {
           sort?: number
         }
         Update: {
+          auth_kind?: string
           created_at?: string
           credentials_help?: string | null
           enabled?: boolean

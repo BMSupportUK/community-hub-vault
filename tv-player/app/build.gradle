@@ -11,8 +11,8 @@ android {
         applicationId "uk.bmsupport.player"
         minSdkVersion 23
         targetSdkVersion 36
-        versionCode 372
-        versionName "5.61"
+        versionCode 373
+        versionName "5.62"
         // Android TV, Fire TV and phones are ARM; the backup engine's native libraries stay ARM-only to keep the download small.
         ndk { abiFilters "armeabi-v7a", "arm64-v8a" }
     }
@@ -66,6 +66,8 @@ dependencies {
     implementation 'androidx.core:core:1.13.1'
     implementation 'org.videolan.android:libvlc-all:3.6.0'
     implementation 'com.google.zxing:core:3.5.3'
+    // Built-in VPN for "VPN on your box" (website sends a ready WireGuard setup).
+    implementation 'com.wireguard.android:tunnel:1.0.20230706'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.robolectric:robolectric:4.14.1'
 }
