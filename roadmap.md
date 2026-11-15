@@ -179,3 +179,4 @@
 - [ ] Android 5.33 sends measured speed (code done, APK build pending — sandbox build tools wiped)
 - [ ] Windows/Mac send measured speed (not started)
 - [x] 5.46: dropped Live TV channels auto-reconnect for up to 2 minutes (published)
+- [x] Published BM Player 5.52 (363): improved broadband speed test (longer measurements, clearer progress) so Settings shows a real broadband figure; buffering notices restored on the live player. 356 tests pass; public APK byte-identical to signed build (SHA-256 acfbc43fac2db3d5b20549be40ec75b0a09fb79b57078a319d4c97993283d3c0). Real-box speed-test check unavailable.
