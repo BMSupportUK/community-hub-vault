@@ -195,3 +195,4 @@
 - [x] BM Player 5.62 (373) built-in WireGuard VPN, released; NordVPN token / Surfshark key auto-pick best server, others paste a WireGuard file.
 - [ ] Try VPN on a real box with a real VPN account: no box or VPN account available here.
 - [ ] Owner Tools VPN providers on/off list (admins can already be given it; screen not built yet).
+- [x] Built, BM-signed and publicly released Android 5.63 (374) with Private DNS (Cloudflare then Google encrypted lookups for channel-list/TV guide servers, 3s fallback to normal DNS, on by default, Settings switch); 385 tests pass. Public download is byte-identical, SHA-256 9ac1ee4d059bc32184b6a633d6836cb1ce9f6dd47a15eed25c6f1d4e9477326e. VPN on your box removed; physical-box verification unavailable.
