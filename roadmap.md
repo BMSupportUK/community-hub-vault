@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Remove the duplicate customer Connection information tab; show latest reported stream throughput with realtime updates, stale/preview guards and no unproven internet-blame labels.
+- [ ] Verify populated latest connection readings on the customer page; signed-in browser remains at the existing password/PIN gate, and new reports require website publication.
+
 - [x] Built and publicly released permanent-BM-signed Android 5.50 (361); 350 tests pass. Live updater and first TV-install choice report 5.50; public installer matches SHA-256 c949d4ad697d670380fd87ca4ace52a55eb55821c27f71b9feed5c44e764cf63. Physical-box verification remains unavailable.
 
 - [x] Add to Android 5.50: remove All from Live TV and Multi-screen categories; default home entry to UK | Free to air while preserving playback return category; replace TV category drawer Close buttons with Press Left on remote to close; all 350 Android tests pass. Publicly released; physical-box check unavailable.

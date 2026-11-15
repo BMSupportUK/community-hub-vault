@@ -6,7 +6,6 @@ import { RolesGate } from "@/components/app/RolesGate";
 import { PlayerConnectionLog } from "@/components/app/PlayerConnectionLog";
 import { PlayerCustomerStats } from "@/components/app/PlayerCustomerStats";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-customer-connections")({
@@ -38,13 +37,6 @@ function CustomerConnectionsPage() {
       <h1 className="font-display text-2xl font-bold">{customer ? "Customer connection log" : "Connection logs"}</h1>
       <Button asChild variant="outline"><Link to="/admin" search={{ tab: "customers" }}><X className="size-4" />Close</Link></Button>
     </header>
-    {customer ? <Tabs key={customer} defaultValue="viewing" className="mt-4">
-      <TabsList className="h-auto flex-wrap justify-start">
-        <TabsTrigger value="viewing">Viewing stats</TabsTrigger>
-        <TabsTrigger value="connections">Connection information</TabsTrigger>
-      </TabsList>
-      <TabsContent value="viewing"><PlayerCustomerStats userId={customer} /></TabsContent>
-      <TabsContent value="connections"><PlayerConnectionLog userId={customer} /></TabsContent>
-    </Tabs> : <PlayerConnectionLog />}
+    {customer ? <PlayerCustomerStats key={customer} userId={customer} /> : <PlayerConnectionLog />}
   </main>;
 }

@@ -14,7 +14,7 @@ export function customerStatsSegments<T extends { title: string; kind: string; s
  return [...groups.values()].sort((a, b) => b.seconds - a.seconds).map(row => ({ ...row, percent: total ? row.seconds / total * 100 : 0 }));
 }
 export type Strength = { level: 'strong' | 'ok' | 'weak' | 'very_weak' | 'none'; bars: 0 | 1 | 2 | 3 | 4; label: string };
-/** Average measured speed (kbps) against fixed bands; 3x the stream's bitrate also counts as Strong. */
+/** Reported stream throughput bands, not Wi-Fi signal or broadband capacity. */
 export function connectionStrength(avgKbps: number | null, bitrateKbps?: number | null): Strength {
  if (!avgKbps || avgKbps <= 0) return { level: 'none', bars: 0, label: 'No reading' };
  if (avgKbps >= 25000 || (bitrateKbps && avgKbps >= bitrateKbps * 3)) return { level: 'strong', bars: 4, label: 'Strong' };
@@ -28,3 +28,13 @@ export function connectionDiagnosis(strength: Strength, buffers: number) {
  return 'Likely channel/provider issue';
 }
 export const mbps = (kbps: number) => `${(kbps / 1000).toFixed(kbps < 10000 ? 1 : 0)} Mbps`;
+export function latestConnectionReading(
+ row: { speed_latest_kbps: number | null; speed_latest_at: string | null; title: string; device_id: string; login: string },
+ device: { id: string; watching_title: string | null; watching_preview: boolean; last_seen_at: string; iptv_username: string | null } | undefined,
+ now = Date.now(),
+) {
+ if (!device || device.watching_preview || device.watching_title !== row.title || device.id !== row.device_id || device.iptv_username !== row.login) return null;
+ const at = Date.parse(row.speed_latest_at ?? ''), seen = Date.parse(device.last_seen_at);
+ if (!Number.isFinite(at) || !Number.isFinite(seen) || now - at > 180000 || now - seen > 180000 || at > now || seen > now) return null;
+ return row.speed_latest_kbps && row.speed_latest_kbps > 0 ? row.speed_latest_kbps : null;
+}

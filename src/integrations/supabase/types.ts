@@ -6196,6 +6196,8 @@ export type Database = {
           platform: string | null
           seconds: number
           speed_kbps_sum: number
+          speed_latest_at: string | null
+          speed_latest_kbps: number | null
           speed_max_kbps: number | null
           speed_min_kbps: number | null
           speed_samples: number
@@ -6219,6 +6221,8 @@ export type Database = {
           platform?: string | null
           seconds?: number
           speed_kbps_sum?: number
+          speed_latest_at?: string | null
+          speed_latest_kbps?: number | null
           speed_max_kbps?: number | null
           speed_min_kbps?: number | null
           speed_samples?: number
@@ -6242,6 +6246,8 @@ export type Database = {
           platform?: string | null
           seconds?: number
           speed_kbps_sum?: number
+          speed_latest_at?: string | null
+          speed_latest_kbps?: number | null
           speed_max_kbps?: number | null
           speed_min_kbps?: number | null
           speed_samples?: number
