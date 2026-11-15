@@ -155,8 +155,18 @@ final class VlcPreview {
         ui.postDelayed(watch, 1000);
     }
 
+    private boolean alwaysDnsTried;
     private void open() {
         if (released || failed || urls == null || urls.length == 0) return;
+        if (!alwaysDnsTried && PlayerActivity.prefs(ctx).getBoolean(StreamDns.ALWAYS_PREF, false)) {
+            // Always use Private DNS for channels: the preview's stream is carried into full screen, so look it up privately here too.
+            alwaysDnsTried = true; final int idx = at; final String u = urls[idx];
+            new Thread(() -> { String fixed = StreamDns.preferPrivate(u); ui.post(() -> {
+                if (released) return;
+                if (fixed != null) { urls[idx] = fixed; PlayerActivity.prefs(ctx).edit().putBoolean("np_dns", true).apply(); }
+                open(); }); }).start();
+            return;
+        }
         playing = false;
         reconnect.opened(android.os.SystemClock.elapsedRealtime());
         ride.stopped(); ride.resetSamples();
