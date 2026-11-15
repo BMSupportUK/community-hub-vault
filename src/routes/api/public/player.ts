@@ -58,6 +58,8 @@ const Body = z.discriminatedUnion("action", [
     }).nullish(),
   }),
   z.object({ action: z.literal("unlink"), device_token: Token }),
+  z.object({ action: z.literal("vpn"), device_token: Token }),
+  z.object({ action: z.literal("vpn_status"), device_token: Token, status: z.enum(["connecting", "on", "off", "failed"]), server: z.string().trim().max(120).optional(), detail: z.string().trim().max(200).optional(), bad_server: z.boolean().optional() }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
   z.object({ action: z.literal("pin_status"), device_token: Token }),
@@ -396,6 +398,32 @@ export const Route = createFileRoute("/api/public/player")({
             .eq("owner_key", owner).eq("scope_key", scope).order("updated_at", { ascending: false }).limit(2000);
           if (error) return json({ error: "Progress isn't available right now." }, 503);
           return json({ now: Date.now(), items: (data ?? []).map(r => ({ key: r.item_key, position_ms: Number(r.position_ms), duration_ms: Number(r.duration_ms), updated_at: new Date(r.updated_at).getTime() })) });
+        }
+
+        if (body.action === "vpn") {
+          // Only this box's own row, found by its device token; the details are unlocked just for the box.
+          const { data: cfg } = await supabaseAdmin.from("player_vpn_configs").select("provider_id, cred_cipher, enabled, server, reselect_at, user_id").eq("device_id", device.id).maybeSingle();
+          if (!cfg || cfg.user_id !== device.user_id) return json({ vpn: null });
+          if (!cfg.enabled) return json({ vpn: { enabled: false } });
+          const { data: prov } = await supabaseAdmin.from("vpn_providers").select("id, name, picker, host_template").eq("id", cfg.provider_id).single();
+          const { unlockVpnCreds, chooseVpnServer } = await import("@/lib/box-vpn.server");
+          let server: { host: string; load: number | null; config_url: string | null } | null = cfg.server ? { host: cfg.server, load: null, config_url: null } : null;
+          if (!server || cfg.reselect_at) {
+            server = prov ? await chooseVpnServer(prov, { cc: device.geo_country, city: device.geo_city }, cfg.reselect_at && cfg.server ? cfg.server : null) : null;
+            await supabaseAdmin.from("player_vpn_configs").update({ server: server?.host ?? null, reselect_at: null, status: "connecting" }).eq("device_id", device.id);
+          }
+          if (!server || !prov) return json({ vpn: { enabled: true, error: "No server found for this provider" } });
+          const creds = await unlockVpnCreds(cfg.cred_cipher);
+          if (prov.picker === "nordvpn" && !server.config_url) server.config_url = `https://downloads.nordcdn.com/configs/files/ovpn_udp/servers/${server.host}.udp.ovpn`;
+          return json({ vpn: { enabled: true, provider: prov.id, provider_name: prov.name, host: server.host, load: server.load, config_url: server.config_url, ...creds } });
+        }
+
+        if (body.action === "vpn_status") {
+          await supabaseAdmin.from("player_vpn_configs").update({
+            status: body.status, status_detail: body.detail ?? null, updated_at: new Date().toISOString(),
+            ...(body.server ? { server: body.server } : {}), ...(body.bad_server ? { reselect_at: new Date().toISOString() } : {}),
+          }).eq("device_id", device.id);
+          return json({ ok: true });
         }
 
         if (body.action === "unlink") {

@@ -2577,6 +2577,13 @@
       "when": 1794765335862,
       "tag": "0367_bm_player_section_permissions",
       "breakpoints": true
+    },
+    {
+      "idx": 368,
+      "version": "7",
+      "when": 1794767404520,
+      "tag": "0368_vpn_on_box",
+      "breakpoints": true
     }
   ]
 }

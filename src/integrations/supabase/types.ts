@@ -7004,6 +7004,53 @@ export type Database = {
         }
         Relationships: []
       }
+      player_vpn_configs: {
+        Row: {
+          cred_cipher: string
+          device_id: string
+          enabled: boolean
+          provider_id: string
+          reselect_at: string | null
+          server: string | null
+          status: string
+          status_detail: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cred_cipher: string
+          device_id: string
+          enabled?: boolean
+          provider_id: string
+          reselect_at?: string | null
+          server?: string | null
+          status?: string
+          status_detail?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cred_cipher?: string
+          device_id?: string
+          enabled?: boolean
+          provider_id?: string
+          reselect_at?: string | null
+          server?: string | null
+          status?: string
+          status_detail?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "player_vpn_configs_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "vpn_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       player_watch_activity: {
         Row: {
           category: string | null
@@ -9446,6 +9493,39 @@ export type Database = {
           user_id?: string
           verified_at?: string | null
           verified_by?: string | null
+        }
+        Relationships: []
+      }
+      vpn_providers: {
+        Row: {
+          created_at: string
+          credentials_help: string | null
+          enabled: boolean
+          host_template: string | null
+          id: string
+          name: string
+          picker: string
+          sort: number
+        }
+        Insert: {
+          created_at?: string
+          credentials_help?: string | null
+          enabled?: boolean
+          host_template?: string | null
+          id: string
+          name: string
+          picker?: string
+          sort?: number
+        }
+        Update: {
+          created_at?: string
+          credentials_help?: string | null
+          enabled?: boolean
+          host_template?: string | null
+          id?: string
+          name?: string
+          picker?: string
+          sort?: number
         }
         Relationships: []
       }
