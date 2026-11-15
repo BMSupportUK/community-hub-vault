@@ -145,6 +145,8 @@ public class BackupPlayerActivity extends Activity {
                     feedStatus.playing(android.os.SystemClock.elapsedRealtime());
                     feedNote.setVisibility(TextView.GONE);
                     reconnect.recovered();
+                    ui.removeCallbacks(retryLive);
+                    retryQueued = false;
                     applyBoost();
                     ride.playing(android.os.SystemClock.elapsedRealtime());
                     break;
@@ -165,7 +167,7 @@ public class BackupPlayerActivity extends Activity {
                 case MediaPlayer.Event.EndReached:
                     // Live streams that end are dropped connections: reopen the same address.
                     if (catchup() && staleCatchupEvent()) break;
-                    ui.post(() -> { if (catchup()) catchupResume(); else if (isLive()) open(); else finish(); }); break;
+                    ui.post(() -> { if (catchup()) catchupResume(); else if (isLive()) next(); else finish(); }); break;
                 default: break;
             }
         });
@@ -385,6 +387,7 @@ public class BackupPlayerActivity extends Activity {
         reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), true);
         started = false;
         paused = false;
+        reconnect.opened(android.os.SystemClock.elapsedRealtime());
         ride.stopped(); ride.resetSamples();
         feedStatus.reset(android.os.SystemClock.elapsedRealtime());
         feedNote.setVisibility(TextView.GONE);
@@ -404,7 +407,7 @@ public class BackupPlayerActivity extends Activity {
 
     /** Adverts and picture/sound changes: reopen a frozen picture quietly, refresh the retry budget, keep the audio track. */
     private void rideThrough() {
-        if (mp == null || (!isLive() && !catchup()) || paused || !started) return;
+        if (mp == null || (!isLive() && !catchup()) || paused || retryQueued) return;
         long now = android.os.SystemClock.elapsedRealtime();
         if (ride.stable(now)) { errors = 0; ride.freezeReopens = 0; }
         if (now - lastSample < 1000) return;
@@ -414,7 +417,9 @@ public class BackupPlayerActivity extends Activity {
             if (media == null) return;
             org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
             media.release();
-            if (st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now)) {
+            if (st != null && isLive() && reconnect.stalled(st.displayedPictures, st.decodedAudio, now)) {
+                next();
+            } else if (started && st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now)) {
                 if (catchup()) catchupResume(); else if (ride.allowFreezeReopen()) open(); else next();
             }
         } catch (RuntimeException ignored) {}
@@ -434,20 +439,21 @@ public class BackupPlayerActivity extends Activity {
 
     private int errors;
     private final LiveReconnect reconnect = new LiveReconnect();
-    private void next() {
+    private boolean retryQueued;
+    private final Runnable retryLive = () -> {
+        retryQueued = false;
         if (mp == null || isFinishing()) return;
-        if (isLive() && (started || reconnect.active() || errors >= urls.length * 3)) {
+        open();
+    };
+    private void next() {
+        if (mp == null || isFinishing() || retryQueued) return;
+        if (isLive()) {
             // A channel that drops keeps reconnecting by itself for up to two minutes instead of closing.
             long wait = reconnect.failed(android.os.SystemClock.elapsedRealtime());
             if (wait >= 0) {
-                if (!started && at + 1 < urls.length) at++; else if (!started) at = 0;
                 String name = getIntent().getStringExtra("content_name");
-                ui.postDelayed(() -> {
-                    if (mp == null || isFinishing()) return;
-                    open();
-                    feedNote.setText("Reconnecting" + (name == null ? "" : " to " + name) + "…");
-                    feedNote.setVisibility(TextView.VISIBLE);
-                }, wait);
+                retryQueued = true;
+                ui.postDelayed(retryLive, wait);
                 feedNote.setText("Reconnecting" + (name == null ? "" : " to " + name) + "…");
                 feedNote.setVisibility(TextView.VISIBLE);
                 return;

@@ -60,9 +60,20 @@ final class VlcPreview {
     private boolean released, playing, muted;
     private final Context ctx;
     private final LiveRideThrough ride = new LiveRideThrough();
+    private final LiveReconnect reconnect = new LiveReconnect();
+    private boolean retryQueued, failed;
+    private final Runnable retry = () -> { retryQueued = false; open(); };
+    private void reconnect() {
+        if (released || failed || retryQueued) return;
+        long wait = reconnect.failed(android.os.SystemClock.elapsedRealtime());
+        if (wait < 0) { failed = true; listener.failed(); return; }
+        retryQueued = true;
+        ui.postDelayed(retry, wait);
+    }
+    private Listener listener;
     private final Runnable watch = new Runnable() {
         @Override public void run() {
-            if (released || mp == null) return;
+            if (released || failed || mp == null) return;
             long now = android.os.SystemClock.elapsedRealtime();
             if (ride.stable(now)) { errors = 0; ride.freezeReopens = 0; }
             try {
@@ -70,7 +81,10 @@ final class VlcPreview {
                 if (media != null) {
                     org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
                     media.release();
-                    if (playing && st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now) && ride.allowFreezeReopen()) open();
+                    if (st != null && !retryQueued) {
+                        if (reconnect.stalled(st.displayedPictures, st.decodedAudio, now)) reconnect();
+                        else if (playing && ride.frozen(st.displayedPictures, st.decodedAudio, now) && ride.allowFreezeReopen()) open();
+                    }
                 }
             } catch (RuntimeException ignored) {}
             ui.postDelayed(this, 1000);
@@ -104,7 +118,7 @@ final class VlcPreview {
     }
 
     private VlcPreview(Context c, ViewGroup host, int index, String[] urls, Listener l, Session carried) {
-        this.ctx = c.getApplicationContext(); this.host = host; this.urls = urls;
+        this.ctx = c.getApplicationContext(); this.host = host; this.urls = urls; this.listener = l;
         if (carried != null) {
             vlc = carried.vlc; mp = carried.player; boost = carried.boost;
             this.urls = carried.urls; at = carried.index;
@@ -129,21 +143,22 @@ final class VlcPreview {
         }
         mp.setEventListener(ev -> {
             if (released) return;
-            if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released) { applyVolume(); applyBoost(); playing = true; ride.playing(android.os.SystemClock.elapsedRealtime()); l.playing(); } });
+            if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released && !failed) { ui.removeCallbacks(retry); retryQueued = false; reconnect.recovered(); applyVolume(); applyBoost(); playing = true; ride.playing(android.os.SystemClock.elapsedRealtime()); l.playing(); } });
             else if (ev.type == MediaPlayer.Event.EncounteredError || ev.type == MediaPlayer.Event.EndReached) ui.post(() -> {
                 if (released) return;
-                if (++errors > urls.length * 3) { l.failed(); return; }
-                if (ev.type == MediaPlayer.Event.EncounteredError && at + 1 < urls.length) at++;
-                ui.postDelayed(this::open, 500);
+                reconnect();
             });
         });
         if (carried == null) open();
         else { applyBoost(); ride.playing(android.os.SystemClock.elapsedRealtime()); l.playing(); }
+        reconnect.opened(android.os.SystemClock.elapsedRealtime());
         ui.postDelayed(watch, 1000);
     }
 
     private void open() {
-        if (released || urls == null || urls.length == 0) return;
+        if (released || failed || urls == null || urls.length == 0) return;
+        playing = false;
+        reconnect.opened(android.os.SystemClock.elapsedRealtime());
         ride.stopped(); ride.resetSamples();
         Media m = new Media(vlc, android.net.Uri.parse(urls[at]));
         mp.setMedia(m); m.release(); applyBoost(); mp.play();

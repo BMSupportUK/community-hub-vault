@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Correct Android live-stream recovery source for silent offline stalls and guide/Multi-screen retries; six retry/stall tests pass. Public 5.50 remains unchanged.
+- [ ] Build/release the recovery correction and verify a real offline stream on a TV; Android SDK and connected physical box are unavailable in this sandbox.
+
 - [x] Remove the duplicate customer Connection information tab; show latest reported stream throughput with realtime updates, stale/preview guards and no unproven internet-blame labels.
 - [ ] Verify populated latest connection readings on the customer page; signed-in browser remains at the existing password/PIN gate, and new reports require website publication.
 
