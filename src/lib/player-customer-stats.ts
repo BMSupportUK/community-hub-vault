@@ -19,6 +19,7 @@ export function playbackReliability(
  device: { id: string; watching_title: string | null; watching_preview: boolean; watching_since: string | null; last_seen_at: string } | undefined,
  events: { device_id: string; content_name: string; stall_ms: number; occurred_at: string; reconnected: boolean }[] | null,
  now = Date.now(),
+ rating?: string | null,
 ): Strength {
  const unknown: Strength = { level: 'none', bars: 0, label: 'Awaiting playback evidence' };
  const since = Date.parse(device?.watching_since ?? ''), seen = Date.parse(device?.last_seen_at ?? '');
@@ -28,10 +29,17 @@ export function playbackReliability(
  const stalled = recent.reduce((sum, e) => sum + Math.max(0, e.stall_ms), 0);
  const reconnects = recent.filter(e => e.reconnected).length;
  const ratio = stalled / (now - start);
- if (ratio >= 0.1 || reconnects >= 3) return { level: 'very_weak', bars: 1, label: 'Poor playback' };
- if (ratio >= 0.03 || reconnects >= 2) return { level: 'weak', bars: 2, label: 'Unstable playback' };
- if (recent.length) return { level: 'ok', bars: 3, label: 'Minor interruptions' };
- return { level: 'strong', bars: 4, label: 'Stable playback' };
+ let strength: Strength;
+ if (ratio >= 0.1 || reconnects >= 3) strength = { level: 'very_weak', bars: 1, label: 'Poor playback' };
+ else if (ratio >= 0.03 || reconnects >= 2) strength = { level: 'weak', bars: 2, label: 'Unstable playback' };
+ else if (recent.length) strength = { level: 'ok', bars: 3, label: 'Minor interruptions' };
+ else strength = { level: 'strong', bars: 4, label: 'Stable playback' };
+ // A struggling channel connection can never leave playback looking better than the connection itself.
+ const cap: Strength | null = rating === 'Poor' ? { level: 'very_weak', bars: 1, label: 'Poor playback' }
+  : rating === 'Fair' ? { level: 'weak', bars: 2, label: 'Unstable playback' }
+  : rating === 'Good' ? { level: 'ok', bars: 3, label: 'Mostly stable' }
+  : null;
+ return cap && cap.bars < strength.bars ? cap : strength;
 }
 /** Reported stream throughput bands, not Wi-Fi signal or broadband capacity. */
 export function connectionStrength(avgKbps: number | null, bitrateKbps?: number | null): Strength {

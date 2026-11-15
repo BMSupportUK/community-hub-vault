@@ -68,7 +68,7 @@ function Stats({ userId }: { userId: string }) {
   {data.devices.filter(device => device.watching_title && !device.watching_preview).map(device => {
    const reading = data.rows.find(row => row.device_id === device.id && row.title === device.watching_title && row.login === device.iptv_username && row.day === days[0]);
    const speed = reading ? latestConnectionReading(reading, device) : null;
-   const rel = playbackReliability(device, data.reliabilityEvents), snapshot = readChannelLinkSnapshot(device.channel_link_snapshot), rating = channelLinkRating(snapshot);
+   const snapshot = readChannelLinkSnapshot(device.channel_link_snapshot), rating = channelLinkRating(snapshot), rel = playbackReliability(device, data.reliabilityEvents, Date.now(), rating);
    return <div key={device.id} className="flex flex-wrap items-center gap-2 text-sm">
     <Pill strong><span className="break-words">{device.watching_title}</span></Pill>
     <Pill label="Playback"><Bars strength={rel} title="Reported stalls and reconnects in this viewing session; reports may arrive after the interruption." /></Pill>

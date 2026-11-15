@@ -21,3 +21,14 @@ test('offline, preview, newly started or unavailable reports never look healthy'
  for (const d of [{...device,last_seen_at:new Date(now-180001).toISOString()}, {...device,watching_preview:true}, {...device,watching_since:new Date(now-59999).toISOString()}]) expect(playbackReliability(d, [], now).bars).toBe(0);
  expect(playbackReliability(device, null, now).bars).toBe(0);
 });
+test('a struggling channel connection pulls the playback label down even without reported stalls', () => {
+ expect(playbackReliability(device, [], now, 'Poor')).toEqual({ level: 'very_weak', bars: 1, label: 'Poor playback' });
+ expect(playbackReliability(device, [], now, 'Fair')).toEqual({ level: 'weak', bars: 2, label: 'Unstable playback' });
+ expect(playbackReliability(device, [], now, 'Good')).toEqual({ level: 'ok', bars: 3, label: 'Mostly stable' });
+ expect(playbackReliability(device, [], now, 'Excellent').bars).toBe(4);
+ expect(playbackReliability(device, [], now, 'Checking').bars).toBe(4);
+});
+test('the connection rating never makes playback look better than reported stalls', () => {
+ expect(playbackReliability(device, [event(30000)], now, 'Excellent').bars).toBe(1);
+ expect(playbackReliability(device, [event(9000)], now, 'Poor').bars).toBe(1);
+});
