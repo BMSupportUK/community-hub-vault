@@ -1,0 +1,52 @@
+package uk.bmsupport.player;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
+import org.robolectric.RobolectricTestRunner;
+import org.robolectric.annotation.Config;
+import org.robolectric.util.ReflectionHelpers;
+import static org.junit.Assert.*;
+
+@RunWith(RobolectricTestRunner.class)
+@Config(sdk = 34, application = PlayerApplication.class)
+public class InactivityDialogTest {
+    private static final class DetachedDialog extends AlertDialog {
+        DetachedDialog(Activity activity) { super(activity); }
+        @Override public void dismiss() {
+            throw new IllegalArgumentException("View not attached to window manager");
+        }
+    }
+
+    @Test public void detachedWarningCannotAbortAppExit() {
+        try (var controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            PlayerApplication app = (PlayerApplication) activity.getApplication();
+            ReflectionHelpers.setField(app, "prompt", new DetachedDialog(activity));
+            try {
+                ReflectionHelpers.callInstanceMethod(app, "exitToHome");
+                assertTrue(ReflectionHelpers.getField(app, "exiting"));
+                assertNull(ReflectionHelpers.getField(app, "prompt"));
+                assertTrue(activity.isFinishing());
+            } finally {
+                InactivityWatchdog watchdog = ReflectionHelpers.getField(app, "inactivityExit");
+                watchdog.cancel();
+            }
+        }
+    }
+
+    @Test public void destroyedWarningOwnerPreservesTheOriginalDeadline() {
+        try (var controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            PlayerApplication app = (PlayerApplication) activity.getApplication();
+            ReflectionHelpers.setField(app, "prompt", new DetachedDialog(activity));
+            ReflectionHelpers.setField(app, "promptedAt", 10_800_000L);
+            ReflectionHelpers.setField(app, "promptOwner", activity);
+            app.onActivityDestroyed(activity);
+            assertNull(ReflectionHelpers.getField(app, "prompt"));
+            assertEquals(Long.valueOf(10_800_000L), ReflectionHelpers.getField(app, "promptedAt"));
+        }
+    }
+}
