@@ -37,6 +37,7 @@ public class GuideGridView extends View {
     private boolean phone;
     private final List<String> names = new ArrayList<>();
     private final List<Boolean> catchup = new ArrayList<>();
+    private final List<String> logos = new ArrayList<>();
     private final Map<Integer, List<Prog>> progs = new HashMap<>();
     private Listener listener;
     private int selRow = 0, topRow = 0, lastRow = -1;
@@ -63,8 +64,11 @@ public class GuideGridView extends View {
     private void resetTime() { windowStart = minStart(); selTime = now(); }
 
     public void setListener(Listener l) { listener = l; }
-    public void setChannels(List<String> n, List<Boolean> cu) {
-        names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu); progs.clear(); progsVersion++; channelsVersion++;
+    public void setChannels(List<String> n, List<Boolean> cu) { setChannels(n, cu, null); }
+    public void setChannels(List<String> n, List<Boolean> cu, List<String> logoUrls) {
+        names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu);
+        logos.clear(); if (logoUrls != null) logos.addAll(logoUrls);
+        progs.clear(); progsVersion++; channelsVersion++;
         selRow = 0; topRow = 0; lastRow = -1; lastProg = null; resetTime();
         invalidate(); post(this::changed);
     }
@@ -400,16 +404,28 @@ public class GuideGridView extends View {
             txt.setColor(0xFFF1F5F9); txt.setTextSize(15 * d); txt.setFakeBoldText(selR);
             String label = EventChannel.label(names.get(r), r);
             float clockW = hasCatchup(r) ? 26 * d : 0;
-            float available = ch - 16 * d - clockW;
+            // Provider logo at the left of the channel cell; the name shifts right to make room.
+            float textX = 8 * d;
+            String logoUrl = r < logos.size() ? logos.get(r) : null;
+            if (logoUrl != null && !logoUrl.isEmpty()) {
+                android.graphics.Bitmap logo = GuideLogoLoader.get(getContext(), logoUrl, u -> invalidate());
+                if (logo != null) {
+                    android.graphics.RectF slot = GuideLogoLoader.slot(0, y, rh, d);
+                    android.graphics.RectF dst = GuideLogoLoader.fit(logo, slot);
+                    c.drawBitmap(logo, null, dst, fill);
+                    textX = slot.right + 4 * d;
+                }
+            }
+            float available = ch - textX - 8 * d - clockW;
             if (selR && isFocused() && txt.measureText(label) > available) {
                 if (marqueeRow != r) { marqueeRow = r; marqueeStarted = android.os.SystemClock.uptimeMillis(); }
                 float offset = ChannelMarquee.offset(txt.measureText(label), available, android.os.SystemClock.uptimeMillis() - marqueeStarted, d);
-                c.save(); c.clipRect(8 * d, y, 8 * d + available, y + rh);
-                c.drawText(label, 8 * d - offset, y + rh / 2 + 5 * d, txt); c.restore();
+                c.save(); c.clipRect(textX, y, textX + available, y + rh);
+                c.drawText(label, textX - offset, y + rh / 2 + 5 * d, txt); c.restore();
                 postInvalidateDelayed(33);
             } else {
                 if (selR) marqueeRow = -1;
-                c.drawText(TextUtils.ellipsize(label, txt, available, TextUtils.TruncateAt.END).toString(), 8 * d, y + rh / 2 + 5 * d, txt);
+                c.drawText(TextUtils.ellipsize(label, txt, available, TextUtils.TruncateAt.END).toString(), textX, y + rh / 2 + 5 * d, txt);
             }
             if (clockW > 0 && selR && onClock) drawRing(c, new RectF(ch - clockW - 6 * d, y + 4 * d, ch - 2 * d, y + rh - 4 * d));
             if (clockW > 0) { txt.setTextSize(17 * d); c.drawText("🕘", ch - clockW - 2 * d, y + rh / 2 + 6 * d, txt); txt.setTextSize(15 * d); }

@@ -4804,9 +4804,9 @@ public class MainActivity extends Activity {
             List<String> panelNames = new ArrayList<>();
             for (String[] c : catRows) panelNames.add((c[0].equals(cat[0]) ? "\u2713 " : "") + c[1]);
             catList.setAdapter(adapter(panelNames));
-            List<String> names = new ArrayList<>(); List<Boolean> cu = new ArrayList<>();
-            for (Item it : shownCh) { names.add(it.name); cu.add(it.archiveDays > 0); }
-            grid.setChannels(names, cu);
+            List<String> names = new ArrayList<>(); List<Boolean> cu = new ArrayList<>(); List<String> logos = new ArrayList<>();
+            for (Item it : shownCh) { names.add(it.name); cu.add(it.archiveDays > 0); logos.add(it.poster == null ? "" : it.poster); }
+            grid.setChannels(names, cu, logos);
             if (shownCh.isEmpty()) { progTitle.setText("No channels in " + cat[1]); progTime.setText(""); }
             grid.requestFocus();
         };
