@@ -14,7 +14,7 @@ final class LiveReconnect {
         lastPictures = pictures; lastAudio = audio;
         return progressAt >= 0 && now - progressAt >= STALL_MS;
     }
-    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; soundSeen = false; muteAudio = -1; muteAt = -1; }
+    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; soundSeen = false; muteAudio = -1; muteAt = -1; lastLost = -1; blockySince = -1; }
 
     static final long SILENT_MS = 8000;
     private boolean soundSeen; private long muteAudio = -1, muteAt = -1;
@@ -40,6 +40,26 @@ final class LiveReconnect {
         if (now - since >= WINDOW_MS) return -1;
         return GAPS[Math.min(tries++, GAPS.length - 1)];
     }
+    private final java.util.ArrayDeque<Long> fails = new java.util.ArrayDeque<>();
+    static final int BACKUP_AFTER = 3;
+    /** Counts one failed reconnect; true once the channel has failed 3 times inside two minutes, so a backup channel should take over. */
+    boolean wantsBackup(long now) {
+        fails.addLast(now);
+        while (!fails.isEmpty() && now - fails.peekFirst() > WINDOW_MS) fails.removeFirst();
+        return fails.size() >= BACKUP_AFTER;
+    }
+
+    static final long BLOCKY_MS = 10000;
+    private long lastLost = -1, blockySince = -1;
+    /** Damaged pictures keep arriving for 10s (blocky picture): reopen the channel. */
+    boolean blocky(long lostPictures, long now) {
+        boolean rising = lastLost >= 0 && lostPictures > lastLost;
+        lastLost = lostPictures;
+        if (!rising) { if (blockySince >= 0 && lostPictures >= 0) blockySince = -1; return false; }
+        if (blockySince < 0) blockySince = now;
+        return now - blockySince >= BLOCKY_MS;
+    }
+
     boolean active() { return since >= 0; }
     void recovered() { since = -1; tries = 0; }
 }

@@ -491,6 +491,8 @@ public class BackupPlayerActivity extends Activity {
                         (noData || mute) ? LiveReconnect.NO_DATA_MS : LiveReconnect.STALL_MS, true, false, mute ? "audio_drop" : "network_drop", "direct", activeDecoder,
                         StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
                 next();
+            } else if (started && st != null && isLive() && reconnect.blocky(st.lostPictures, now)) {
+                open();
             } else if (started && st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now)) {
                 if (catchup()) catchupResume(); else if (ride.allowFreezeReopen()) open(); else next();
             }
@@ -510,6 +512,7 @@ public class BackupPlayerActivity extends Activity {
     }
 
     private int errors;
+    private boolean dnsTried;
     private final LiveReconnect reconnect = new LiveReconnect();
     private boolean retryQueued;
     private final Runnable retryLive = () -> {
@@ -521,7 +524,16 @@ public class BackupPlayerActivity extends Activity {
         if (mp == null || isFinishing() || retryQueued) return;
         if (isLive()) {
             // A channel that drops keeps reconnecting by itself for up to two minutes instead of closing.
-            long wait = reconnect.failed(android.os.SystemClock.elapsedRealtime());
+            long nowMs = android.os.SystemClock.elapsedRealtime();
+            if (reconnect.wantsBackup(nowMs) && PlayerActionControls.autoBackup(this, () -> { if (mp != null) mp.stop(); })) return;
+            if (!started && !dnsTried) {
+                // Never got going: the broadband provider may be blocking the stream server's name.
+                dnsTried = true; final int idx = at; final String u = urls[idx];
+                retryQueued = true;
+                new Thread(() -> { String fixed = StreamDns.unblock(u); ui.post(() -> { if (fixed != null) urls[idx] = fixed; retryQueued = false; if (!isFinishing()) open(); }); }).start();
+                return;
+            }
+            long wait = reconnect.failed(nowMs);
             if (wait >= 0) {
                 String name = getIntent().getStringExtra("content_name");
                 retryQueued = true;

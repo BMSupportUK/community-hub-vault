@@ -101,6 +101,29 @@ final class PlayerActionControls {
         });
         dialog.show(); if (dialog.getWindow() != null) dialog.getWindow().setSoftInputMode(PlayerActivity.reportInputMode());
     }
+    /** Opens the first working backup version of this channel by itself; false when there is none. */
+    static boolean autoBackup(Activity a, Runnable release) {
+        try {
+            String raw = a.getIntent().getStringExtra("swap_options");
+            JSONArray options = new JSONArray(raw == null ? "[]" : raw);
+            for (int i = 0; i < options.length(); i++) {
+                JSONObject o = options.getJSONObject(i);
+                if (o.optBoolean("down")) continue;
+                JSONArray urls = o.getJSONArray("urls"); if (urls.length() == 0) continue;
+                String[] next = new String[urls.length()]; for (int j=0;j<next.length;j++) next[j]=urls.getString(j);
+                BufferReporter.swap(a, a.getIntent().getStringExtra("content_id"), a.getIntent().getStringExtra("content_name"), o.getString("name"), "auto_backup", a.getIntent().getStringExtra("event_name"));
+                Intent intent = new Intent(a.getIntent()).setClass(a, PlayerActivity.class); intent.removeExtra("carried"); intent.removeExtra("backup_first");
+                intent.putExtra("content_id", o.getString("id")).putExtra("content_name", o.getString("name"))
+                    .putExtra("recovery_name", o.optString("recovery_name", o.getString("name"))).putExtra("urls", next).putExtra("url", next[0]);
+                intent.removeExtra("sd_urls"); intent.removeExtra("sd_name");
+                Toast.makeText(a, "Channel kept dropping – switched to backup: " + o.getString("name"), Toast.LENGTH_LONG).show();
+                release.run(); a.startActivity(intent); a.finish();
+                return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
+    }
+
     static void swap(Activity a, boolean auto, Runnable release) {
         JSONArray options;
         try { String raw = a.getIntent().getStringExtra("swap_options"); options = new JSONArray(raw == null ? "[]" : raw); } catch (Exception e) { options = new JSONArray(); }
