@@ -1,8 +1,10 @@
 # Roadmap
 
-- [x] Add to unreleased Android 5.50: remove All from Live TV and Multi-screen categories; default home entry to UK | Free to air while preserving playback return category; replace TV category drawer Close buttons with Press Left on remote to close; all 350 Android tests pass. Not publicly released; physical-box check unavailable.
+- [x] Built and publicly released permanent-BM-signed Android 5.50 (361); 350 tests pass. Live updater and first TV-install choice report 5.50; public installer matches SHA-256 c949d4ad697d670380fd87ca4ace52a55eb55821c27f71b9feed5c44e764cf63. Physical-box verification remains unavailable.
 
-- [x] Prepare Android 5.50: clear pill beside Favourites heading, confirmed Live TV/Movies/Series multi-section clearing, equal-height Settings cards, uncommon options last, plain-language User agent explanation; all 346 Android tests pass. Public release not requested.
+- [x] Add to Android 5.50: remove All from Live TV and Multi-screen categories; default home entry to UK | Free to air while preserving playback return category; replace TV category drawer Close buttons with Press Left on remote to close; all 350 Android tests pass. Publicly released; physical-box check unavailable.
+
+- [x] Prepare Android 5.50: clear pill beside Favourites heading, confirmed Live TV/Movies/Series multi-section clearing, equal-height Settings cards, uncommon options last, plain-language User agent explanation; all 350 Android tests pass. Publicly released.
 - [ ] Visually check 5.50 favourites selection and Settings on a physical player; blocked by no connected device.
 
 - [x] Correct Darts colon-separated dual-clock imports: actual post retains 12:55/18:55 GMT, both session names and PDC Event 1 through save/merge read-back; 154 sports tests pass. Website publication remains needed. Live review check was interrupted when the queued post disappeared during testing; no existing guides were changed.

@@ -199,7 +199,7 @@ public class LiveGuideHeaderTest {
         List<View> texts = new ArrayList<>();
         collect(a.getWindow().getDecorView(), android.widget.TextView.class, texts);
         android.widget.TextView hint = null;
-        for (View t : texts) if ("◀ Press Left on your remote to list the categories".equals(((android.widget.TextView) t).getText().toString())) hint = (android.widget.TextView) t;
+        for (View t : texts) if ("Press Left button on your remote to open categories".equals(((android.widget.TextView) t).getText().toString())) hint = (android.widget.TextView) t;
         assertNotNull("the box guide must tell remote users that Left lists the categories", hint);
         assertTrue("the hint must be bold so it stands out", hint.getTypeface() != null);
         View parent = (View) hint.getParent();
@@ -218,7 +218,7 @@ public class LiveGuideHeaderTest {
         List<View> texts = new ArrayList<>();
         collect(a.getWindow().getDecorView(), android.widget.TextView.class, texts);
         View hint = null;
-        for (View t : texts) if ("◀ Press Left on your remote to list the categories".equals(((android.widget.TextView) t).getText().toString())) hint = t;
+        for (View t : texts) if ("Press Left button on your remote to open categories".equals(((android.widget.TextView) t).getText().toString())) hint = t;
         assertNotNull("the box guide must carry the Press Left hint", hint);
         List<View> grids = new ArrayList<>();
         collect(a.getWindow().getDecorView(), GuideGridView.class, grids);
