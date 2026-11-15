@@ -387,11 +387,13 @@ public class PlayerActivity extends Activity {
         }
     }
 
+    private final Runnable returnOriginal = () -> PlayerActionControls.returnToOriginal(this, () -> { if (player != null) { player.release(); player = null; } });
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         BufferBlame.reset();
         ui.postDelayed(blamePing, 2000);
         StreamClaim.attach(this);
+        if (getIntent().hasExtra("return_urls")) ui.postDelayed(returnOriginal, PlayerActionControls.RETURN_MS);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         FrameLayout root = new FrameLayout(this);
         final boolean stage = this instanceof PlayerStageActivity;
@@ -1255,5 +1257,5 @@ public class PlayerActivity extends Activity {
         if ("live".equals(kind()) && !everReady && !handedOver && !blackSent && isFinishing()
                 && android.os.SystemClock.elapsedRealtime() - openedAt >= ChannelHealth.GIVE_UP_MS)
             ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "failed");
-        ui.removeCallbacks(uncover); ui.removeCallbacks(reopenStream); ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
+        ui.removeCallbacks(returnOriginal); ui.removeCallbacks(uncover); ui.removeCallbacks(reopenStream); ui.removeCallbacks(freezeWatch); ui.removeCallbacks(stallWatch); ui.removeCallbacks(qualityRaise); ui.removeCallbacks(antiFreeze); BufferReporter.flush(this); saveProgress(false); ProgressSync.push(this, true); ui.removeCallbacks(saveTick); ui.removeCallbacks(hideControls); ui.removeCallbacks(barWatch); super.onDestroy(); if (player != null) { player.release(); player = null; } }
 }

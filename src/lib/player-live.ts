@@ -70,3 +70,30 @@ export function watchCredit(input: { now: number; lastSeenAt: string | null | un
   const seconds = Math.round((input.now - new Date(input.lastSeenAt as string).getTime()) / 1000);
   return seconds > 0 ? { kind: input.watchingKind, seconds: Math.min(seconds, LIVE_WINDOW_MS / 1000) } : null;
 }
+
+/** Most places one app login may play at once before it is flagged as shared. */
+export const SHARED_LOGIN_MAX = 3;
+
+/**
+ * Logins that look shared: playing on more than SHARED_LOGIN_MAX devices at once,
+ * on devices belonging to more than one member, or on a device not linked to any member.
+ * Returns a reason per flagged login.
+ */
+export function sharedLogins(rows: { iptv_username: string | null; user_id: string | null }[]): Map<string, string> {
+  const by = new Map<string, { n: number; members: Set<string>; unlinked: boolean }>();
+  for (const r of rows) {
+    const login = (r.iptv_username ?? "").trim().toLowerCase();
+    if (!login) continue;
+    const g = by.get(login) ?? { n: 0, members: new Set<string>(), unlinked: false };
+    g.n++;
+    if (r.user_id) g.members.add(r.user_id); else g.unlinked = true;
+    by.set(login, g);
+  }
+  const out = new Map<string, string>();
+  for (const [login, g] of by) {
+    if (g.n > SHARED_LOGIN_MAX) out.set(login, `Playing in ${g.n} places at once`);
+    else if (g.members.size > 1) out.set(login, `Used by ${g.members.size} different members`);
+    else if (g.unlinked && g.n > 1) out.set(login, "Also playing on a box not linked to a member");
+  }
+  return out;
+}

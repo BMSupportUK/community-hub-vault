@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { formatElapsed, isLive, LIVE_WINDOW_MS } from "@/lib/player-live";
+import { formatElapsed, isLive, LIVE_WINDOW_MS, sharedLogins } from "@/lib/player-live";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -236,6 +236,7 @@ function AdminPlayerLivePageInner() {
   const live = useMemo(() => (rows ?? []).filter((r) => isLive(r.last_seen_at, now) && !!r.watching_since), [rows, now]);
   const watching = live.filter((r) => r.watching_since).length;
   const onVpn = live.filter((r) => r.vpn_status === "yes").length;
+  const shared = useMemo(() => sharedLogins(live), [live]);
 
   if (loading || (!roles.includes("admin") && !perms)) return null;
   if (!isAdmin) return <Navigate to="/admin" />;
@@ -248,6 +249,7 @@ function AdminPlayerLivePageInner() {
         <div className="flex gap-2 text-sm">
           <span className="rounded-full border border-border bg-surface px-3 py-1"><Radio className="mr-1 inline size-3.5 text-primary" />{live.length} watching</span>
           {onVpn > 0 && <span className="rounded-full border border-warning/40 bg-warning/10 px-3 py-1 font-medium text-warning"><ShieldAlert className="mr-1 inline size-3.5" />{onVpn} on VPN</span>}
+          {shared.size > 0 && <span className="rounded-full border border-destructive/40 bg-destructive/10 px-3 py-1 font-medium text-destructive"><ShieldAlert className="mr-1 inline size-3.5" />{shared.size} shared login{shared.size === 1 ? "" : "s"}</span>}
         </div>
       </div>
       <p className="text-xs text-muted-foreground">Updates every few seconds. Apps check in about once a minute; only players watching Live TV, Movies, Series or Catch up are listed; idle apps are left out. Press Details on any row for its full IP and connection record.</p>
@@ -266,7 +268,7 @@ function AdminPlayerLivePageInner() {
                 const Icon = r.watching_kind === "live" ? Tv : Film;
                 return <tr key={r.id} className="border-b border-border last:border-0 align-top">
                   <td className="p-3 font-mono font-semibold">{r.id.slice(0, 8).toUpperCase()}<div className="font-sans text-xs font-normal text-muted-foreground">{PLATFORM[r.platform] ?? r.platform}{r.app_version ? ` · ${r.app_version}` : ""}</div></td>
-                  <td className="p-3"><div className="font-medium">{r.user_id ? names[r.user_id] ?? "…" : "Not linked"}</div>{r.iptv_username && <div className="text-xs text-muted-foreground">Login: {r.iptv_username}</div>}</td>
+                  <td className="p-3"><div className="font-medium">{r.user_id ? names[r.user_id] ?? "…" : "Not linked"}</div>{r.iptv_username && <div className="text-xs text-muted-foreground">Login: {r.iptv_username}</div>}{r.iptv_username && shared.get(r.iptv_username.trim().toLowerCase()) && <span className="mt-1 inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive"><ShieldAlert className="size-3.5" />Shared login · {shared.get(r.iptv_username.trim().toLowerCase())}</span>}</td>
                   <td className="p-3">{map
                     ? <a href={map} target="_blank" rel="noreferrer" title={`${place || "Location"}${r.last_ip ? ` · IP ${r.last_ip}` : ""}`} className="inline-flex items-center gap-1 text-primary hover:underline"><MapPin className="size-4" /><span className="text-xs">{place || "Map"}</span></a>
                     : <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={r.last_ip ?? ""}><MapPin className="size-4" />Unknown</span>}</td>

@@ -77,6 +77,7 @@ async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[
   if(event.type==='household-warning'){setModal({type:'household',message:event.message});}
   if(event.type==='stream-taken'){setPlayingView(false);setModal({type:'stream-taken'});}
   if(event.type==='unlinked'){catalogs.current={};epgScope.current=null;epgCache.current.clear();try{Object.keys(localStorage).filter(k=>k.startsWith('bm-guide-')).forEach(k=>localStorage.removeItem(k));}catch{}setPlayingView(false);setMulti(1);setView('home');setModal({type:'unlinked'});}
+  if(event.type==='auto-backup'){bm.swapped({index:event.index,to:event.to.name,reason:'auto'});toast('Channel kept dropping – switched to backup: '+event.to.name);play(event.to,false,undefined,event.eventKey);clearTimeout(window.__bmReturn);const orig=event.original,backupId=event.to.id;window.__bmReturn=setTimeout(()=>{bm.state?.().then?.(st=>{const p=(st?.playing||[])[0];if(p&&String(p.item?.id)===String(backupId)){toast('Trying '+orig.name+' again');play(orig,false,undefined,event.eventKey);}}).catch(()=>{});},600000);return;}
   if(event.type==='alternate-feed')setModal({type:'alternate-feed',auto:!!event.auto,index:event.index,items:event.items,eventKey:event.eventKey});
   if(event.type==='progress')setProgress(event.percent<100?event:null);
   if(event.type==='catalogues')void keepCatalogues().then(()=>{if(event.guide)return preloadGuide();});

@@ -113,6 +113,13 @@ final class PlayerActionControls {
                 String[] next = new String[urls.length()]; for (int j=0;j<next.length;j++) next[j]=urls.getString(j);
                 BufferReporter.swap(a, a.getIntent().getStringExtra("content_id"), a.getIntent().getStringExtra("content_name"), o.getString("name"), "auto_backup", a.getIntent().getStringExtra("event_name"));
                 Intent intent = new Intent(a.getIntent()).setClass(a, PlayerActivity.class); intent.removeExtra("carried"); intent.removeExtra("backup_first");
+                if (!a.getIntent().hasExtra("return_urls")) {
+                    // Remember the original channel so the backup tries it again after 10 minutes.
+                    intent.putExtra("return_id", a.getIntent().getStringExtra("content_id")).putExtra("return_name", a.getIntent().getStringExtra("content_name"))
+                        .putExtra("return_recovery", a.getIntent().getStringExtra("recovery_name"));
+                    String[] orig = a.getIntent().getStringArrayExtra("urls");
+                    intent.putExtra("return_urls", orig != null ? orig : new String[]{a.getIntent().getStringExtra("url")});
+                }
                 intent.putExtra("content_id", o.getString("id")).putExtra("content_name", o.getString("name"))
                     .putExtra("recovery_name", o.optString("recovery_name", o.getString("name"))).putExtra("urls", next).putExtra("url", next[0]);
                 intent.removeExtra("sd_urls"); intent.removeExtra("sd_name");
@@ -122,6 +129,20 @@ final class PlayerActionControls {
             }
         } catch (Exception ignored) {}
         return false;
+    }
+
+    static final long RETURN_MS = 600_000;
+    /** On a backup channel: reopen the original channel (ready to fall back again if it still fails). */
+    static void returnToOriginal(Activity a, Runnable release) {
+        String[] urls = a.getIntent().getStringArrayExtra("return_urls");
+        if (urls == null || urls.length == 0 || urls[0] == null || a.isFinishing()) return;
+        String name = a.getIntent().getStringExtra("return_name");
+        Intent intent = new Intent(a.getIntent()).setClass(a, PlayerActivity.class); intent.removeExtra("carried");
+        intent.putExtra("content_id", a.getIntent().getStringExtra("return_id")).putExtra("content_name", name)
+            .putExtra("recovery_name", a.getIntent().getStringExtra("return_recovery")).putExtra("urls", urls).putExtra("url", urls[0]);
+        intent.removeExtra("return_urls"); intent.removeExtra("return_id"); intent.removeExtra("return_name"); intent.removeExtra("return_recovery");
+        Toast.makeText(a, "Trying " + (name == null ? "the original channel" : name) + " again", Toast.LENGTH_SHORT).show();
+        release.run(); a.startActivity(intent); a.finish();
     }
 
     static void swap(Activity a, boolean auto, Runnable release) {
