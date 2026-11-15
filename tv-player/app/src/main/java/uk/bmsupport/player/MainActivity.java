@@ -794,9 +794,12 @@ public class MainActivity extends Activity {
     /** Preview playback is flagged so the website shows it on Live connections but never counts it in viewing hours. */
     private void setNowPlaying(Item it, boolean vlc, boolean preview) {
         long since = System.currentTimeMillis();
+        // Preview carried into full screen keeps the same stream, so keep its Private DNS marker.
+        boolean sameStream = it.name != null && it.name.equals(prefs.getString("np_title", null)) && prefs.getLong("np_since", 0) != 0;
+        boolean keepDns = sameStream && prefs.getBoolean("np_dns", false);
         prefs.edit().putString("np_kind", it.kind).putString("np_title", it.name == null ? "" : it.name)
                 .putString("np_cat", "").putString("np_player", vlc ? "VLC" : "BM Player").putLong("np_since", since)
-                .putBoolean("np_preview", preview).remove("channel_link_snapshot").remove("np_dns").apply();
+                .putBoolean("np_preview", preview).remove("channel_link_snapshot").putBoolean("np_dns", keepDns).apply();
         io.execute(() -> {
             String cat = ""; try { cat = categoryName(it); } catch (Exception ignored) {}
             if (prefs.getLong("np_since", 0) == since) prefs.edit().putString("np_cat", cat == null ? "" : cat).apply();
