@@ -118,7 +118,8 @@ public class BackupPlayerActivity extends Activity {
             try {
                 org.json.JSONObject snapshot = new org.json.JSONObject().put("since", since)
                         .put("ping_ms", link.pingMs()).put("stalls", link.stalls(now))
-                        .put("reconnects", link.reconnects(now)).put("delivery_ratio", link.deliveryRatio());
+                        .put("reconnects", link.reconnects(now)).put("delivery_ratio", link.deliveryRatio())
+                        .put("short_ms", link.shortMs(now)).put("poor_ms", link.poorMs(now));
                 String encoded = snapshot.toString();
                 if (!encoded.equals(savedLink.getString("channel_link_snapshot", null)))
                     savedLink.edit().putString("channel_link_snapshot", encoded).apply();

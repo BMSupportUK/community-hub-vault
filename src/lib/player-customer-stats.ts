@@ -54,14 +54,17 @@ export function latestConnectionReading(
  if (!Number.isFinite(at) || !Number.isFinite(seen) || now - at > 180000 || now - seen > 180000 || at > now || seen > now) return null;
  return row.speed_latest_kbps && row.speed_latest_kbps > 0 ? row.speed_latest_kbps : null;
 }
-export type ChannelLinkSnapshot = { ping_ms: number; stalls: number; reconnects: number; delivery_ratio: number };
+export type ChannelLinkSnapshot = { ping_ms: number; stalls: number; reconnects: number; delivery_ratio: number; short_ms?: number; poor_ms?: number };
+/** A delivery shortfall only counts once it has lasted this long (matches ChannelLink.SUSTAIN_MS on the box). */
+export const CHANNEL_LINK_SUSTAIN_MS = 60_000;
 /** Exact ChannelLink.java thresholds, using the same two-minute snapshot as the box. */
 export function channelLinkRating(snapshot: ChannelLinkSnapshot | null): string | null {
  if (!snapshot) return null;
  const { ping_ms: ping, stalls, reconnects, delivery_ratio: ratio } = snapshot;
+ const shortOk = (snapshot.short_ms ?? 0) >= CHANNEL_LINK_SUSTAIN_MS, poorOk = (snapshot.poor_ms ?? 0) >= CHANNEL_LINK_SUSTAIN_MS;
  if (ping < 0 && ratio < 0 && stalls === 0 && reconnects === 0) return 'Checking';
- if (reconnects > 0 || stalls >= 3 || ping > 400 || (ratio >= 0 && ratio < 0.9)) return 'Poor';
- if (stalls >= 1 || ping > 200 || (ratio >= 0 && ratio < 0.98)) return 'Fair';
+ if (reconnects > 0 || stalls >= 3 || ping > 400 || poorOk) return 'Poor';
+ if (stalls >= 1 || ping > 200 || shortOk) return 'Fair';
  if (ping > 80) return 'Good';
  return 'Excellent';
 }
@@ -69,5 +72,5 @@ export function readChannelLinkSnapshot(value: unknown): ChannelLinkSnapshot | n
  if (!value || typeof value !== 'object') return null;
  const s = value as Record<string, unknown>;
  if (typeof s.ping_ms !== 'number' || typeof s.stalls !== 'number' || typeof s.reconnects !== 'number' || typeof s.delivery_ratio !== 'number') return null;
- return { ping_ms: s.ping_ms, stalls: s.stalls, reconnects: s.reconnects, delivery_ratio: s.delivery_ratio };
+ return { ping_ms: s.ping_ms, stalls: s.stalls, reconnects: s.reconnects, delivery_ratio: s.delivery_ratio, short_ms: typeof s.short_ms === 'number' ? s.short_ms : 0, poor_ms: typeof s.poor_ms === 'number' ? s.poor_ms : 0 };
 }

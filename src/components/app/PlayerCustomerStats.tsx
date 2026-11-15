@@ -76,6 +76,7 @@ function Stats({ userId }: { userId: string }) {
     {speed !== null
      ? <Pill label="Stream download">{mbps(speed)} · Updated {time(reading?.speed_latest_at ?? device.last_seen_at)} UK</Pill>
      : <Pill label="Stream download">Waiting for a fresh reading</Pill>}
+    {rating === 'Poor' && <div className="basis-full"><PoorAdvice pingMs={snapshot?.ping_ms ?? -1} /></div>}
    </div>;
   })}
   {!data.devices.some(device => device.watching_title && !device.watching_preview) && <p className="text-sm text-muted-foreground">Not watching now</p>}
@@ -130,7 +131,23 @@ function ConnectionHistory({ userId, day, buffers }: { userId: string; day: stri
      {ev.length > 0 && <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">Likely cause</dt><dd className="flex flex-wrap gap-1 pt-0.5">{(['stream', 'customer', 'unclear'] as const).map(k => { const n = ev.filter(b => (b.blame ?? 'unclear') === k).length; return n ? <span key={k} className={`rounded-full border px-2 py-0.5 font-semibold ${k === 'stream' ? 'border-destructive/60 text-destructive' : k === 'customer' ? 'border-primary/60 text-primary' : 'border-border text-muted-foreground'}`}>{blameLabel(k)} · {n}×</span> : null; })}</dd></div>}
      <div className="min-w-0"><dt className="text-muted-foreground">Device / login</dt><dd className="truncate font-semibold">{r.login || '—'}</dd></div>
     </dl>
+    {rating === 'Poor' && <PoorAdvice pingMs={snapshot?.ping_ms ?? -1} />}
    </li>; })}</ul>}
   {pages > 1 && <nav className="flex flex-wrap gap-1" aria-label="Connection history pages">{Array.from({ length: pages }, (_, i) => <Button key={i} type="button" size="sm" variant={i === page ? 'default' : 'outline'} onClick={() => setPage(i)} aria-current={i === page ? 'page' : undefined} className="min-w-8">{i + 1}</Button>)}</nav>}
+ </div>;
+}
+
+/** Advice shown whenever a connection is rated Poor; low ping points at the stream server rather than the customer's line. */
+function PoorAdvice({ pingMs }: { pingMs: number }) {
+ const provider = pingMs > 0 && pingMs <= 80;
+ return <div className="rounded-md border border-destructive/50 bg-destructive/5 p-2 text-xs">
+  <p className="font-semibold text-destructive">How to improve this</p>
+  {provider && <p className="pt-1">Ping is low, so the channel's own server is the likely cause. Try a backup channel or a quieter time.</p>}
+  <ul className="list-disc space-y-0.5 pl-4 pt-1">
+   <li>Back out and reopen the channel.</li>
+   <li>Restart the router and the box.</li>
+   <li>Use a network cable instead of Wi‑Fi, or move the box closer to the router.</li>
+   <li>Pause other heavy use at home (downloads, gaming, 4K streaming).</li>
+  </ul>
  </div>;
 }

@@ -46,7 +46,7 @@ const Body = z.discriminatedUnion("action", [
     broadband_test: z.object({ down: z.number().int().positive().max(2000000), up: z.number().int().positive().max(2000000), measured_at: z.number().int().positive(), method: z.literal("cloudflare-adaptive-v1") }).optional(),
     up_kbps: z.number().int().min(0).max(2000000).optional(),
     ping_ms: z.number().int().min(0).max(60000).optional(),
-    channel_link: z.object({ ping_ms: z.number().int().min(-1).max(60000), stalls: z.number().int().min(0).max(100000), reconnects: z.number().int().min(0).max(100000), delivery_ratio: z.number().finite().min(-1).max(1000000), since: z.number().int().positive() }).optional(),
+    channel_link: z.object({ ping_ms: z.number().int().min(-1).max(60000), stalls: z.number().int().min(0).max(100000), reconnects: z.number().int().min(0).max(100000), delivery_ratio: z.number().finite().min(-1).max(1000000), short_ms: z.number().int().min(0).max(86400000).optional(), poor_ms: z.number().int().min(0).max(86400000).optional(), since: z.number().int().positive() }).optional(),
     bitrate_kbps: z.number().int().min(0).max(200000).optional(),
     watching: z.object({
       kind: z.string().transform((k) => k === "episode" ? "series" : k === "movie" ? "film" : ["live", "film", "series", "catchup"].includes(k) ? k : "live"),
