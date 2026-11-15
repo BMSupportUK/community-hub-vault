@@ -359,9 +359,8 @@ public class MainActivity extends Activity {
                     }
                     JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
                     List<String[]> rows = new ArrayList<>();
-                    rows.add(new String[]{"*", "All channels"});
                     for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); String id = o.optString("category_id"); if (!hideAdult(id)) rows.add(new String[]{id, o.optString("category_name")}); }
-                    multiCats = rows;
+                    multiCats = CategoryOrder.liveNavigation(rows);
                     ui.post(() -> { try { wait.dismiss(); } catch (Exception ignored) {} pickMultiChannel(n, label); });
                 } catch (Exception ex) { ui.post(() -> { try { wait.dismiss(); } catch (Exception ignored) {} Toast.makeText(this, "Couldn't load your channels", Toast.LENGTH_LONG).show(); }); }
             });
@@ -1353,6 +1352,7 @@ public class MainActivity extends Activity {
         if (!unlocked && !rememberedUnlock()) { showUnlock(); return; }
         if (!PlayerApplication.pinPassed) { checkPin(); return; }
         screen = "home"; back = null; drawnVersion = appVersion();
+        liveCatId = null; // Each home-screen entry starts at UK | Free to air; playback returns retain their category.
         // Update check waits until the app is fully in (linked, unlocked, past the link screen), once per app start.
         if (!updateChecked) { updateChecked = true; checkForUpdate(false); }
         LinearLayout root = column();
@@ -1824,7 +1824,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onPause() { super.onPause(); saveGuide(); stopPreview(); if ("multi".equals(screen)) { stopMulti(); showHome(); } }
 
-    private String liveCatId = "*";
+    private String liveCatId = null;
 
     private void browse(String kind) {
         // Phones: Live TV is the guide screen (preview, View EPG pop-up). TV boxes keep the original
@@ -4628,7 +4628,7 @@ public class MainActivity extends Activity {
         TextView progTime = text("", 15, MUTED, false);
         TextView pvStatus = text("", 13, MUTED, false);
         info.addView(heading); info.addView(progTitle); info.addView(progTime);
-        TextView selectedCategory = text("Category: All", 15, MUTED, false);
+        TextView selectedCategory = text("Category: UK | Free to air", 15, MUTED, false);
         // Phones: "Preview channel" loads the selected channel into the preview box; once it kicks in,
         // the box and the button both bring up that channel's play menu.
         final Runnable[] previewSelected = { null };
@@ -5006,19 +5006,19 @@ public class MainActivity extends Activity {
                     liveChannels = l;
                 }
                 List<String[]> rows = new ArrayList<>();
-                rows.add(new String[]{"*", "All"});
                 for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
+                List<String[]> liveRows = CategoryOrder.liveNavigation(rows);
                 ui.post(() -> {
                     if (!"tvguide".equals(screen)) return;
-                    catRows.clear(); catRows.addAll(rows);
+                    catRows.clear(); catRows.addAll(liveRows);
                     // The full-screen player's Left drawer shows these same categories and channels.
                     List<LiveDrawerData.Channel> drawerChannels = new ArrayList<>();
                     java.util.Map<String, String> catNames = new java.util.HashMap<>();
-                    for (String[] r : rows) catNames.put(r[0], r[1]);
+                    for (String[] r : liveRows) catNames.put(r[0], r[1]);
                     for (Item it : liveChannels) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, catNames.get(it.category), null));
-                    LiveDrawerData.set(rows, drawerChannels);
-                    String[] start = rows.get(0);
-                    if (startCat != null) for (String[] r : rows) if (r[0].equals(startCat)) { start = r; break; }
+                    LiveDrawerData.set(liveRows, drawerChannels);
+                    String[] start = CategoryOrder.liveDefault(liveRows, startCat);
+                    if (start == null) { progTitle.setText("No Live TV categories available"); return; }
                     applyCat.accept(start);
                 });
             } catch (Exception ex) { ui.post(() -> progTitle.setText("Couldn't load your channels – check your login in Settings")); }

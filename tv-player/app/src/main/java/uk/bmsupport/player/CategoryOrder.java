@@ -49,4 +49,22 @@ final class CategoryOrder {
         for (String[] row : rows) if ("*".equals(row[0]) || !hidden.contains(row[0])) out.add(row);
         return out;
     }
+    static List<String[]> liveNavigation(List<String[]> rows) {
+        List<String[]> out = new ArrayList<>();
+        for (String[] row : rows) {
+            String name = row[1].trim().toLowerCase(java.util.Locale.ROOT);
+            if (!"*".equals(row[0]) && !name.equals("all") && !name.equals("all channels")) out.add(row);
+        }
+        return out;
+    }
+    static String[] liveDefault(List<String[]> rows, String requested) {
+        if (requested != null && !"*".equals(requested))
+            for (String[] row : rows) if (requested.equals(row[0])) return row;
+        for (String[] row : rows) {
+            String name = java.text.Normalizer.normalize(row[1], java.text.Normalizer.Form.NFKC)
+                    .toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]", "");
+            if (name.equals("ukfreetoair")) return row;
+        }
+        return rows.isEmpty() ? null : rows.get(0);
+    }
 }

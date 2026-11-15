@@ -11,6 +11,25 @@ import android.content.SharedPreferences;
 @RunWith(RobolectricTestRunner.class)
 @org.robolectric.annotation.Config(sdk = 28)
 public class CategoryOrderTest {
+    @Test public void liveNavigationNeverOffersAllChannels() {
+        List<String[]> visible = CategoryOrder.liveNavigation(Arrays.asList(
+                new String[]{"*", "All"}, new String[]{"99", "All channels"},
+                new String[]{"1", "UK | Free to air"}, new String[]{"2", "Sports"}));
+        assertEquals(2, visible.size());
+        assertEquals("1", visible.get(0)[0]); assertEquals("2", visible.get(1)[0]);
+    }
+    @Test public void liveDefaultsToUkFreeToAirRegardlessOfOrderOrOldAllSelection() {
+        List<String[]> rows = Arrays.asList(new String[]{"2", "Sports"}, new String[]{"1", "Uk| Free to air"});
+        assertEquals("1", CategoryOrder.liveDefault(rows, null)[0]);
+        assertEquals("1", CategoryOrder.liveDefault(rows, "*")[0]);
+        assertEquals("1", CategoryOrder.liveDefault(rows, "missing")[0]);
+    }
+    @Test public void playbackReturnPreservesExplicitCategoryAndMissingFreeToAirIsSafe() {
+        List<String[]> rows = Arrays.asList(new String[]{"2", "Sports"}, new String[]{"1", "UK | Free to air"});
+        assertEquals("2", CategoryOrder.liveDefault(rows, "2")[0]);
+        assertEquals("2", CategoryOrder.liveDefault(rows.subList(0, 1), null)[0]);
+        assertNull(CategoryOrder.liveDefault(java.util.Collections.emptyList(), null));
+    }
     private List<String[]> rows() { return Arrays.asList(new String[]{"*","All"},new String[]{"1","News"},new String[]{"2","Sport"},new String[]{"3","New"}); }
     @Test public void allStaysFirstAndNewCategoriesAppendInProviderOrder() {
         List<String[]> sorted = CategoryOrder.apply(rows(), "[\"9\",\"2\",\"2\"]");
