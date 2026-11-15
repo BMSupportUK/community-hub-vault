@@ -22,4 +22,17 @@ public class LiveReconnectTest {
         assertFalse(r.active());
         assertEquals(1000, r.failed(500000));
     }
+    @Test public void serverStoppingSendingIsADrop() {
+        LiveReconnect r = new LiveReconnect();
+        r.opened(0);
+        assertFalse(r.noData(100, 1000));
+        assertFalse(r.noData(500, 2000));
+        assertFalse(r.noData(500, 9000));
+        assertTrue(r.noData(500, 10000));
+    }
+    @Test public void bytesStillArrivingIsNotADrop() {
+        LiveReconnect r = new LiveReconnect();
+        r.opened(0);
+        for (int i = 1; i <= 20; i++) assertFalse(r.noData(i * 1000L, i * 1000L));
+    }
 }

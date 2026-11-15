@@ -14,7 +14,16 @@ final class LiveReconnect {
         lastPictures = pictures; lastAudio = audio;
         return progressAt >= 0 && now - progressAt >= STALL_MS;
     }
-    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; }
+    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; }
+
+    private long lastBytes = -1, bytesAt = -1;
+    static final long NO_DATA_MS = 8000;
+    /** The server stopped sending: no new bytes for 8s means the feed dropped even if VLC still reports Playing. */
+    boolean noData(long readBytes, long now) {
+        if (lastBytes < 0 || readBytes > lastBytes) bytesAt = now;
+        lastBytes = readBytes;
+        return bytesAt >= 0 && now - bytesAt >= NO_DATA_MS;
+    }
 
     /** Records one failure; returns the wait before the next reopen, or -1 once the two-minute window is used up. */
     long failed(long now) {
