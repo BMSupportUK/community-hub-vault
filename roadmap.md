@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Generate a secure, copyable Downloader link alongside admin-issued Direct Install PINs and website codes; bind its 24-hour capability to the exact issue and retire it on completion.
+
 - [x] Restore member-home stream information immediately beneath Subscription Details, using owner/profile-scoped live devices and showing title, category, device, player, elapsed playback and measured stream connection.
 
 - [x] Built, BM-signed and publicly released Android 5.45 (356) with both warning corrections; 339 Android tests and ten timer/watchdog checks pass. Public updater reports 5.45 and installer matches SHA-256 18481c5641997be7421aeaaadd75c04d441330a17a89781dc0fe191c6f64a3b8. Crash mapping retained privately.

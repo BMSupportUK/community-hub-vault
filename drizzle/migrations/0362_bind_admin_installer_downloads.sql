@@ -1,0 +1,5 @@
+ALTER TABLE public.direct_install_links ADD COLUMN admin_issue_id uuid REFERENCES public.admin_enabler_issues(id) ON DELETE CASCADE;
+CREATE INDEX direct_install_links_admin_issue_idx ON public.direct_install_links(admin_issue_id) WHERE admin_issue_id IS NOT NULL;
+CREATE OR REPLACE FUNCTION public.retire_admin_installer_download() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$ BEGIN IF NEW.admin_issue_id IS NOT NULL AND NEW.completed_at IS NOT NULL AND OLD.completed_at IS NULL THEN UPDATE public.direct_install_links SET completed_at = NEW.completed_at WHERE admin_issue_id = NEW.admin_issue_id AND completed_at IS NULL; END IF; RETURN NEW; END; $$;
+REVOKE ALL ON FUNCTION public.retire_admin_installer_download() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER retire_admin_installer_download AFTER UPDATE OF completed_at ON public.enabler_handoffs FOR EACH ROW EXECUTE FUNCTION public.retire_admin_installer_download();

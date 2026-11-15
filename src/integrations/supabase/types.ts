@@ -2105,6 +2105,7 @@ export type Database = {
       }
       direct_install_links: {
         Row: {
+          admin_issue_id: string | null
           code_at: string | null
           code_hash: string
           completed_at: string | null
@@ -2118,6 +2119,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          admin_issue_id?: string | null
           code_at?: string | null
           code_hash: string
           completed_at?: string | null
@@ -2131,6 +2133,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          admin_issue_id?: string | null
           code_at?: string | null
           code_hash?: string
           completed_at?: string | null
@@ -2143,7 +2146,15 @@ export type Database = {
           used_count?: number
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "direct_install_links_admin_issue_id_fkey"
+            columns: ["admin_issue_id"]
+            isOneToOne: false
+            referencedRelation: "admin_enabler_issues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       discord_import_queue: {
         Row: {

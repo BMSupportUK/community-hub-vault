@@ -4,6 +4,7 @@ import { ADMIN_ISSUE_TTL_MS, makeHandoffCode, sha256Hex } from "@/lib/enabler-ha
 import { makePin, pinHash } from "@/lib/enabler-pin";
 import { encryptPin } from "@/lib/enabler-pin-crypto.server";
 import { adminInstallerCodeSchema, adminInstallerPinTtl, requireAdminInstallerAccess } from "@/lib/admin-installer-code";
+import { beginDirectInstallSession } from "@/lib/direct-install-session.server";
 
 export type AdminEnablerIssueRow = {
   id: string; name: string; device: "amazon" | "android"; purpose: "install" | "support";
@@ -57,7 +58,21 @@ export const issueAdminEnablerCode = createServerFn({ method: "POST" })
       await db.from("admin_enabler_issues").delete().eq("id", issue.id);
       throw new Error("Couldn't make the code and PIN. Try again.");
     }
-    return { code, pin, expiresAt, pinExpiresAt };
+    let downloaderUrl: string | null = null;
+    let downloaderExpiresAt: string | null = null;
+    if (data.installer === "direct") {
+      try {
+        const download = await beginDirectInstallSession(db, context.userId, true, Date.now(), issue.id);
+        downloaderUrl = download.url ?? null;
+        downloaderExpiresAt = download.expiresAt ?? null;
+      } catch (error) {
+        await db.from("enabler_login_pins").delete().eq("admin_issue_id", issue.id);
+        await db.from("enabler_handoffs").delete().eq("admin_issue_id", issue.id);
+        await db.from("admin_enabler_issues").delete().eq("id", issue.id);
+        throw error;
+      }
+    }
+    return { code, pin, expiresAt, pinExpiresAt, downloaderUrl, downloaderExpiresAt };
   });
 
 /** Admin/management: the separate log of every admin-issued code. */

@@ -2,13 +2,13 @@ import { DIRECT_LINK_TTL_MS, DIRECT_PROGRESS_TTL_MS, directInstallUrl, makeDirec
 import { sha256Hex } from "./enabler-handoff";
 
 /** Both setup paths create a fresh progress row; only Downloader receives a download capability. */
-export async function beginDirectInstallSession(db: any, userId: string, download: boolean, now = Date.now()) {
+export async function beginDirectInstallSession(db: any, userId: string, download: boolean, now = Date.now(), adminIssueId?: string) {
   const expiresAt = new Date(now + DIRECT_LINK_TTL_MS).toISOString();
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = download ? makeDirectCode() : null;
     const code_hash = code ? await sha256Hex(code) : `session:${crypto.randomUUID()}`;
     const { data, error } = await db.from("direct_install_links")
-      .insert({ user_id: userId, code_hash, expires_at: expiresAt })
+      .insert({ user_id: userId, code_hash, expires_at: expiresAt, ...(adminIssueId ? { admin_issue_id: adminIssueId } : {}) })
       .select("id").single();
     if (!error && data?.id) return {
       sessionId: String(data.id),

@@ -20,6 +20,13 @@ function database() {
 }
 
 describe("Direct Install setup sessions", () => {
+  test("admin Downloader link is bound to its issued PIN/code entry", async () => {
+    const { db, rows } = database();
+    const session = await beginDirectInstallSession(db, "admin", true, Date.parse("2026-11-15T09:56:00Z"), "issued-entry");
+    expect(rows[0].admin_issue_id).toBe("issued-entry");
+    expect(session.url).toBe(`https://bmsupport.uk/di/${session.code}`);
+    expect(session.expiresAt).toBe("2026-11-16T09:56:00.000Z");
+  });
   test("issued Downloader expiry is stored and returned exactly 24 hours later", async () => {
     const { db, rows } = database();
     const session = await beginDirectInstallSession(db, "customer", true, Date.parse("2026-11-12T09:43:00Z"));

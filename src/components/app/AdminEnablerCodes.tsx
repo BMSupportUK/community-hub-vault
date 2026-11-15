@@ -84,7 +84,7 @@ export function AdminEnablerCodes() {
   const [apps, setApps] = useState<{ name: string; path: string }[]>([]);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
-  const [issued, setIssued] = useState<{ name: string; code: string; pin: string; expiresAt: string; pinExpiresAt: string; installer: "direct" | "enabler" } | null>(null);
+  const [issued, setIssued] = useState<{ name: string; code: string; pin: string; expiresAt: string; pinExpiresAt: string; downloaderUrl: string | null; downloaderExpiresAt: string | null; installer: "direct" | "enabler" } | null>(null);
   const [appsLoading, setAppsLoading] = useState(true);
   const [log, setLog] = useState<AdminEnablerIssueRow[] | null>(null);
 
@@ -154,6 +154,18 @@ export function AdminEnablerCodes() {
                     <Button size="icon" variant="ghost" onClick={() => copy(v)} aria-label={`Copy ${label}`}><Copy className="h-4 w-4" /></Button></span>
                 </div>
               ))}
+              {issued.downloaderUrl && (
+                <div className="space-y-1 border-t pt-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-muted-foreground">Downloader link</span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="break-all font-mono font-semibold">{issued.downloaderUrl.replace(/^https:\/\//, "")}</span>
+                      <Button size="icon" variant="ghost" className="shrink-0" onClick={() => copy(issued.downloaderUrl ?? "")} aria-label="Copy Downloader link"><Copy className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
+                  {issued.downloaderExpiresAt && <p className="text-xs text-muted-foreground">Expires {fmt(issued.downloaderExpiresAt)} or when installation completes.</p>}
+                </div>
+              )}
             </div>
           )}
         </section>
