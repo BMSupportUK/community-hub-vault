@@ -553,9 +553,10 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
     .filter((match): match is RegExpMatchArray => Boolean(match?.[1] && match?.[2]));
   if (!zoned.length) return null;
 
-  const chosen = zoned.find((match) => /^(?:uk|gmt|bst)$/i.test(match[1]!)) ?? zoned[0]!;
-  const zone = chosen[1]!;
-  const rest = chosen[2]!;
+  const chosen = zoned.find((match) => /^(?:uk|gmt|bst)$/i.test(match[1] ?? "")) ?? zoned[0];
+  if (!chosen?.[1] || !chosen[2]) return null;
+  const zone = chosen[1];
+  const rest = chosen[2];
   const time = rest.match(new RegExp(`(${TIME_SOURCE})`, "i"))?.[1];
   if (!time) return null;
 
@@ -566,7 +567,10 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
 
   // Some providers separate the channel from the fixture with a spaced colon
   // ("Stan 01 : Singapore: Day 3 - WTA 500") instead of a pipe.
-  const parts = head.split(/\s*(?:\||·|•)\s*|\s+:\s+/).map((part) => part.trim()).filter(Boolean);
+  const colonHead = head.match(/^([A-Za-z][A-Za-z0-9 +&'./-]*?\d{1,3})\s*:\s*(.+)$/);
+  const parts = colonHead?.[1] && colonHead[2] && isLikelyChannelLabel(colonHead[1])
+    ? [colonHead[1].trim(), colonHead[2].trim()]
+    : head.split(/\s*(?:\||·|•)\s*|\s+:\s+/).map((part) => part.trim()).filter(Boolean);
   // Channel-first rows with qualifiers after the fixture:
   // "HBO Max UK 1 | Page - Selby Shenzhen Open | Round 3" → channel first,
   // every later segment belongs to the event name.
@@ -791,6 +795,11 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
     };
   }
 
+  // Explicit UK/ET segments own the slot; generic trailing-clock patterns
+  // otherwise swallow the ET clock and leave both date segments in the title.
+  const slashZoned = detectSlashZonedEvent(line, date);
+  if (slashZoned) return slashZoned;
+
   const channelColonTrailingTimeWithNote = line.match(CHANNEL_COLON_TITLE_TIME_NOTE_RE);
   if (
     channelColonTrailingTimeWithNote?.[1] &&
@@ -842,9 +851,6 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 
   const stamped = detectStampedEvent(line, date);
   if (stamped) return stamped;
-
-  const slashZoned = detectSlashZonedEvent(line, date);
-  if (slashZoned) return slashZoned;
 
   const span = line.match(DATE_TIME_SPAN_RE);
   if (span && span[1] && span[2]) {

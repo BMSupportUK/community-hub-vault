@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Correct Darts colon-separated dual-clock imports: actual post retains 12:55/18:55 GMT, both session names and PDC Event 1 through save/merge read-back; 154 sports tests pass. Website publication remains needed. Live review check was interrupted when the queued post disappeared during testing; no existing guides were changed.
+
 - [x] Refresh the Installer codes page with the existing digital TV-install illustration, clearer form sections, selected-app states and mobile-safe controls; retain all issuance and security behaviour.
 
 - [x] Generate a secure, copyable Downloader link alongside admin-issued Direct Install PINs and website codes; bind its 24-hour capability to the exact issue and retire it on completion.
