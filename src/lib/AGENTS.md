@@ -1,6 +1,6 @@
 # src/lib rules
-- Customer viewing stats use separate UK-day check-in credits with hourly seven-day retention and admin-only reads; lifetime totals and 30-day connection logs stay unchanged so daily breakdowns never assign an entire midnight-crossing session to one day.
 - Player device, buffering, voting, connection-count and cron-hook rules live in `src/routes/api/public/AGENTS.md`.
+- Customer viewing stats, connection strength, broadband capacity, Link Device, box VPN and ticket setup display rules live in `src/components/app/AGENTS.md`.
 - Inbox deletion uses a participant-checked, thread-locked RPC for selected messages or the current conversation on both ends; reported evidence stays protected, empty threads are removed, and authoritative reads clear selection/cache state.
 - EPG imports stream matched stations; US locals use station callsigns. EPG uses shared indexed fixture matching and single-flight catalogues without provider completion waits; sports cards retain those checks separately. Published-row caches never freeze event overlays.
 - Saved sports listing end times are authoritative in shared fixture EPG and Sports Guide events; preserve them through import, merging and completion without provider overwrites or prelim estimates. Provider-derived completion remains separate.
@@ -10,7 +10,6 @@
 - Customers staff-detail forms reuse member username/email updates; handlers read target roles and require admin for staff targets while preserving management edits for non-staff customers.
 - Customer-card credential dialogs read through the admin/management/staff (staff read-only) admin_customer_card_credentials RPC and reload on open; ordinary profile-scoped credential reads stay unchanged.
 - Customer-card credential deletion uses an admin/management-only owner-and-credential RPC with a confirmed affected row and profile change event; profile-filtered views must never silently skip deletion or report false success.
-- Link Device uses the shared active profile, filters owner-only player_owner_saved_logins to its credential ID and resets form state on profile changes; no independent account tabs or fallback to another profile's login.
 - Service Credentials uses the bearer-bound active_profile_credential and owner-only saved-login RPC after PIN verification or a server-verified, unexpired admin switch for that customer with current admin privileges, never email/order aggregation; remount on user/profile change so revealed details cannot survive a switch.
 - Member email editors validate the full address before sending and show inline errors; never silently strip extra words into a different address.
 - Screen unlock verifies the bearer-bound account password through an isolated non-persistent Auth client and retires only its verification session, so the app session and MFA state remain unchanged; legacy PIN reset endpoints are retired.
@@ -22,7 +21,6 @@
 - Staff display role refreshes retain the last successful map until replacement succeeds; one ref-counted focus listener prevents app-return colour/order flicker.
 - Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.
 - Order staff-help tickets start pending remote setup; their existing ticket layout notifies staff after confirmation, while self-install links retain paid-order guide access.
-- Ticket setup stages are presentation-only, derived from scoped ticket checks and available website codes; code creation advances instructions but never proves redemption or TV readiness.
 - Every customer checkout requires the entered order password, including signed-in shop owners; paid, non-cancelled orders can open published guides through the same credentials.
 - Customer password-request notifications use an owner-only RPC and contain no credentials; copy actions retrieve the password separately.
 - Checkout mutations check admin/management in handlers/RPCs; email-free staff reads use a narrow order-summary RPC.
@@ -33,13 +31,9 @@
 - Customer account switching verifies admin on the server, uses real customer sessions and an audit; admin return refresh tokens stay in a short-lived HttpOnly cookie and return checks current admin privileges.
 - Site-user manual orders use a role-gated atomic RPC that assigns explicit user ownership and payment notification; site identity and email come from a validated user ID, never email matching.
 - Ticket/order Connect atomically consumes only an unlinked, never-requested Enabler-delivered session; reference redemption cannot revive consumed checks, preventing connection reuse and duplicate staff alerts.
-- Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
 - Accounts with multiple saved logins expose the shared profile chooser and switch pill; selection uses the existing authenticated profile scope so each login retains separate details and returning to staff requires password verification.
 - Profile permissions use a verified session-bound database scope; role helpers and global server-function allowlisting enforce customer restrictions, and only password-verified service actions may restore staff scope.
 - Sports import and guide rules live in `src/routes/api/public/AGENTS.md`.
 - Manual customer creation saves contact-only rows; checkout emails use an authenticated role-checked RPC to bind an explicit order and resolve its saved recipient, preventing premature Auth accounts and arbitrary-recipient sends.
 - Enabler rules (login PIN issuance/status and confirmation status) live in `src/routes/api/public/AGENTS.md`.
-- Viewing-stats connection strength: record_player_watch_speed retains the latest timestamped speed separately from daily aggregates; only fresh matching active-device readings get live bars, because historic averages cannot describe the current stream.
-- Live-connection broadband capacity uses user-requested bounded adaptive Cloudflare tests (BroadbandTest.java / shared network-test.cjs), never traffic counters; the player API preserves actual test time separately from stream TCP ping and clears legacy estimates until a genuine test arrives.
 - BM Player dashboard sections are granted per role via `bm-player-<section>` page_permissions rows (own Role permissions tab); client uses `src/lib/player-sections.ts`, server/RLS use `player_section_allowed` — owner-only sections (DNS, maintenance, channel matching, customer logins) are never grantable. BM Player admin pages open through `playerPageAllowed` (section ticks), not the BM Support page list, and an action inside a page keeps its own section gate (messaging a box needs `announcements`, so a live-only role is never shown that button).
-- VPN on your box is retired: the Link Device column and box VPN buttons are removed and all providers are switched off; the server code stays dormant (vpn action returns nothing) so existing boxes switch any VPN off.
