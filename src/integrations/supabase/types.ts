@@ -11108,6 +11108,7 @@ export type Database = {
           password: string
         }[]
       }
+      player_section_allowed: { Args: { _section: string }; Returns: boolean }
       player_watch_member_breakdown: {
         Args: { _user: string }
         Returns: {

@@ -19,5 +19,8 @@ export function adminInstallerPinTtl(installer: "direct" | "enabler") {
 
 export async function requireAdminInstallerAccess(sb: { rpc: (fn: "has_role", args: { _user_id: string; _role: "admin" | "management" }) => PromiseLike<{ data: boolean | null; error?: unknown }> }, userId: string) {
   const roles = await Promise.all([sb.rpc("has_role", { _user_id: userId, _role: "admin" }), sb.rpc("has_role", { _user_id: userId, _role: "management" })]);
-  if (!roles.some((r) => !r.error && r.data === true)) throw new Error("Only admin and management can issue codes.");
+  if (roles.some((r) => !r.error && r.data === true)) return;
+  // Staff the owner ticked for BM Player › Installer codes.
+  const { data } = await (sb as any).rpc("player_section_allowed", { _section: "installer-codes" });
+  if (data !== true) throw new Error("You don't have access to installer codes.");
 }

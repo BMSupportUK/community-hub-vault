@@ -181,7 +181,11 @@ export const unlockPlayerAdminWithPin = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
     const roles = (rows ?? []).map((r: any) => String(r.role));
-    if (!roles.includes("admin") && !roles.includes("management")) return { ok: false, error: "Not allowed" };
+    if (!roles.includes("admin") && !roles.includes("management")) {
+      const { PLAYER_GRANTABLE_SECTIONS } = await import("@/lib/player-sections");
+      const checks = await Promise.all(PLAYER_GRANTABLE_SECTIONS.map((s) => context.supabase.rpc("player_section_allowed", { _section: s })));
+      if (!checks.some((c: any) => c.data === true)) return { ok: false, error: "Not allowed" };
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: ok } = await supabaseAdmin.rpc("staff_pin_check" as any, { p_user: context.userId, p_pin: data.pin.trim() });
     return ok ? { ok: true } : { ok: false, error: "Incorrect staff PIN" };

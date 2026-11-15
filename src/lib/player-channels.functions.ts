@@ -5,11 +5,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export const listPlayerChannels = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const [a, m] = await Promise.all([
+    const [a, m, s] = await Promise.all([
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
       context.supabase.rpc("has_role", { _user_id: context.userId, _role: "management" }),
+      context.supabase.rpc("player_section_allowed", { _section: "channel-status" }),
     ]);
-    if (!a.data && !m.data) throw new Error("Not allowed");
+    if (!a.data && !m.data && s.data !== true) throw new Error("Not allowed");
     const { playlistAllChannels } = await import("@/lib/playlist-source.server");
     // Event-only channels whose event is on now (from 10 min before start), so the list never shows them offline between events.
     const { buildSportsFeed } = await import("@/lib/player-sports-feed.server");

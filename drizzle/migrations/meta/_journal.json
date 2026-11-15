@@ -2570,6 +2570,13 @@
       "when": 1794759646737,
       "tag": "0366_buffer_blame",
       "breakpoints": true
+    },
+    {
+      "idx": 367,
+      "version": "7",
+      "when": 1794765335862,
+      "tag": "0367_bm_player_section_permissions",
+      "breakpoints": true
     }
   ]
 }

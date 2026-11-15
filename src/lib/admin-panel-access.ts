@@ -1,4 +1,5 @@
 import type { PagePermMap } from "@/lib/page-access";
+import { anyPlayerSectionAllowed } from "@/lib/player-sections";
 import { linkOptions } from "@tanstack/react-router";
 
 export const ADMIN_CUSTOMERS_LINK = linkOptions({ to: "/admin", search: { tab: "customers" } });
@@ -45,6 +46,8 @@ export function adminPanelToolAllowed(
 ): boolean {
   const isAdmin = roles.includes("admin");
   const isManagement = roles.includes("management");
+  // BM Player dashboard: open to anyone with at least one BM Player section ticked.
+  if (tool.to === "/admin-player" && !isAdmin && !isManagement) return canOpenAdminPanel(roles) && anyPlayerSectionAllowed(bmSupportRoles(roles), perms);
   if (tool.adminOnly && !isAdmin && !(tool.managementToo && isManagement)) return false;
   if (isAdmin || isManagement) return true;
   if (!canOpenAdminPanel(roles)) return false;

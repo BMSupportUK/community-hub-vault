@@ -16,6 +16,8 @@ import { PlayerMajorAnnouncementsCard } from "@/components/app/PlayerMajorAnnoun
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { usePagePermissions } from "@/lib/page-access";
+import { anyPlayerSectionAllowed, playerSectionAllowed } from "@/lib/player-sections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,9 +62,9 @@ const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe;
 ];
 
 function AdminPlayerPageInner() {
-  const { hasAny, loading } = useAuth();
+  const { hasAny, loading, roles } = useAuth();
+  const perms = usePagePermissions();
   const isAdmin = hasAny(["admin"]);
-  const isManagement = hasAny(["management"]);
   const { section } = Route.useSearch();
   const navigate = Route.useNavigate();
   const back = () => void navigate({ search: {} });
@@ -94,8 +96,9 @@ function AdminPlayerPageInner() {
   }, [isAdmin]);
 
   if (loading) return null;
-  if (!isAdmin && !isManagement) return <Navigate to="/admin" />;
-  const visible = SECTIONS.filter((x) => isAdmin || x.managementToo);
+  if (!isAdmin && !perms) return null;
+  if (!anyPlayerSectionAllowed(roles, perms)) return <Navigate to="/admin" />;
+  const visible = SECTIONS.filter((x) => playerSectionAllowed(x.key, roles, perms));
   const current = visible.find((x) => x.key === section);
 
   if (!current) return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">
@@ -104,7 +107,7 @@ function AdminPlayerPageInner() {
       <h1 className="font-display text-2xl font-bold">BM Player Admin Dashboard</h1>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {[...visible.map((x) => ({ key: x.key as string, label: x.label, desc: x.desc, icon: x.icon, live: false })),
-          ...(isAdmin ? [{ key: "live", label: "Live connections", desc: "Every BM Player app online now.", icon: MonitorPlay, live: true }] : [])]
+          ...(playerSectionAllowed("live", roles, perms) ? [{ key: "live", label: "Live connections", desc: "Every BM Player app online now.", icon: MonitorPlay, live: true }] : [])]
           .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }))
           .map((x) => {
             const cls = "flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-surface p-4 text-center transition-colors hover:border-primary hover:bg-surface-2";

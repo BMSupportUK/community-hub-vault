@@ -205,6 +205,7 @@ function PagesTab({ pages, roles, onChanged, canEditManagement }: { pages: PageP
     <div>
     <div className="flex gap-2 mb-3">
       <TabBtn active={section === "bm"} onClick={() => setSection("bm")} icon={Shield}>BM Support ({count("bm")})</TabBtn>
+      <TabBtn active={section === "player"} onClick={() => setSection("player")} icon={Layers}>BM Player ({count("player")})</TabBtn>
       <TabBtn active={section === "fanzone"} onClick={() => setSection("fanzone")} icon={Users}>Boro Fan Zone ({count("fanzone")})</TabBtn>
     </div>
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">

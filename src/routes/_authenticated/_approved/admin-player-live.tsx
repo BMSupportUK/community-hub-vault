@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { adminRemovePlayerDevice } from "@/lib/player.functions";
+import { usePagePermissions } from "@/lib/page-access";
+import { playerSectionAllowed } from "@/lib/player-sections";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player-live")({
   component: AdminPlayerLivePage,
@@ -190,8 +192,9 @@ function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row |
 }
 
 function AdminPlayerLivePageInner() {
-  const { hasAny, loading } = useAuth();
-  const isAdmin = hasAny(["admin"]);
+  const { loading, roles } = useAuth();
+  const perms = usePagePermissions();
+  const isAdmin = playerSectionAllowed("live", roles, perms);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [messageId, setMessageId] = useState<string | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -231,7 +234,7 @@ function AdminPlayerLivePageInner() {
   const watching = live.filter((r) => r.watching_since).length;
   const onVpn = live.filter((r) => r.vpn_status === "yes").length;
 
-  if (loading) return null;
+  if (loading || (!roles.includes("admin") && !perms)) return null;
   if (!isAdmin) return <Navigate to="/admin" />;
 
   return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">

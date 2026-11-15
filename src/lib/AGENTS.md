@@ -41,3 +41,4 @@
 - Enabler rules (login PIN issuance/status and confirmation status) live in `src/routes/api/public/AGENTS.md`.
 - Viewing-stats connection strength: record_player_watch_speed retains the latest timestamped speed separately from daily aggregates; only fresh matching active-device readings get live bars, because historic averages cannot describe the current stream.
 - Live-connection broadband capacity uses user-requested bounded adaptive Cloudflare tests (BroadbandTest.java / shared network-test.cjs), never traffic counters; the player API preserves actual test time separately from stream TCP ping and clears legacy estimates until a genuine test arrives.
+- BM Player dashboard sections are granted per role via `bm-player-<section>` page_permissions rows (own Role permissions tab); client uses `src/lib/player-sections.ts`, server/RLS use `player_section_allowed` — owner-only sections (DNS, maintenance, channel matching, customer logins) are never grantable.

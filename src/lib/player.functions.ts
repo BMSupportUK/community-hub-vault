@@ -89,20 +89,18 @@ export const notMePlayerDevice = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function requireAdminOrManagement(context: { supabase: any; userId: string }) {
-  const [{ data: a }, { data: m }] = await Promise.all([
-    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" }),
-    context.supabase.rpc("has_role", { _user_id: context.userId, _role: "management" }),
-  ]);
-  if (!a && !m) throw new Error("Only admin and management can do this.");
+async function requireAdminOrManagement(context: { supabase: any; userId: string }, section: "security" | "live" = "security") {
+  const { requirePlayerSection } = await import("@/lib/player-section-access.server");
+  return requirePlayerSection(context.supabase, section);
 }
+
 
 /** Admin/management: remove any box. It logs out on its next check-in. */
 export const adminRemovePlayerDevice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ deviceId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    await requireAdminOrManagement(context);
+    await requireAdminOrManagement(context, "live");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("player_devices").delete().eq("id", data.deviceId);
     if (error) throw new Error("Could not remove that box.");
