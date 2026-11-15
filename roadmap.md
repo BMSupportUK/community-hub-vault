@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Add to unreleased Android 5.50: remove All from Live TV and Multi-screen categories; default home entry to UK | Free to air while preserving playback return category; test filtering and default selection.
+- [x] Add to unreleased Android 5.50: remove All from Live TV and Multi-screen categories; default home entry to UK | Free to air while preserving playback return category; replace TV category drawer Close buttons with Press Left on remote to close; all 350 Android tests pass. Not publicly released; physical-box check unavailable.
 
 - [x] Prepare Android 5.50: clear pill beside Favourites heading, confirmed Live TV/Movies/Series multi-section clearing, equal-height Settings cards, uncommon options last, plain-language User agent explanation; all 346 Android tests pass. Public release not requested.
 - [ ] Visually check 5.50 favourites selection and Settings on a physical player; blocked by no connected device.

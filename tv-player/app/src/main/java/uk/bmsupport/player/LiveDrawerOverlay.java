@@ -78,10 +78,12 @@ final class LiveDrawerOverlay {
             }
             drawer.showChannels(names, sel);
         });
-        android.widget.Button close = new android.widget.Button(a);
-        close.setText("Close");
-        close.setOnClickListener(v -> hide());
-        panel.addView(close);
+        TextView closeHint = new TextView(a);
+        closeHint.setText("◀ Press Left on remote to close");
+        closeHint.setTextSize(15);
+        closeHint.setTextColor(title.getCurrentTextColor());
+        closeHint.setTypeface(Typeface.DEFAULT_BOLD);
+        panel.addView(closeHint);
         panel.setTranslationX(-w);
         root.addView(panel, new FrameLayout.LayoutParams(w, -1));
         panel.animate().translationX(0f).setDuration(220).start();

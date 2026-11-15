@@ -624,6 +624,11 @@ public class MainActivity extends Activity {
     };
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         if (PlayerApplication.closeAnnouncementOnBack(this, e)) return true;
+        if ("tvguide".equals(screen) && !"phone".equals(platform()) && panelOpen()
+                && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) hidePanel();
+            return true;
+        }
         if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && (previewBackTracking ||
                 (!"phone".equals(platform()) && ("tvguide".equals(screen) || "sports".equals(screen) || "sports_channels".equals(screen))
                         && previewPlaying && previewItem != null && !panelOpen()))) {
@@ -4819,7 +4824,8 @@ public class MainActivity extends Activity {
         }) : null;
         panel.addView(channelDrawer != null ? channelDrawer : catList,
                 new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        panel.addView(button("Close", v -> hidePanel()));
+        if (!"phone".equals(platform())) panel.addView(text("◀ Press Left on remote to close", 15, TEXT, true));
+        else panel.addView(button("Close", v -> hidePanel()));
         // No persistent edge tab: the guide fills the width, and a bold hint beside the Category
         // pill tells remote users that Left from any guide row lists the categories.
         FrameLayout guideScreen = sideDrawer(root, panel);

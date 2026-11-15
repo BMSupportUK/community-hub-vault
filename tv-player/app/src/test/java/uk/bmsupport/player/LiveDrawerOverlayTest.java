@@ -96,6 +96,23 @@ public class LiveDrawerOverlayTest {
         assertFalse(bool(a, "drawerShown"));
     }
 
+    @Test public void guideLeftClosesCategoryPanelWithoutLeavingGuide() throws Exception {
+        MainActivity a = Robolectric.buildActivity(MainActivity.class).get();
+        shadowOf(a.getPackageManager()).setSystemFeature(PackageManager.FEATURE_LEANBACK, true);
+        FrameLayout frame = new FrameLayout(a);
+        LinearLayout panel = new LinearLayout(a);
+        frame.addView(panel);
+        for (String name : new String[]{"screen", "drawerPanel", "drawerShown"}) {
+            Field f = MainActivity.class.getDeclaredField(name); f.setAccessible(true);
+            f.set(a, name.equals("screen") ? "tvguide" : name.equals("drawerPanel") ? panel : true);
+        }
+        assertTrue(a.dispatchKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DPAD_LEFT)));
+        Field shown = MainActivity.class.getDeclaredField("drawerShown"); shown.setAccessible(true);
+        assertFalse(shown.getBoolean(a));
+        Field screen = MainActivity.class.getDeclaredField("screen"); screen.setAccessible(true);
+        assertEquals("tvguide", screen.get(a));
+    }
+
     @Test public void phonesKeepLeftForThemselves() throws Exception {
         PlayerActivity a = Robolectric.buildActivity(PlayerActivity.class).get(); // no LEANBACK, not Amazon
         set(a, "rootView", new FrameLayout(a));
