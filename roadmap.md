@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Prepare Android 5.50: clear pill beside Favourites heading, confirmed Live TV/Movies/Series multi-section clearing, equal-height Settings cards, uncommon options last, plain-language User agent explanation; all 346 Android tests pass. Public release not requested.
+- [ ] Visually check 5.50 favourites selection and Settings on a physical player; blocked by no connected device.
+
 - [x] Correct Darts colon-separated dual-clock imports: actual post retains 12:55/18:55 GMT, both session names and PDC Event 1 through save/merge read-back; 154 sports tests pass. Website publication remains needed. Live review check was interrupted when the queued post disappeared during testing; no existing guides were changed.
 
 - [x] Refresh the Installer codes page with the existing digital TV-install illustration, clearer form sections, selected-app states and mobile-safe controls; retain all issuance and security behaviour.

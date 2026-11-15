@@ -3380,18 +3380,24 @@ public class MainActivity extends Activity {
         if ("fav".equals(key) && !"fav".equals(screen)) syncFavourites(() -> { if ("fav".equals(screen)) showSaved(key, title); });
         screen = key; back = this::showHome;
         LinearLayout root = column();
-        root.addView(text(title, 26, TEXT, true));
         // Each list clears from its own screen (moved out of Settings).
         boolean fav = "fav".equals(key);
-        Button clear = button(fav ? "🗑 Clear favourites" : "🗑 Clear history", v -> new AlertDialog.Builder(this)
+        LinearLayout heading = row();
+        heading.setGravity(Gravity.CENTER_VERTICAL);
+        heading.addView(text(title, 26, TEXT, true), weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+        Button clear = smallButton(fav ? "🗑 Clear favourites" : "🗑 Clear history", v -> {
+            if (fav) { chooseFavouritesToClear(); return; }
+            new AlertDialog.Builder(this)
                 .setMessage(fav ? "Remove all favourites from all your BM Players?" : "Clear everything in Recently watched?")
                 .setPositiveButton("Clear", (d, w) -> {
                     prefs.edit().remove(key).apply();
                     if (fav) pushFavourites();
                     Toast.makeText(this, fav ? "Favourites cleared" : "Recently watched cleared", Toast.LENGTH_SHORT).show();
                     showSaved(key, title);
-                }).setNegativeButton("Cancel", null).show());
-        root.addView(clear, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                }).setNegativeButton("Cancel", null).show();
+        });
+        heading.addView(clear);
+        root.addView(heading);
         JSONArray a = saved(key);
         List<Item> list = new ArrayList<>();
         boolean droppedAdult = false;
@@ -3662,6 +3668,39 @@ public class MainActivity extends Activity {
         return labels[0];
     }
 
+    private void chooseFavouritesToClear() {
+        String[] names = {"Live TV", "Movies", "Series"};
+        String[] kinds = {"live", "film", "series"};
+        boolean[] selected = {false, false, false};
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle("Which favourites would you like to clear?")
+                .setMultiChoiceItems(names, selected, (d, index, checked) -> selected[index] = checked)
+                .setPositiveButton("Next", null).setNegativeButton("Cancel", null).create();
+        dialog.setOnShowListener(d -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            java.util.Set<String> sections = new java.util.HashSet<>();
+            List<String> labels = new ArrayList<>();
+            for (int i = 0; i < selected.length; i++) if (selected[i]) { sections.add(kinds[i]); labels.add(names[i]); }
+            if (sections.isEmpty()) { Toast.makeText(this, "Choose at least one section", Toast.LENGTH_SHORT).show(); return; }
+            dialog.dismiss();
+            new AlertDialog.Builder(this).setTitle("Clear favourites?")
+                    .setMessage("Remove " + android.text.TextUtils.join(", ", labels) + " favourites from all your BM Players? Other sections will be kept.")
+                    .setPositiveButton("Clear", (confirm, which) -> clearFavouriteSections(sections))
+                    .setNegativeButton("Cancel", null).show();
+        }));
+        dialog.show();
+    }
+
+    private void clearFavouriteSections(java.util.Set<String> sections) {
+        JSONArray current = saved("fav"), kept = new JSONArray();
+        for (int i = 0; i < current.length(); i++) {
+            JSONObject item = current.optJSONObject(i);
+            if (item != null && !sections.contains(savedKind(Item.fromJson(item)))) kept.put(item);
+        }
+        prefs.edit().putString("fav", kept.toString()).apply();
+        pushFavourites();
+        showSaved("fav", "Favourites");
+        Toast.makeText(this, "Selected favourites cleared", Toast.LENGTH_SHORT).show();
+    }
+
     private View settingBox(String icon, String title, String value, View.OnClickListener l) {
         LinearLayout t = column();
         t.setGravity(Gravity.CENTER);
@@ -3672,6 +3711,8 @@ public class MainActivity extends Activity {
         TextView ic = text(icon, 30, TEXT, false); ic.setGravity(Gravity.CENTER);
         TextView lb = text(title, 17, TEXT, true); lb.setGravity(Gravity.CENTER);
         TextView vl = text(value, 13, MUTED, false); vl.setGravity(Gravity.CENTER);
+        lb.setMaxLines(2); lb.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        vl.setMaxLines(3); vl.setEllipsize(android.text.TextUtils.TruncateAt.END);
         t.addView(ic); t.addView(lb); t.addView(vl);
         return t;
     }
@@ -3689,6 +3730,7 @@ public class MainActivity extends Activity {
         String[] uaL = {"Standard", "BM Player", "IPTV Smarters"}, uaV = {PlayerActivity.UA, "BMPlayer/" + appVersion(), "IPTVSmartersPlayer"};
 
         List<View> boxes = new ArrayList<>();
+        List<View> advanced = new ArrayList<>();
         boxes.add(settingBox("🔒", "Parental control", prefs.getString("pin", "").isEmpty() ? "Set PIN" : adultUnlocked ? "Unlocked" : "On", v -> parentalControl()));
         for (String kind : new String[]{"live", "film", "series"}) {
             boxes.add(settingBox("⇅", sectionName(kind) + " categories", "Rearrange / hide categories", v -> editCategoryOrder(kind)));
@@ -3702,20 +3744,20 @@ public class MainActivity extends Activity {
                     .setMessage(null).setNegativeButton("Cancel", null).show();
             Toast.makeText(this, "Guide times are slot times and recordings often begin early. Catch up opens this many minutes after the listed start. If the show before is still on, press Skip ahead 2 min; BM Player remembers where that channel really starts next time.", Toast.LENGTH_LONG).show();
         }));
-        boxes.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
-        boxes.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
+        advanced.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
+        advanced.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
-        boxes.add(settingBox("🛡", "Anti-Freeze: On", "Always on: unfreezes stuck pictures, reconnects drops, keeps live TV at now",
+        advanced.add(settingBox("🛡", "Anti-Freeze: On", "Automatic stream recovery",
                 v -> new AlertDialog.Builder(this).setTitle("Anti-Freeze: On")
                         .setMessage("BM Player watches every channel, film and episode while you watch. If the picture freezes, the stream drops or live TV falls behind, it quietly fixes it. It can't fix a slow internet connection or a problem at the provider.")
                         .setPositiveButton("OK", null).show()));
-        boxes.add(settingBox("⏳", "Buffer size", label("buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV),
+        advanced.add(settingBox("⏳", "Buffer size", label("buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV),
                 v -> chooseExplained("Buffer size", "A larger buffer gives more cushion against brief connection dips, but channels can take longer to open and live TV can be further behind. It cannot fix a broken feed. The guide preview and Multi-screen use a short 1.5-second cache for faster starts.", "buffer", StreamRecovery.DEFAULT_BUFFER, bufL, bufV)));
-        boxes.add(settingBox("🎞", "Decoder", label("decoder", "hardware", decL, decV),
+        advanced.add(settingBox("🎞", "Decoder", label("decoder", "hardware", decL, decV),
                 v -> chooseExplained("Video decoder", "Hardware uses the box’s video chip and is best for HD and 4K. Software uses its processor and may help compatibility, but HD can run slowly on weaker boxes. Applies when playback next opens; Live TV previews and Multi-screen currently use their engine’s automatic choice.", "decoder", "hardware", decL, decV)));
-        boxes.add(settingBox("🌐", "User agent", label("ua", PlayerActivity.UA, uaL, uaV),
-                v -> chooseExplained("User agent", "The app name sent to the provider when requesting a stream. Some providers respond differently to different names; it does not boost speed or picture quality. Currently applies to the original player for Movies, episodes and Catch up, not the Live TV engine or its previews. Reopen playback after changing it.", "ua", PlayerActivity.UA, uaL, uaV)));
-        boxes.add(settingBox("📺", "4K check", PlayerActivity.device4k(this) ? "4K device" : "Non 4K Device", v ->
+        advanced.add(settingBox("🌐", "User agent", label("ua", PlayerActivity.UA, uaL, uaV) + " · App name sent to provider",
+                v -> chooseExplained("User agent", "This is the name BM Player sends to your TV provider when asking to play a stream — like introducing itself. It is not an assistant and does not monitor you. A provider may accept one name but reject another. Leave it on Standard unless support asks you to change it; it will not improve speed, sound or picture quality. This setting applies to Movies and Series in the original built-in player (and its fallback playback), not the Live TV, Catch-up, guide preview or Multi-screen engine. Stop and reopen playback after changing it.", "ua", PlayerActivity.UA, uaL, uaV)));
+        advanced.add(settingBox("📺", "4K check", PlayerActivity.device4k(this) ? "4K device" : "Non 4K Device", v ->
                 new AlertDialog.Builder(this).setTitle("4K check")
                         .setMessage(PlayerActivity.device4k(this)
                                 ? "This TV and streaming device can play 4K."
@@ -3725,7 +3767,7 @@ public class MainActivity extends Activity {
         boxes.add(settingBox("🕒", "Time format", label("time_format", "24", timeL, timeV),
                 v -> choose("Time format", "time_format", "24", timeL, timeV)));
         int shift = prefs.getInt("epg_shift", 0);
-        boxes.add(settingBox("📅", "EPG time shift", (shift > 0 ? "+" : "") + shift + " h", v -> {
+        advanced.add(settingBox("📅", "EPG time shift", (shift > 0 ? "+" : "") + shift + " h", v -> {
             String[] l = new String[25];
             for (int i = 0; i < 25; i++) l[i] = (i - 12 > 0 ? "+" : "") + (i - 12) + " hours";
             new AlertDialog.Builder(this).setTitle("EPG time shift").setSingleChoiceItems(l, prefs.getInt("epg_shift", 0) + 12, (d, w) -> {
@@ -3742,12 +3784,12 @@ public class MainActivity extends Activity {
                         .setMessage(null).setNegativeButton("Cancel", null).show()));
         boxes.add(settingBox("⚡", "Speed test", "Test your internet", v -> speedTest()));
         boxes.add(settingBox("ℹ", "Account info", "Status and expiry", v -> accountInfo()));
-        boxes.add(settingBox("🧹", "Clear cache", "Reload all lists", v -> {
+        advanced.add(settingBox("🧹", "Clear cache", "Reload all lists", v -> {
             clearCache(null);
             Toast.makeText(this, "Cache cleared – lists will reload", Toast.LENGTH_SHORT).show();
         }));
         boxes.add(settingBox("⬆", "Update app", "Version " + appVersion(), v -> checkForUpdate(true)));
-        boxes.add(settingBox("🔗", "Unlink device", "Removes the login – use to change login", v -> new AlertDialog.Builder(this)
+        advanced.add(settingBox("🔗", "Unlink device", "Removes the login – use to change login", v -> new AlertDialog.Builder(this)
                 .setMessage("This removes the login from this device. You'll need a new code to link it again.")
                 .setPositiveButton("Unlink", (d, w) -> io.execute(() -> {
                     try { Net.postJson(Net.SITE + "/api/public/player",
@@ -3756,14 +3798,16 @@ public class MainActivity extends Activity {
                     ui.post(this::start);
                 })).setNegativeButton("Cancel", null).show()));
 
+        boxes.addAll(advanced);
         int cols = platform().equals("phone") ? 2 : 4;
         LinearLayout grid = new LinearLayout(this);
         grid.setOrientation(LinearLayout.VERTICAL);
         for (int i = 0; i < boxes.size(); i += cols) {
             LinearLayout r = row();
+            r.setBaselineAligned(false);
             for (int j = i; j < i + cols; j++) {
                 View box = j < boxes.size() ? boxes.get(j) : new View(this);
-                r.addView(box, weight(1, ViewGroup.LayoutParams.WRAP_CONTENT));
+                r.addView(box, weight(1, dp(180)));
             }
             grid.addView(r);
         }
