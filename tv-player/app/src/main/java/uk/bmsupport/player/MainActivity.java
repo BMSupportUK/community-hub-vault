@@ -4758,7 +4758,7 @@ public class MainActivity extends Activity {
             boxCatPill.setFocusable(false);
             dr.addView(boxCatPill);
             // Bold stand-out hint: Left on the remote lists the categories from the on-now programme.
-            leftHint[0] = text("◀ Press Left on your remote to list the categories", 15, ACCENT, true);
+            leftHint[0] = text("Press Left button on your remote to open categories", 15, ACCENT, true);
             leftHint[0].setSingleLine(true);
             leftHint[0].setPadding(dp(10), 0, 0, 0);
             dr.addView(leftHint[0]);
