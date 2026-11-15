@@ -1,6 +1,7 @@
 # Roadmap
 
-- [x] Correct Android's unanswered inactivity exit with an independent shutdown deadline; ten timer/watchdog checks pass, including blocked screen shutdown and cancelling on Continue viewing. No installer built or publicly released.
+- [x] Correct Android's unanswered inactivity exit with an independent shutdown deadline; ten timer/watchdog checks pass, including blocked screen shutdown and cancelling on Continue viewing.
+- [x] Built, BM-signed and publicly released Android 5.44 (355) with the inactivity fix; 337 Android tests and ten timer/watchdog checks pass. Public updater reports 5.44; installer matches SHA-256 5cd0be286410074e4e9c063b63e8be2fe6d83582c2cc8448526b52adc44ae436. Crash mapping retained privately.
 - [ ] Verify the unanswered warning closes on a physical TV box; blocked by no connected box.
 
 - [x] Built and publicly released BM-signed Android 5.36 (347) with pending preview layering, search entry and proper on-request speed-test fixes; 326 tests pass. Public updater reports 5.36; public download matches SHA-256 21a9b9824a83b86be20aeb8b701e35087971b87af88d1678d0f2a7cfda15c187. Real-box playback and Fire TV microphone dictation remain unverified because no box is connected.
