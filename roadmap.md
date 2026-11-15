@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Add five-minute reported playback reliability from current-session stalls/reconnects, separate from throughput; 20 tests pass and website build OK. Batched device reports mean this is not an instantaneous signal meter.
+- [ ] Publish playback reliability and verify populated customer screen; existing password/PIN gate blocks browser verification.
+
 - [x] Restore full-screen libVLC buffering notices for silent stalls and keep reconnect notices visible; remove misleading broadband-strength ratings from stream throughput. Android suite and 15 website checks pass; website build OK.
 - [ ] Release the buffering-notice Android update and publish neutral stream-download labels; real-TV notice verification is blocked by no connected physical box.
 
