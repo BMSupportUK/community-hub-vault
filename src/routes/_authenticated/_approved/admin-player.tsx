@@ -26,6 +26,7 @@ import { OffsitePlayerLogins } from "@/components/app/OffsitePlayerLogins";
 import { OffsitePlayerLoginRequests } from "@/components/app/OffsitePlayerLoginRequests";
 import { PlayerSecuritySection } from "@/components/app/PlayerSecuritySection";
 import { savePlayerChannelAliases, savePlayerDns, savePlayerMaintenance, testPlayerDns } from "@/lib/player.functions";
+import installerIllustration from "@/assets/app-download-illustration.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   component: AdminPlayerPage,
@@ -119,6 +120,24 @@ function AdminPlayerPageInner() {
   if (section === "announcements") return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8"><PlayerAnnouncementsCard onBack={back} /></main>;
   if (section === "major-announcements") return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8"><PlayerMajorAnnouncementsCard onBack={back} /></main>;
 
+  if (section === "installer-codes") return <main className="relative isolate min-h-0 flex-1 overflow-y-auto bg-background">
+    <img src={installerIllustration} alt="" className="pointer-events-none absolute inset-0 -z-20 h-full min-h-full w-full object-cover object-right" />
+    <div className="pointer-events-none absolute inset-0 -z-10 bg-background/85 xl:bg-background/65" />
+    <div className="relative mx-auto w-full max-w-screen-2xl px-4 py-7 sm:px-8 lg:px-10">
+      <header className="mb-7 border-b border-border/70 pb-6">
+        <Link to="/admin-player" search={{}} className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> BM Player Admin Dashboard</Link>
+        <div className="flex items-center gap-3">
+          <KeyRound className="size-7 shrink-0 text-primary" />
+          <h1 className="font-display text-2xl font-bold sm:text-3xl">BM Player – Installer codes</h1>
+        </div>
+      </header>
+      <div className="w-full space-y-6 xl:max-w-3xl">
+        <AlternativeInstallToggle />
+        <AdminEnablerCodes />
+      </div>
+    </div>
+  </main>;
+
   return <main className="min-h-0 flex-1 overflow-y-auto bg-background px-4 py-6 sm:px-8">
     <div className="w-full space-y-4">
       <Link to="/admin-player" search={{}} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" /> BM Player Admin Dashboard</Link>
@@ -193,7 +212,6 @@ function AdminPlayerPageInner() {
       {section === "watch-time" && <WatchTimeSection />}
       {section === "connection-limits" && <ConnectionLimitSection />}
       {section === "security" && <PlayerSecuritySection />}
-      {section === "installer-codes" && <div className="space-y-4"><AlternativeInstallToggle /><AdminEnablerCodes /></div>}
       {section === "logins" && <><OffsitePlayerLoginRequests /><OffsitePlayerLogins /></>}
       {section === "devices" && <section className="rounded-xl border border-border bg-surface p-5">
         <h2 className="font-display font-semibold">Linked devices</h2>

@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Refresh the Installer codes page with the existing digital TV-install illustration, clearer form sections, selected-app states and mobile-safe controls; retain all issuance and security behaviour.
+
 - [x] Generate a secure, copyable Downloader link alongside admin-issued Direct Install PINs and website codes; bind its 24-hour capability to the exact issue and retire it on completion.
 
 - [x] Restore member-home stream information immediately beneath Subscription Details, using owner/profile-scoped live devices and showing title, category, device, player, elapsed playback and measured stream connection.

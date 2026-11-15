@@ -116,25 +116,27 @@ export function AdminEnablerCodes() {
   const copy = (v: string) => { void navigator.clipboard.writeText(v); toast.success("Copied"); };
 
   return (
-    <Tabs defaultValue="issue" className="max-w-3xl">
-      <TabsList><TabsTrigger value="issue">Issue a code</TabsTrigger><TabsTrigger value="log">Log</TabsTrigger></TabsList>
+    <Tabs defaultValue="issue" className="w-full min-w-0">
+      <TabsList className="h-10"><TabsTrigger value="issue" className="px-5">Issue a code</TabsTrigger><TabsTrigger value="log" className="px-5">Log</TabsTrigger></TabsList>
       <TabsContent value="issue">
-        <section className="space-y-5 py-5">
+        <section className="space-y-6 py-5">
           <div>
-            <h2 className="text-lg font-semibold">Installer PIN & website code</h2>
+            <h2 className="font-display text-xl font-semibold">Installer PIN & website code</h2>
           </div>
-          <label className="block space-y-1.5"><span className="text-sm font-medium">Reference name (required)</span>
-            <Input required value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Who is this for?" /></label>
+          <label className="block space-y-2"><span className="text-sm font-medium">Reference name (required)</span>
+            <Input className="h-11 bg-background/80" required value={name} maxLength={120} onChange={(e) => setName(e.target.value)} placeholder="Who is this for?" /></label>
+          <div className="grid gap-6 border-y border-border/70 py-6 sm:grid-cols-2">
           <div className="space-y-1.5"><span className="text-sm font-medium">Installer app</span><Choice value={installer} options={INSTALLER_LABEL} onChange={(v) => { setInstaller(v); if (v === "direct") setPurpose("install"); }} /></div>
           <div className="space-y-1.5"><span className="text-sm font-medium">Device (required)</span><Choice value={device} options={DEVICE_LABEL} onChange={setDevice} /></div>
+          </div>
           {installer === "enabler" && <div className="space-y-1.5"><span className="text-sm font-medium">What is it for?</span><Choice value={purpose} options={PURPOSE_LABEL} onChange={setPurpose} /></div>}
           {purpose === "install" && (
             <div className="space-y-1.5"><span className="text-sm font-medium">Apps to install (required)</span>
               {appsLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : !apps.length ? <p className="text-sm text-muted-foreground">No apps available.</p> : null}
               <div className="grid gap-2 sm:grid-cols-2">
                 {apps.map((a) => (
-                  <label key={a.path} className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-                    <input type="checkbox" checked={picked.has(a.path)} onChange={(e) => setPicked((s) => { const n = new Set(s); if (e.target.checked) n.add(a.path); else n.delete(a.path); return n; })} />
+                  <label key={a.path} className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-md border px-4 py-3 text-sm transition-colors ${picked.has(a.path) ? "border-primary bg-primary/15" : "border-border bg-background/75 hover:border-primary/60"}`}>
+                    <input className="size-4 shrink-0 accent-primary" type="checkbox" checked={picked.has(a.path)} onChange={(e) => setPicked((s) => { const n = new Set(s); if (e.target.checked) n.add(a.path); else n.delete(a.path); return n; })} />
                     {a.name}
                   </label>
                 ))}
@@ -142,9 +144,9 @@ export function AdminEnablerCodes() {
             </div>
           )}
           {purpose === "support" && <p className="text-sm text-muted-foreground">BM TV Enabler puts BM Remote Helper on the TV and shows a TV code. Use that code in TV Remote to connect.</p>}
-          <Button onClick={() => void issue()} disabled={busy || !name.trim() || !device || (purpose === "install" && (appsLoading || !picked.size))}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />} Generate PIN & website code</Button>
+          <Button className="h-auto min-h-11 w-full whitespace-normal py-3 sm:w-auto" onClick={() => void issue()} disabled={busy || !name.trim() || !device || (purpose === "install" && (appsLoading || !picked.size))}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />} Generate PIN & website code</Button>
           {issued && (
-            <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
+            <div className="space-y-4 rounded-lg border border-primary/40 bg-background/90 p-5">
               <p className="text-sm">For <b>{issued.name}</b> · {INSTALLER_LABEL[issued.installer]}</p>
               <p className="text-sm text-muted-foreground">{issued.installer === "direct" ? 'App login PIN stays valid until the customer presses “All done”.' : `App login PIN expires ${fmt(issued.pinExpiresAt)} (24 hours).`} Website code expires {fmt(issued.expiresAt)} (24 hours). Shown once only.</p>
               {([["App PIN", issued.pin], ["Website code", issued.code]] as const).map(([label, v]) => (
