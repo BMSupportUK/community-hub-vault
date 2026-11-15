@@ -32,7 +32,7 @@ final class BufferReporter {
         if (stallMs < StreamRecovery.MIN_REPORT_MS && !reconnected) return;
         try {
             JSONObject e = new JSONObject().put("kind", kind == null ? "live" : kind).put("content_id", id == null ? "" : id)
-                    .put("name", name == null ? "" : name).put("stall_ms", stallMs).put("reconnected", reconnected).put("freeze", freeze).put("cause", cause == null ? JSONObject.NULL : cause)
+                    .put("name", name == null ? "" : name).put("stall_ms", stallMs).put("reconnected", reconnected).put("freeze", freeze).put("cause", cause == null ? JSONObject.NULL : cause).put("blame", BufferBlame.current(c, cause == null ? "network_drop" : cause))
                     .put("at", System.currentTimeMillis());
             if (format != null) e.put("stream_format", format);
             if (decoder != null) e.put("decoder", decoder);

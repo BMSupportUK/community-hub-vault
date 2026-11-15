@@ -4,6 +4,7 @@ import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { customerStatsDays, customerStatsSegments, playbackReliability, latestConnectionReading, mbps, channelLinkRating, readChannelLinkSnapshot, type Strength } from '@/lib/player-customer-stats';
+import { blameLabel } from '@/lib/player-buffering';
 import { viewingDuration } from '@/lib/player-watch-activity';
 import { Button } from '@/components/ui/button';
 import { connectionDayRange, CONNECTION_HISTORY_PAGE_SIZE } from '@/lib/player-connection-session';
@@ -53,7 +54,7 @@ function Stats({ userId }: { userId: string }) {
   const [stats, devices, buffers] = await Promise.all([
    supabase.from('player_customer_daily_stats').select('*').eq('user_id', userId).gte('day', days[6]).lte('day', days[0]).order('last_watched_at', { ascending: false }),
    supabase.from('player_devices').select('id,watching_title,watching_preview,watching_since,last_seen_at,iptv_username,net_ping_ms,channel_link_snapshot').eq('user_id', userId).gte('last_seen_at', new Date(Date.now()-180000).toISOString()),
-   supabase.from('player_buffer_events').select('device_id,content_name,stall_ms,occurred_at,reconnected').in('device_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']).gte('occurred_at', new Date(Date.now()-8*86400000).toISOString()).order('occurred_at', { ascending: false }).limit(2000),
+   supabase.from('player_buffer_events').select('device_id,content_name,stall_ms,occurred_at,reconnected,blame').in('device_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']).gte('occurred_at', new Date(Date.now()-8*86400000).toISOString()).order('occurred_at', { ascending: false }).limit(2000),
   ]);
   if (stats.error) throw new Error('Could not load customer viewing statistics.');
   if (devices.error) throw new Error('Could not load current playback.');
@@ -97,7 +98,7 @@ function Stats({ userId }: { userId: string }) {
 }
 const HISTORY_PAGE = CONNECTION_HISTORY_PAGE_SIZE;
 /** Every full-screen connection, newest first: 5 per page with numbered pages. */
-function ConnectionHistory({ userId, day, buffers }: { userId: string; day: string; buffers: { device_id: string; content_name: string; stall_ms: number; occurred_at: string; reconnected: boolean }[] }) {
+function ConnectionHistory({ userId, day, buffers }: { userId: string; day: string; buffers: { device_id: string; content_name: string; stall_ms: number; occurred_at: string; reconnected: boolean; blame?: string | null }[] }) {
  const [page, setPage] = useState(0);
  const { data, isError } = useQuery({ queryKey: ['player-connection-sessions', userId, day, page], refetchInterval: 15000, queryFn: async () => {
   const { from, to } = connectionDayRange(day);
@@ -126,6 +127,7 @@ function ConnectionHistory({ userId, day, buffers }: { userId: string; day: stri
      <div className="min-w-0"><dt className="text-muted-foreground">Ping</dt><dd className="font-semibold tabular-nums">{r.ping_last != null ? `${r.ping_last} ms` : '—'}{r.ping_min != null && r.ping_max != null && <span className="font-normal text-muted-foreground"> (low–high {r.ping_min}–{r.ping_max} ms)</span>}</dd></div>
      <div className="min-w-0"><dt className="text-muted-foreground">Download</dt><dd className="font-semibold tabular-nums">{r.speed_last_kbps ? mbps(r.speed_last_kbps) : '—'}</dd></div>
      <div className="min-w-0"><dt className="text-muted-foreground">Buffering</dt><dd className="font-semibold tabular-nums">{ev.length ? `${ev.length}×` : 'None'}</dd></div>
+     {ev.length > 0 && <div className="col-span-2 min-w-0"><dt className="text-muted-foreground">Likely cause</dt><dd className="flex flex-wrap gap-1 pt-0.5">{(['stream', 'customer', 'unclear'] as const).map(k => { const n = ev.filter(b => (b.blame ?? 'unclear') === k).length; return n ? <span key={k} className={`rounded-full border px-2 py-0.5 font-semibold ${k === 'stream' ? 'border-destructive/60 text-destructive' : k === 'customer' ? 'border-primary/60 text-primary' : 'border-border text-muted-foreground'}`}>{blameLabel(k)} · {n}×</span> : null; })}</dd></div>}
      <div className="min-w-0"><dt className="text-muted-foreground">Device / login</dt><dd className="truncate font-semibold">{r.login || '—'}</dd></div>
     </dl>
    </li>; })}</ul>}

@@ -85,7 +85,8 @@ public class BackupPlayerActivity extends Activity {
         updateLink(nowMs);
         String name = getIntent().getStringExtra("content_name");
         feedNote.setText(retryQueued || reconnect.active()
-                ? "Reconnecting" + (name == null ? "" : " to " + name) + "…" : FeedStatus.BUFFERING);
+                ? "Reconnecting" + (name == null ? "" : " to " + name) + "…\n" + BufferBlame.label(BufferBlame.current(this, "network_drop"))
+                : FeedStatus.BUFFERING + "\n" + BufferBlame.label(BufferBlame.current(this, "network_drop")));
         feedNote.setVisibility(stalled || retryQueued || reconnect.active() ? TextView.VISIBLE : TextView.GONE);
     }
 
@@ -478,7 +479,7 @@ public class BackupPlayerActivity extends Activity {
             if (media == null) return;
             org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
             media.release();
-            if (st != null) link.bytes(st.readBytes, st.demuxReadBytes, now);
+            if (st != null) { link.bytes(st.readBytes, st.demuxReadBytes, now); BufferBlame.pingMs = link.pingMs(); BufferBlame.channelKbps = link.kbps(); }
             boolean noData = st != null && isLive() && started && reconnect.noData(st.readBytes, now);
             boolean mute = st != null && isLive() && started && !noData && reconnect.soundLost(st.displayedPictures, st.decodedAudio, now);
             if (st != null && isLive() && (reconnect.stalled(st.displayedPictures, st.decodedAudio, now) | noData | mute)) {

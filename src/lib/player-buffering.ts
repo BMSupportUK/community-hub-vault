@@ -15,8 +15,20 @@ export const BufferEvent = z.object({
   event_name: z.string().trim().max(200).optional().catch(undefined),
   swapped_to: z.string().trim().max(200).optional().catch(undefined),
   swap_reason: z.enum(['manual', 'auto']).optional().catch(undefined),
+  blame: z.enum(["stream", "customer", "unclear"]).optional().catch(undefined),
   at: z.number().int().positive(),
 });
+/** Other viewers stalling on the same live channel within the alert window that prove the stream is at fault. */
+export const CROWD_DEVICES = 2;
+export type BufferBlame = "stream" | "customer" | "unclear";
+/** The box's guess, overruled to "stream" when other homes stalled on the same channel at the same time. */
+export function bufferBlame(box: BufferBlame | undefined, otherDevices: number): BufferBlame {
+  if (otherDevices >= CROWD_DEVICES) return "stream";
+  return box ?? "unclear";
+}
+export function blameLabel(b: string | null | undefined): string {
+  return b === "stream" ? "Stream / provider" : b === "customer" ? "Customer's internet" : "Unclear";
+}
 export const BufferBatch = z.array(BufferEvent).min(1).max(20);
 /** Older apps send no cause: a zero-length freeze is a provider cut, anything else a network drop. */
 export function stallCause(e: { cause?: string; freeze?: boolean; stall_ms: number }): "provider_cut" | "advert_switch" | "network_drop" {

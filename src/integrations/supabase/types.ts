@@ -5907,6 +5907,7 @@ export type Database = {
       player_buffer_events: {
         Row: {
           app_version: string | null
+          blame: string | null
           cause: string | null
           content_id: string
           content_name: string
@@ -5929,6 +5930,7 @@ export type Database = {
         }
         Insert: {
           app_version?: string | null
+          blame?: string | null
           cause?: string | null
           content_id?: string
           content_name?: string
@@ -5951,6 +5953,7 @@ export type Database = {
         }
         Update: {
           app_version?: string | null
+          blame?: string | null
           cause?: string | null
           content_id?: string
           content_name?: string

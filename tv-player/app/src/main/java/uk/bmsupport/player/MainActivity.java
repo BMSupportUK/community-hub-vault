@@ -4210,6 +4210,7 @@ public class MainActivity extends Activity {
             io.execute(() -> {
                 try {
                     BroadbandTest.Result r = BroadbandTest.run(message -> ui.post(() -> { if (dlg.isShowing()) dlg.setMessage(message); })); broadbandResult = r;
+                    if (r.down > 0) prefs.edit().putInt("bb_down", r.down).putLong("bb_at", System.currentTimeMillis()).apply();
                     io.execute(this::pollOnce);
                     ui.post(() -> { if (dlg.isShowing()) dlg.setMessage(String.format(java.util.Locale.UK,
                             "Box download: %.1f Mbps\nBox upload: %s\nResponse time: %d ms\nTest server: %s\n\nMeasured on this box's Wi-Fi or Ethernet connection, not your broadband package's advertised speed.",

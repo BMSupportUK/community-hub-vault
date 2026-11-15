@@ -1,0 +1,1 @@
+ALTER TABLE public.player_buffer_events ADD COLUMN IF NOT EXISTS blame text CHECK (blame IN ('stream','customer','unclear'));

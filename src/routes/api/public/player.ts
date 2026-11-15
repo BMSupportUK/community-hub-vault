@@ -8,7 +8,7 @@ import { createSharedCache } from "@/lib/player-sports-cache";
 import { RatingTitle, RatingVote, ratingIdentity, ratingVoter } from "@/lib/player-ratings";
 import { announcementReachesDevice } from "@/lib/player-announcement-audience";
 import { WATCH_REQUEST_TTL_MS } from "@/lib/send-to-box";
-import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, FeedSwitchBatch, dedupeSwitches, eventTime, stallCause, shouldAlert } from "@/lib/player-buffering";
+import { ALERT_COOLDOWN_MS, ALERT_WINDOW_MS, BufferBatch, bufferBlame, FeedSwitchBatch, dedupeSwitches, eventTime, stallCause, shouldAlert } from "@/lib/player-buffering";
 
 // One sports-guide build per minute per server instance, however many apps ask.
 const sportsCache = createSharedCache<{ version: string; events: unknown[]; aliases: unknown[] }>(60_000);
@@ -708,9 +708,17 @@ export const Route = createFileRoute("/api/public/player")({
             device_id: device.id, user_id: device.user_id, platform: dev?.platform ?? null, app_version: body.version ?? dev?.app_version ?? null,
             kind: e.kind, content_id: e.content_id, content_name: e.name, stall_ms: e.stall_ms, reconnected: e.reconnected, is_freeze: e.freeze ?? false, cause: stallCause(e),
             stream_format: e.stream_format ?? null, decoder: e.decoder ?? null, recovery_provider: e.recovery_provider ?? null, event_name: e.event_name ?? null, swapped_to: e.swapped_to ?? null, swap_reason: e.swap_reason ?? null,
-            occurred_at: new Date(eventTime(e.at, now)).toISOString(),
+            occurred_at: new Date(eventTime(e.at, now)).toISOString(), box_blame: e.blame, blame: null as string | null,
           }));
-          const { error } = await supabaseAdmin.from("player_buffer_events").insert(rows);
+          // Other homes stalling on the same channel recently means the stream is at fault, whatever this box guessed.
+          const others = new Map<string, number>();
+          for (const name of [...new Set(rows.filter((r) => r.kind === "live" && r.content_name).map((r) => r.content_name))]) {
+            const { data: near } = await supabaseAdmin.from("player_buffer_events").select("device_id")
+              .eq("kind", "live").eq("content_name", name).neq("device_id", device.id).gte("occurred_at", new Date(now - ALERT_WINDOW_MS).toISOString()).limit(500);
+            others.set(name, new Set((near ?? []).map((r) => r.device_id)).size);
+          }
+          for (const r of rows) r.blame = bufferBlame(r.box_blame, r.kind === "live" ? others.get(r.content_name) ?? 0 : 0);
+          const { error } = await supabaseAdmin.from("player_buffer_events").insert(rows.map(({ box_blame: _b, ...r }) => r));
           if (error) return json({ error: "Could not record" }, 503);
           // A channel stalling for many different viewers at once points at the provider, not one home's internet.
           for (const name of [...new Set(rows.filter((r) => r.kind === "live" && r.content_name).map((r) => r.content_name))]) {
