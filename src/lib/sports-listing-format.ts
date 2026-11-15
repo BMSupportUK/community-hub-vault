@@ -1243,6 +1243,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   // between UK and ET clocks. Repair only clock punctuation, not titles.
   raw = raw
     .replace(/(\b\d{1,2}[:.]\d{2}):\s*(am|pm)\b/gi, "$1$2")
+    // "NFL 03: 1pm ET | 6pm ET" — the second clock of an ET | UK pair is
+    // sometimes mislabelled ET; it is the UK time.
+    .replace(/(\d\s*(?:am|pm)?\s*ET\s*\|\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s*)ET[ \t]*$/gim, "$1UK")
     // "8:00pm UK UK | 3:00pm ET" — a doubled zone label after a clock.
     .replace(/(\d\s*(?:am|pm)?\s*)\b(UK|BST|GMT|ET|EST|EDT)(?:\s+\2)+\b/gi, "$1$2")
     .replace(/(\bUK(?:\s+(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*)?\s*)\\(?=\s*\d{1,2}[:.]\d{2}\s*(?:am|pm)?\s*ET\b)/gi, "$1|")
