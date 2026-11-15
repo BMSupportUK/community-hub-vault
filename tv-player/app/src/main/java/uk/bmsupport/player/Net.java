@@ -27,6 +27,7 @@ final class Net {
         if (PrivateDns.enabled && !url.startsWith(SITE) && "http".equals(u.getProtocol())) {
             String ip = PrivateDns.resolve(u.getHost());
             if (ip != null) { hostHeader = u.getPort() > 0 ? u.getHost() + ":" + u.getPort() : u.getHost();
+                PrivateDns.listUsed = true;
                 u = new URL("http", ip, u.getPort(), u.getFile()); }
         }
         HttpURLConnection c = (HttpURLConnection) u.openConnection();

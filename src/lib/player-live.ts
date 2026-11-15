@@ -7,7 +7,7 @@ export function isLive(lastSeenAt: string | null | undefined, now = Date.now()):
   return !!lastSeenAt && now - new Date(lastSeenAt).getTime() <= LIVE_WINDOW_MS;
 }
 
-type Watching = { kind: string; title: string; category?: string; player?: string; since: number; preview?: boolean } | null;
+type Watching = { kind: string; title: string; category?: string; player?: string; since: number; preview?: boolean; private_dns?: string | null } | null;
 
 export function presenceUpdate(input: {
   now: number;
@@ -42,6 +42,9 @@ export function presenceUpdate(input: {
     watching_since: since,
     // Previews show on Live connections but never count toward viewing hours.
     watching_preview: !!w?.preview,
+    // How this playback reached its server: "stream" = the channel's own address came from an
+    // encrypted (Private DNS) lookup, "list" = only the channel list / TV guide lookups did.
+    private_dns_used: w?.private_dns === "stream" || w?.private_dns === "list" ? w.private_dns : null,
     ...(input.ip ? { last_ip: input.ip.slice(0, 64) } : {}),
     ...(input.cf || input.headerCountry
       ? {

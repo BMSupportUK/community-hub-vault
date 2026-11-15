@@ -38,4 +38,17 @@ public class PrivateDnsTest {
         PrivateDns.fetcher = (u, t) -> { fail("should not look up"); return null; };
         assertNull(PrivateDns.resolve("9.9.9.9"));
     }
+
+    @Test public void reportedPrefersTheStreamsOwnLookup() {
+        assertEquals("stream", PrivateDns.reported(true, true));
+        assertEquals("stream", PrivateDns.reported(true, false));
+        assertEquals("list", PrivateDns.reported(false, true));
+        assertNull(PrivateDns.reported(false, false));
+    }
+
+    @Test public void clearingResetsTheListLookupFlag() {
+        PrivateDns.listUsed = true;
+        PrivateDns.clear();
+        assertFalse(PrivateDns.listUsed);
+    }
 }

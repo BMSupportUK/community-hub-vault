@@ -51,3 +51,21 @@ test("previews are flagged so viewing hours skip them, real playback is not", ()
   const idle = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null });
   expect(idle.watching_preview).toBe(false);
 });
+
+test("private DNS marker: the stream's own encrypted lookup wins over the channel list's", () => {
+  const now = Date.parse("2026-11-15T08:00:00Z");
+  const stream = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null, watching: { kind: "live", title: "Sky Sports 1", since: now, private_dns: "stream" } });
+  expect(stream.private_dns_used).toBe("stream");
+  const list = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null, watching: { kind: "live", title: "Sky Sports 1", since: now, private_dns: "list" } });
+  expect(list.private_dns_used).toBe("list");
+});
+
+test("private DNS marker is nothing for normal lookups, an unknown answer or when nothing is playing", () => {
+  const now = Date.parse("2026-11-15T08:00:00Z");
+  const plain = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null, watching: { kind: "live", title: "Sky Sports 1", since: now } });
+  expect(plain.private_dns_used).toBeNull();
+  const bogus = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null, watching: { kind: "live", title: "Sky Sports 1", since: now, private_dns: "everything" } });
+  expect(bogus.private_dns_used).toBeNull();
+  const idle = presenceUpdate({ ...base, now, lastSeenAt: null, connectedSince: null });
+  expect(idle.private_dns_used).toBeNull();
+});

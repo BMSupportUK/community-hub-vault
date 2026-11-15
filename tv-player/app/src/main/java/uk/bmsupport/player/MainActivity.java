@@ -762,10 +762,17 @@ public class MainActivity extends Activity {
         JSONObject b = new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", ""))
                 .put("login", prefs.getString("user", "")).put("version", appVersion()).put("sig", appSignature());
         long since = prefs.getLong("np_since", 0);
-        if (since > 0) b.put("watching", new JSONObject().put("kind", prefs.getString("np_kind", "live"))
-                .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
-                .put("player", prefs.getString("np_player", "BM Player")).put("since", since)
-                .put("preview", prefs.getBoolean("np_preview", false)));
+        if (since > 0) {
+            JSONObject w = new JSONObject().put("kind", prefs.getString("np_kind", "live"))
+                    .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
+                    .put("player", prefs.getString("np_player", "BM Player")).put("since", since)
+                    .put("preview", prefs.getBoolean("np_preview", false));
+            // Tells the website how this channel reached its server: the stream's own encrypted
+            // lookup wins over the channel list's, and neither is reported when both were normal.
+            String dnsUsed = PrivateDns.reported(prefs.getBoolean("np_dns", false), PrivateDns.listUsed);
+            if (dnsUsed != null) w.put("private_dns", dnsUsed);
+            b.put("watching", w);
+        }
         int kbps = WatchSpeed.sample(android.net.TrafficStats.getUidRxBytes(android.os.Process.myUid()), android.os.SystemClock.elapsedRealtime());
         if (since > 0 && !prefs.getBoolean("np_preview", false) && kbps > 0) b.put("speed_kbps", kbps);
         BroadbandTest.Result tested = broadbandResult;
@@ -789,7 +796,7 @@ public class MainActivity extends Activity {
         long since = System.currentTimeMillis();
         prefs.edit().putString("np_kind", it.kind).putString("np_title", it.name == null ? "" : it.name)
                 .putString("np_cat", "").putString("np_player", vlc ? "VLC" : "BM Player").putLong("np_since", since)
-                .putBoolean("np_preview", preview).remove("channel_link_snapshot").apply();
+                .putBoolean("np_preview", preview).remove("channel_link_snapshot").remove("np_dns").apply();
         io.execute(() -> {
             String cat = ""; try { cat = categoryName(it); } catch (Exception ignored) {}
             if (prefs.getLong("np_since", 0) == since) prefs.edit().putString("np_cat", cat == null ? "" : cat).apply();
@@ -799,7 +806,7 @@ public class MainActivity extends Activity {
 
     private void clearNowPlaying() {
         if (prefs.getLong("np_since", 0) == 0) return;
-        prefs.edit().putLong("np_since", 0).putBoolean("np_preview", false).remove("np_host").remove("np_port").apply();
+        prefs.edit().putLong("np_since", 0).putBoolean("np_preview", false).remove("np_host").remove("np_port").remove("np_dns").apply();
         io.execute(this::pollOnce);
     }
 

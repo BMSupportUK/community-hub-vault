@@ -2598,6 +2598,13 @@
       "when": 1794768774875,
       "tag": "0370_vpn_providers_enabled_only",
       "breakpoints": true
+    },
+    {
+      "idx": 371,
+      "version": "7",
+      "when": 1794773078112,
+      "tag": "0371_private_dns_marker",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,7 @@ import { MessageSquare } from "lucide-react";
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  ArrowLeft, Copy, Film, Info, MapPin, MonitorPlay, Radio, ShieldAlert,
+  ArrowLeft, Copy, Film, Globe, Info, MapPin, MonitorPlay, Radio, ShieldAlert,
   ShieldCheck, Tv,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,13 +41,32 @@ type Row = {
   linked_at: string | null; created_at: string | null; offsite_customer_id: string | null;
   unlock_failures: number | null; unlock_locked_until: string | null;
   net_down_kbps: number | null; net_up_kbps: number | null; net_ping_ms: number | null; net_measured_at: string | null;
+  private_dns_used: string | null;
 };
 
-const DEVICE_SELECT = "id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon, vpn_status, vpn_provider, vpn_checked_at, linked_at, created_at, offsite_customer_id, unlock_failures, unlock_locked_until, net_down_kbps, net_up_kbps, net_ping_ms, net_measured_at";
+const DEVICE_SELECT = "id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon, vpn_status, vpn_provider, vpn_checked_at, linked_at, created_at, offsite_customer_id, unlock_failures, unlock_locked_until, net_down_kbps, net_up_kbps, net_ping_ms, net_measured_at, private_dns_used";
 
 const PLATFORM: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Phone", windows: "Windows", mac: "Mac" };
 
 const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString("en-GB") : "—");
+
+/**
+ * How this box reached the channel it is playing.
+ * "stream" = the channel's own server address came from an encrypted (Private DNS) lookup,
+ * so the broadband provider could not look it up itself.
+ * "list" = only the channel list / TV guide lookups went through encrypted DNS.
+ */
+function PrivateDnsTag({ used }: { used: string }) {
+  const stream = used === "stream";
+  return <span className={stream
+    ? "mt-1 inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning"
+    : "mt-1 inline-flex items-center gap-1 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground"}
+    title={stream
+      ? "This channel's own server address came from an encrypted (Private DNS) lookup — the broadband provider could not look it up itself"
+      : "Only the channel list and TV guide lookups went through encrypted (Private) DNS; the stream itself used the normal lookup"}>
+    <Globe className="size-3.5" />Private DNS · {stream ? "stream" : "list"}
+  </span>;
+}
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -178,6 +197,9 @@ function ConnectionDetailsDialog({ row, names, now, onOpenChange }: { row: Row |
                   : "Menus – not playing"} />
                 <Field label="Category" value={row.watching_category || "—"} />
                 <Field label="Player" value={row.watching_player || "—"} />
+                <Field label="Private DNS" value={row.private_dns_used === "stream"
+                  ? "Channel address found by encrypted lookup"
+                  : row.private_dns_used === "list" ? "Channel list only" : "Not used"} />
                 <Field label="Playing for" value={row.watching_since ? formatElapsed(row.watching_since, now) : "—"} />
               </div>
             </section>
@@ -278,7 +300,7 @@ function AdminPlayerLivePageInner() {
                       ? <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={`No VPN or proxy found${r.last_ip ? ` on IP ${r.last_ip}` : ""}`}><ShieldCheck className="size-3.5" />None</span>
                       : <span className="text-xs text-muted-foreground" title="VPN not checked yet">—</span>}</td>
                   <td className="p-3">{r.watching_title
-                    ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Movie" : r.watching_kind === "catchup" ? "Catch up" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div></div></div>
+                    ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Movie" : r.watching_kind === "catchup" ? "Catch up" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div>{r.private_dns_used && <PrivateDnsTag used={r.private_dns_used} />}</div></div>
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>
                   <td className="p-3"><ConnectionBars down={hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null} /><div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">↓ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null)} · ↑ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_up_kbps : null)} · Stream {r.net_ping_ms ? `${r.net_ping_ms} ms` : "—"}</div></td>
                   <td className="p-3 font-mono tabular-nums">{r.watching_since ? formatElapsed(r.watching_since, now) : "—"}</td>

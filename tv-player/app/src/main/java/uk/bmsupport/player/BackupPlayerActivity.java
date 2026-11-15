@@ -530,7 +530,10 @@ public class BackupPlayerActivity extends Activity {
                 // Never got going: the broadband provider may be blocking the stream server's name.
                 dnsTried = true; final int idx = at; final String u = urls[idx];
                 retryQueued = true;
-                new Thread(() -> { String fixed = StreamDns.unblock(u); ui.post(() -> { if (fixed != null) urls[idx] = fixed; retryQueued = false; if (!isFinishing()) open(); }); }).start();
+                new Thread(() -> { String fixed = StreamDns.unblock(u); ui.post(() -> { if (fixed != null) { urls[idx] = fixed;
+                        // This channel is now reached through an address found by an encrypted lookup.
+                        PlayerActivity.prefs(this).edit().putBoolean("np_dns", true).apply(); }
+                    retryQueued = false; if (!isFinishing()) open(); }); }).start();
                 return;
             }
             long wait = reconnect.failed(nowMs);

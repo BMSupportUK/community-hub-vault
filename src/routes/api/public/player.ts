@@ -54,6 +54,7 @@ const Body = z.discriminatedUnion("action", [
       category: z.string().trim().max(120).optional(),
       player: z.string().trim().max(20).optional(),
       preview: z.boolean().optional(),
+      private_dns: z.enum(["stream", "list"]).optional(),
       since: z.number().int().positive(),
     }).nullish(),
   }),
@@ -234,7 +235,7 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "stream_claim" || body.action === "stream_release") {
           const nowIso = new Date().toISOString();
           if (body.action === "stream_release") {
-            await supabaseAdmin.from("player_devices").update({ watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false, stream_claimed_at: null }).eq("id", device.id);
+            await supabaseAdmin.from("player_devices").update({ watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false, private_dns_used: null, stream_claimed_at: null }).eq("id", device.id);
             return json({ ok: true });
           }
           const { streamClash, maxedMessage } = await import("@/lib/player-stream-claim");
@@ -253,7 +254,7 @@ export const Route = createFileRoute("/api/public/player")({
             return json({ busy: true, message: maxedMessage(clash, pkgMax ?? body.max), devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title, screens: d.watching_screens ?? 1 })) });
           }
           if (clash.length) {
-            await supabaseAdmin.from("player_devices").update({ stream_stop_at: nowIso, watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false })
+            await supabaseAdmin.from("player_devices").update({ stream_stop_at: nowIso, watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false, private_dns_used: null })
               .in("id", clash.map((d) => d.id));
           }
           // Multi/Triple Room household rule (src/lib/player-household.ts).
@@ -305,7 +306,7 @@ export const Route = createFileRoute("/api/public/player")({
                 if (v.refuse || (v.stopIds.length && !body.takeover)) {
                   return json({ busy: true, refused: v.refuse, message: v.message, devices: v.refuse ? [] : (peers ?? []).filter((d) => v.stopIds.includes(d.id)).map(() => ({ name: "BM Player", platform: null, title: null })) });
                 }
-                if (v.stopIds.length) await supabaseAdmin.from("player_devices").update({ stream_stop_at: nowIso, watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false }).in("id", v.stopIds);
+                if (v.stopIds.length) await supabaseAdmin.from("player_devices").update({ stream_stop_at: nowIso, watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false, private_dns_used: null }).in("id", v.stopIds);
                 if (!onVpn) { claimIp = ip; claimAway = v.away; }
                 claimMobile = isMobile;
               }
@@ -316,6 +317,8 @@ export const Route = createFileRoute("/api/public/player")({
             iptv_username: body.login, last_seen_at: nowIso, stream_claimed_at: nowIso, stream_stop_at: null,
             watching_screens: Math.max(1, Math.min(3, body.screens ?? 1)),
             watching_kind: body.kind === "catchup" ? "live" : body.kind, watching_title: body.title, watching_since: device.watching_kind ? device.watching_since : nowIso,
+            // A fresh playback: the app reports how it reached this channel's server on its next check-in.
+            private_dns_used: null,
           }).eq("id", device.id);
           return json({ ok: true, took_over: clash.length, warning });
         }

@@ -24,6 +24,14 @@ final class PrivateDns {
     static final int TIMEOUT_MS = 3000;
     static volatile boolean enabled = true;
 
+    /** True once a provider-list lookup went through Private DNS; reset when the switch changes. */
+    static volatile boolean listUsed;
+
+    /** What the check-in tells the website about the playback: the stream's own lookup wins over the list's. */
+    static String reported(boolean streamViaPrivate, boolean listViaPrivate) {
+        return streamViaPrivate ? "stream" : listViaPrivate ? "list" : null;
+    }
+
     interface Fetcher { String fetch(String url, int timeoutMs) throws Exception; }
     static Fetcher fetcher = PrivateDns::httpGet;
 
@@ -53,7 +61,7 @@ final class PrivateDns {
         return null;
     }
 
-    static void clear() { cache.clear(); ips.clear(); }
+    static void clear() { cache.clear(); ips.clear(); listUsed = false; }
 
     private static String httpGet(String url, int timeoutMs) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();

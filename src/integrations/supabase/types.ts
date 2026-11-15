@@ -6342,6 +6342,7 @@ export type Database = {
           pin_lock_level: number
           pin_locked_until: string | null
           platform: string
+          private_dns_used: string | null
           remote_unlock_at: string | null
           stream_claimed_at: string | null
           stream_stop_at: string | null
@@ -6392,6 +6393,7 @@ export type Database = {
           pin_lock_level?: number
           pin_locked_until?: string | null
           platform?: string
+          private_dns_used?: string | null
           remote_unlock_at?: string | null
           stream_claimed_at?: string | null
           stream_stop_at?: string | null
@@ -6442,6 +6444,7 @@ export type Database = {
           pin_lock_level?: number
           pin_locked_until?: string | null
           platform?: string
+          private_dns_used?: string | null
           remote_unlock_at?: string | null
           stream_claimed_at?: string | null
           stream_stop_at?: string | null
