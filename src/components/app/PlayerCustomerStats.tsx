@@ -1,5 +1,5 @@
 import { Component, Suspense, useEffect, useState, type ReactNode } from 'react';
-import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -64,7 +64,7 @@ function Stats({ userId }: { userId: string }) {
    return <div key={device.id} className="flex flex-wrap items-center gap-3 text-sm"><strong className="break-words">{device.watching_title}</strong><Bars strength={rel} title="Reported stalls and reconnects in this viewing session; reports may arrive after the interruption." />{rating && <span className="text-xs font-semibold">Channel connection: {rating} · Ping {(device as { net_ping_ms?: number | null }).net_ping_ms} ms</span>}{speed !== null ? <span className="text-xs text-muted-foreground">Stream download: {mbps(speed)} · Updated {time(reading?.speed_latest_at ?? device.last_seen_at)} UK</span> : <span className="text-xs text-muted-foreground">Waiting for a fresh download reading</span>}</div>;
   })}
   {!data.devices.some(device => device.watching_title && !device.watching_preview) && <p className="text-sm text-muted-foreground">Not watching now</p>}
- </div><Tabs value={day} onValueChange={setDay}>
+ </div><ConnectionHistory userId={userId} buffers={data.buffers} /><Tabs value={day} onValueChange={setDay}>
   <TabsList className="h-auto flex-wrap justify-start gap-1">{days.map(d => <TabsTrigger key={d} value={d}>{label(d)}</TabsTrigger>)}</TabsList>
   {days.map(d => <TabsContent key={d} value={d} className="space-y-5">
    {d === days[0] && data.devices.some(x => x.watching_title && !x.watching_preview) && <p className="text-sm font-semibold text-success">Watching now: {data.devices.filter(x => x.watching_title && !x.watching_preview).map(x => x.watching_title).join(' · ')}</p>}
@@ -80,4 +80,34 @@ function Stats({ userId }: { userId: string }) {
    <div className="overflow-x-auto border-t border-border pt-3"><table className="w-full text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="p-3">IP</th><th className="p-3">Location</th><th className="p-3">Flags</th></tr></thead><tbody>{[...new Map(rows.map(r=>[`${r.last_ip}:${r.geo_city}:${r.vpn_status}`,r])).values()].map(r=><tr key={r.id} className="border-t border-border"><td className="p-3 font-mono text-xs">{r.last_ip || 'Unknown'}</td><td className="p-3">{[r.geo_city,r.geo_country].filter(Boolean).join(', ') || 'Unknown'}</td><td className="p-3">{r.vpn_status==='yes'?'VPN':r.vpn_status==='no'?'No VPN':'Unknown'}</td></tr>)}</tbody></table></div>
   </TabsContent>)}
  </Tabs></>;
+}
+const HISTORY_PAGE = 5;
+/** Every full-screen connection, newest first: 5 per page with numbered pages. */
+function ConnectionHistory({ userId, buffers }: { userId: string; buffers: { device_id: string; content_name: string; stall_ms: number; occurred_at: string; reconnected: boolean }[] }) {
+ const [page, setPage] = useState(0);
+ const { data } = useQuery({ queryKey: ['player-connection-sessions', userId, page], refetchInterval: 15000, queryFn: async () => {
+  const r = await supabase.from('player_connection_sessions').select('*', { count: 'exact' }).eq('user_id', userId).order('started_at', { ascending: false }).range(page * HISTORY_PAGE, page * HISTORY_PAGE + HISTORY_PAGE - 1);
+  if (r.error) throw new Error('Could not load connection history.');
+  return { rows: r.data ?? [], count: r.count ?? 0 };
+ } });
+ const pages = Math.max(1, Math.ceil((data?.count ?? 0) / HISTORY_PAGE));
+ const t = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+ return <div className="space-y-2 border-b border-border py-3">
+  <h3 className="text-sm font-semibold">Full-screen connections · newest first</h3>
+  {!data?.rows.length ? <p className="text-sm text-muted-foreground">{data ? 'No full-screen connections recorded yet.' : 'Loading…'}</p> :
+  <div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="p-2">Started · UK</th><th className="p-2">Watched</th><th className="p-2">Channel connection</th><th className="p-2">Ping (low–high)</th><th className="p-2">Download</th><th className="p-2">Buffering</th><th className="p-2">Device / login</th></tr></thead>
+  <tbody>{data.rows.map(r => {
+   const from = Date.parse(r.started_at), to = Date.parse(r.last_seen_at) + 60000;
+   const ev = buffers.filter(b => b.device_id === r.device_id && b.content_name === r.title && Date.parse(b.occurred_at) >= from && Date.parse(b.occurred_at) <= to);
+   const recon = ev.filter(e => e.reconnected).length;
+   const rel: Strength = recon >= 3 ? { level: 'very_weak', bars: 1, label: '' } : ev.length >= 3 || recon >= 2 ? { level: 'weak', bars: 2, label: '' } : ev.length ? { level: 'ok', bars: 3, label: '' } : { level: 'strong', bars: 4, label: '' };
+   const rating = channelLinkRating(r.ping_last, rel);
+   return <tr key={r.id} className="border-b border-border"><td className="whitespace-nowrap p-2">{t(r.started_at)}</td><td className="p-2"><strong className="break-words">{r.title}</strong><span className="block text-xs text-muted-foreground">{r.kind}</span></td>
+    <td className="p-2 font-semibold">{rating ?? 'No ping'}</td>
+    <td className="whitespace-nowrap p-2">{r.ping_last != null ? `${r.ping_last} ms` : '—'}{r.ping_min != null && r.ping_max != null && <span className="block text-xs text-muted-foreground">{r.ping_min}–{r.ping_max} ms</span>}</td>
+    <td className="whitespace-nowrap p-2">{r.speed_last_kbps ? mbps(r.speed_last_kbps) : '—'}</td>
+    <td className="whitespace-nowrap p-2">{ev.length ? `${ev.length}×` : 'None'}</td>
+    <td className="p-2">{r.login || '—'}</td></tr>; })}</tbody></table></div>}
+  {pages > 1 && <nav className="flex flex-wrap gap-1" aria-label="Connection history pages">{Array.from({ length: pages }, (_, i) => <button key={i} type="button" onClick={() => setPage(i)} aria-current={i === page ? 'page' : undefined} className={`min-w-8 rounded-md border px-2 py-1 text-xs ${i === page ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'}`}>{i + 1}</button>)}</nav>}
+ </div>;
 }

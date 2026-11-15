@@ -913,6 +913,12 @@ export const Route = createFileRoute("/api/public/player")({
             _device: activity._device, _user: activity._user, _kind: activity._kind, _title: activity._title,
             _speed: body.speed_kbps ?? 0, _bitrate: body.bitrate_kbps ?? 0 });
         }
+        // Full-screen connection history: one row per playback session (previews excluded).
+        if (device.watching_title && device.watching_since && !device.watching_preview && (body.ping_ms != null || body.speed_kbps))
+          await supabaseAdmin.rpc("record_player_connection_session", {
+            _device: device.id, _user: device.user_id, _title: device.watching_title, _kind: device.watching_kind ?? "",
+            _login: body.login || device.iptv_username || "", _started: device.watching_since,
+            _ping: body.ping_ms ?? null, _speed: body.speed_kbps ?? 0 } as never);
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({
           linked: !!(device.user_id || device.offsite_customer_id),

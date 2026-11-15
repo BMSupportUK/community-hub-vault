@@ -6179,6 +6179,54 @@ export type Database = {
           },
         ]
       }
+      player_connection_sessions: {
+        Row: {
+          device_id: string
+          id: string
+          kind: string | null
+          last_seen_at: string
+          login: string | null
+          ping_last: number | null
+          ping_max: number | null
+          ping_min: number | null
+          samples: number
+          speed_last_kbps: number | null
+          started_at: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          device_id: string
+          id?: string
+          kind?: string | null
+          last_seen_at?: string
+          login?: string | null
+          ping_last?: number | null
+          ping_max?: number | null
+          ping_min?: number | null
+          samples?: number
+          speed_last_kbps?: number | null
+          started_at: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          device_id?: string
+          id?: string
+          kind?: string | null
+          last_seen_at?: string
+          login?: string | null
+          ping_last?: number | null
+          ping_max?: number | null
+          ping_min?: number | null
+          samples?: number
+          speed_last_kbps?: number | null
+          started_at?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       player_customer_daily_stats: {
         Row: {
           bitrate_kbps: number | null
@@ -11126,6 +11174,19 @@ export type Database = {
         Returns: undefined
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
+      record_player_connection_session: {
+        Args: {
+          _device: string
+          _kind: string
+          _login: string
+          _ping: number
+          _speed: number
+          _started: string
+          _title: string
+          _user: string
+        }
+        Returns: undefined
+      }
       record_player_watch_activity: {
         Args: {
           _category: string
