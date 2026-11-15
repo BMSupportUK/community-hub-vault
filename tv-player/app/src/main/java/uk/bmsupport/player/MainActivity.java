@@ -178,6 +178,7 @@ public class MainActivity extends Activity {
         };
         PlayerActivity.loadHeavy(this);
         prefs = getSharedPreferences("bmplayer", MODE_PRIVATE);
+        PrivateDns.enabled = prefs.getBoolean(PrivateDns.PREF, true);
         if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         start();
@@ -3762,6 +3763,14 @@ public class MainActivity extends Activity {
                     .setMessage(null).setNegativeButton("Cancel", null).show();
             Toast.makeText(this, "Guide times are slot times and recordings often begin early. Catch up opens this many minutes after the listed start. If the show before is still on, press Skip ahead 2 min; BM Player remembers where that channel really starts next time.", Toast.LENGTH_LONG).show();
         }));
+        boolean pdns = prefs.getBoolean(PrivateDns.PREF, true);
+        boxes.add(settingBox("🕶", "Private DNS: " + (pdns ? "On" : "Off"), "Hides lookups from your broadband provider", v ->
+                new AlertDialog.Builder(this).setTitle("Private DNS")
+                        .setMessage("Hides which servers you look up from your broadband provider, and gets round provider blocks on channel lists and the TV guide. Your IP address is still visible to the channel server, and it does not change your location. It is not a VPN.")
+                        .setPositiveButton(pdns ? "Switch off" : "Switch on", (d, w) -> {
+                            prefs.edit().putBoolean(PrivateDns.PREF, !pdns).apply();
+                            PrivateDns.enabled = !pdns; PrivateDns.clear(); showSettings(); })
+                        .setNegativeButton("Cancel", null).show()));
         advanced.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
         advanced.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));

@@ -21,8 +21,17 @@ final class Net {
     static String postJson(String url, String body) throws Exception { return send("POST", url, body, null); }
 
     private static String send(String method, String url, String body, Progress p) throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        URL u = new URL(url);
+        String hostHeader = null;
+        // Private DNS for provider lists (plain http only; https needs the real name for its certificate).
+        if (PrivateDns.enabled && !url.startsWith(SITE) && "http".equals(u.getProtocol())) {
+            String ip = PrivateDns.resolve(u.getHost());
+            if (ip != null) { hostHeader = u.getPort() > 0 ? u.getHost() + ":" + u.getPort() : u.getHost();
+                u = new URL("http", ip, u.getPort(), u.getFile()); }
+        }
+        HttpURLConnection c = (HttpURLConnection) u.openConnection();
         c.setRequestMethod(method);
+        if (hostHeader != null) { c.setInstanceFollowRedirects(true); c.setRequestProperty("Host", hostHeader); }
         c.setConnectTimeout(15000);
         c.setReadTimeout(30000);
         c.setRequestProperty("User-Agent", "BMPlayer/1.0");
