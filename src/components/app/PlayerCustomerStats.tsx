@@ -3,8 +3,10 @@ import { useQuery, useQueryClient, useSuspenseQuery } from '@tanstack/react-quer
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { customerStatsDays, customerStatsSegments, connectionStrength, playbackReliability, latestConnectionReading, mbps, channelLinkRating, type Strength } from '@/lib/player-customer-stats';
+import { customerStatsDays, customerStatsSegments, playbackReliability, latestConnectionReading, mbps, channelLinkRating, type Strength } from '@/lib/player-customer-stats';
 import { viewingDuration } from '@/lib/player-watch-activity';
+import { Button } from '@/components/ui/button';
+import { connectionDayRange, CONNECTION_HISTORY_PAGE_SIZE } from '@/lib/player-connection-session';
 
 const colors = ['var(--accent)', 'var(--success)', 'var(--warning)', 'var(--destructive)', 'var(--primary)', 'var(--muted-foreground)'];
 const time = (iso: string) => new Date(iso).toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit' });
@@ -60,8 +62,6 @@ function Stats({ userId }: { userId: string }) {
  const [day, setDay] = useState(days[0]);
  const rows = data.rows.filter(row => row.day === day), segments = customerStatsSegments(rows);
  const total = segments.reduce((sum, row) => sum+row.seconds, 0);
- const ukDay = (iso: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date(iso));
- const buf = (r: { device_id: string; title: string; day: string }) => { const list = data.buffers.filter(b => b.device_id === r.device_id && b.content_name === r.title && ukDay(b.occurred_at) === r.day); return { count: list.length, ms: list.reduce((s, b) => s + Number(b.stall_ms), 0) }; };
  return <><div className="space-y-3 border-b border-border py-3">
   <h3 className="text-sm font-semibold">Playback reliability · Last 5 minutes reported</h3>
   {data.devices.filter(device => device.watching_title && !device.watching_preview).map(device => {
@@ -78,7 +78,7 @@ function Stats({ userId }: { userId: string }) {
    </div>;
   })}
   {!data.devices.some(device => device.watching_title && !device.watching_preview) && <p className="text-sm text-muted-foreground">Not watching now</p>}
- </div><ConnectionHistory userId={userId} buffers={data.buffers} /><Tabs value={day} onValueChange={setDay}>
+ </div><Tabs value={day} onValueChange={setDay}>
   <TabsList className="h-auto flex-wrap justify-start gap-1">{days.map(d => <TabsTrigger key={d} value={d}>{label(d)}</TabsTrigger>)}</TabsList>
   {days.map(d => <TabsContent key={d} value={d} className="space-y-5">
    {d === days[0] && data.devices.some(x => x.watching_title && !x.watching_preview) && <p className="text-sm font-semibold text-success">Watching now: {data.devices.filter(x => x.watching_title && !x.watching_preview).map(x => x.watching_title).join(' · ')}</p>}
@@ -89,18 +89,19 @@ function Stats({ userId }: { userId: string }) {
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-20 text-center"><span className="text-sm text-muted-foreground">Total viewed</span><strong className="text-xl tabular-nums">{viewingDuration(total)}</strong></div>
      </div><dl className="max-h-96 space-y-3 overflow-y-auto">{segments.length ? segments.map((s,i)=><div key={`${s.kind}:${s.title}`} className="flex justify-between gap-3 text-sm"><dt className="min-w-0 break-words"><svg className="mr-2 inline size-3" aria-hidden="true"><circle cx="6" cy="6" r="6" fill={colors[i%colors.length]} /></svg>{s.title}</dt><dd className="shrink-0 text-right tabular-nums"><strong>{s.percent.toFixed(1)}%</strong><span className="block text-xs text-muted-foreground">{viewingDuration(s.seconds)}</span></dd></div>) : <p className="text-sm text-muted-foreground">Nothing recorded on this day.</p>}</dl>
     </div></TabsContent>
-    <TabsContent value="details"><div className="overflow-x-auto"><table className="w-full text-sm"><thead className="border-b border-border text-left text-xs text-muted-foreground"><tr><th className="p-3">Watched</th><th className="p-3">Time viewed</th><th className="p-3">Connection</th><th className="p-3">Buffering</th><th className="p-3">Last seen · UK</th><th className="p-3">Device / login</th></tr></thead><tbody>{rows.map(r=>{ const live = d === days[0] ? latestConnectionReading(r, data.devices.find(device => device.id === r.device_id)) : null, b = buf(r); return <tr key={r.id} className="border-b border-border"><td className="p-3"><strong className="block break-words">{r.title}</strong><span className="text-xs text-muted-foreground">{r.category || r.kind}</span></td><td className="whitespace-nowrap p-3">{viewingDuration(Number(r.seconds))}</td><td className="p-3">{live !== null ? <><Bars strength={connectionStrength(live, r.bitrate_kbps)} /><span className="block text-xs text-muted-foreground">{mbps(live)} · Live</span></> : <span className="text-xs text-muted-foreground">{r.speed_latest_kbps !== null && r.speed_latest_at ? `Last reading: ${mbps(r.speed_latest_kbps)} · ${time(r.speed_latest_at)} UK` : 'No reading'}</span>}</td><td className="whitespace-nowrap p-3">{b.count ? `${b.count}× · ${viewingDuration(Math.round(b.ms/1000))} frozen` : 'None'}</td><td className="p-3">{time(r.last_watched_at)}</td><td className="p-3">{r.platform}<span className="block text-xs text-muted-foreground">{r.login}</span></td></tr>; })}</tbody></table>{!rows.length && <p className="p-3 text-sm text-muted-foreground">Nothing recorded on this day.</p>}</div></TabsContent>
+    <TabsContent value="details"><ConnectionHistory key={`${userId}:${d}`} userId={userId} day={d} buffers={data.buffers} /></TabsContent>
    </Tabs>
    <div className="overflow-x-auto border-t border-border pt-3"><table className="w-full text-sm"><thead className="text-left text-xs text-muted-foreground"><tr><th className="p-3">IP</th><th className="p-3">Location</th><th className="p-3">Flags</th></tr></thead><tbody>{[...new Map(rows.map(r=>[`${r.last_ip}:${r.geo_city}:${r.vpn_status}`,r])).values()].map(r=><tr key={r.id} className="border-t border-border"><td className="p-3 font-mono text-xs">{r.last_ip || 'Unknown'}</td><td className="p-3">{[r.geo_city,r.geo_country].filter(Boolean).join(', ') || 'Unknown'}</td><td className="p-3">{r.vpn_status==='yes'?'VPN':r.vpn_status==='no'?'No VPN':'Unknown'}</td></tr>)}</tbody></table></div>
   </TabsContent>)}
  </Tabs></>;
 }
-const HISTORY_PAGE = 5;
+const HISTORY_PAGE = CONNECTION_HISTORY_PAGE_SIZE;
 /** Every full-screen connection, newest first: 5 per page with numbered pages. */
-function ConnectionHistory({ userId, buffers }: { userId: string; buffers: { device_id: string; content_name: string; stall_ms: number; occurred_at: string; reconnected: boolean }[] }) {
+function ConnectionHistory({ userId, day, buffers }: { userId: string; day: string; buffers: { device_id: string; content_name: string; stall_ms: number; occurred_at: string; reconnected: boolean }[] }) {
  const [page, setPage] = useState(0);
- const { data } = useQuery({ queryKey: ['player-connection-sessions', userId, page], refetchInterval: 15000, queryFn: async () => {
-  const r = await supabase.from('player_connection_sessions').select('*', { count: 'exact' }).eq('user_id', userId).order('started_at', { ascending: false }).range(page * HISTORY_PAGE, page * HISTORY_PAGE + HISTORY_PAGE - 1);
+ const { data, isError } = useQuery({ queryKey: ['player-connection-sessions', userId, day, page], refetchInterval: 15000, queryFn: async () => {
+  const { from, to } = connectionDayRange(day);
+  const r = await supabase.from('player_connection_sessions').select('*', { count: 'exact' }).eq('user_id', userId).gte('started_at', from).lt('started_at', to).order('started_at', { ascending: false }).range(page * HISTORY_PAGE, page * HISTORY_PAGE + HISTORY_PAGE - 1);
   if (r.error) throw new Error('Could not load connection history.');
   return { rows: r.data ?? [], count: r.count ?? 0 };
  } });
@@ -108,7 +109,7 @@ function ConnectionHistory({ userId, buffers }: { userId: string; buffers: { dev
  const t = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
  return <div className="space-y-2 border-b border-border py-3">
   <h3 className="text-sm font-semibold">Full-screen connections · newest first</h3>
-  {!data?.rows.length ? <p className="text-sm text-muted-foreground">{data ? 'No full-screen connections recorded yet.' : 'Loading…'}</p> :
+  {isError ? <p role="alert" className="text-sm text-destructive">Could not load connection history.</p> : !data?.rows.length ? <p className="text-sm text-muted-foreground">{data ? 'No full-screen connections recorded on this day.' : 'Loading…'}</p> :
   <ul className="space-y-2">{data.rows.map(r => {
     const from = Date.parse(r.started_at), to = Date.parse(r.last_seen_at) + 60000;
    const ev = buffers.filter(b => b.device_id === r.device_id && b.content_name === r.title && Date.parse(b.occurred_at) >= from && Date.parse(b.occurred_at) <= to);
@@ -124,6 +125,6 @@ function ConnectionHistory({ userId, buffers }: { userId: string; buffers: { dev
     <Pill label="Buffering">{ev.length ? `${ev.length}×` : 'None'}</Pill>
     <Pill label="Device / login">{r.login || '—'}</Pill>
    </li>; })}</ul>}
-  {pages > 1 && <nav className="flex flex-wrap gap-1" aria-label="Connection history pages">{Array.from({ length: pages }, (_, i) => <button key={i} type="button" onClick={() => setPage(i)} aria-current={i === page ? 'page' : undefined} className={`min-w-8 rounded-md border px-2 py-1 text-xs ${i === page ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted'}`}>{i + 1}</button>)}</nav>}
+  {pages > 1 && <nav className="flex flex-wrap gap-1" aria-label="Connection history pages">{Array.from({ length: pages }, (_, i) => <Button key={i} type="button" size="sm" variant={i === page ? 'default' : 'outline'} onClick={() => setPage(i)} aria-current={i === page ? 'page' : undefined} className="min-w-8">{i + 1}</Button>)}</nav>}
  </div>;
 }

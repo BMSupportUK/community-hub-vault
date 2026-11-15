@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Move full-screen history into Details, retaining five-per-page UK-day records; record the current full-screen start without waiting for metrics and exclude previews. 22 focused tests pass.
+- [ ] Verify populated Details on the signed-in customer screen; existing account security gate prevents access, and a physical player is unavailable for new-start verification.
+
 - [x] Improve Android broadband test with longer measured transfers, setup-time exclusion and visible phase progress; 356 Android tests pass. Stream traffic remains separate from broadband capacity.
 - [ ] Build/release the improved broadband test with buffering notices; verify measured speeds on a physical box (no connected box available).
 

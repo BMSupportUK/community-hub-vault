@@ -52,6 +52,7 @@ const Body = z.discriminatedUnion("action", [
       title: z.string().trim().max(200),
       category: z.string().trim().max(120).optional(),
       player: z.string().trim().max(20).optional(),
+      preview: z.boolean().optional(),
       since: z.number().int().positive(),
     }).nullish(),
   }),
@@ -914,11 +915,13 @@ export const Route = createFileRoute("/api/public/player")({
             _speed: body.speed_kbps ?? 0, _bitrate: body.bitrate_kbps ?? 0 });
         }
         // Full-screen connection history: one row per playback session (previews excluded).
-        if (device.watching_title && device.watching_since && !device.watching_preview && (body.ping_ms != null || body.speed_kbps))
-          await supabaseAdmin.rpc("record_player_connection_session", {
-            _device: device.id, _user: device.user_id, _title: device.watching_title, _kind: device.watching_kind ?? "",
-            _login: body.login || device.iptv_username || "", _started: device.watching_since,
-            _ping: body.ping_ms ?? null, _speed: body.speed_kbps ?? 0 } as never);
+        const { connectionSession } = await import('@/lib/player-connection-session');
+        const session = connectionSession(device, fields, body);
+        if (session) {
+          // PostgreSQL accepts null owner/ping values; generated RPC types omit that nullability.
+          const { error } = await supabaseAdmin.rpc("record_player_connection_session", session as never);
+          if (error) console.error('[player poll] connection recording failed', error.code);
+        }
         const fresh = pending && Date.now() - new Date(pending.created_at).getTime() < PENDING_CREDENTIAL_TTL_MS;
         return json({
           linked: !!(device.user_id || device.offsite_customer_id),
