@@ -39,24 +39,9 @@ public class PrivateDnsTest {
         assertNull(PrivateDns.resolve("9.9.9.9"));
     }
 
-    @Test public void reportedPrefersTheStreamsOwnLookup() {
-        assertEquals("stream", PrivateDns.reported(true, true));
-        assertEquals("stream", PrivateDns.reported(true, false));
-        assertEquals("list", PrivateDns.reported(false, true));
-        assertNull(PrivateDns.reported(false, false));
-    }
-
     @Test public void clearingResetsTheListLookupFlag() {
         PrivateDns.listUsed = true;
         PrivateDns.clear();
         assertFalse(PrivateDns.listUsed);
-    }
-
-    @Test public void alwaysModeLeavesSecureAndIpLinksAlone() {
-        PrivateDns.enabled = true;
-        assertNull(StreamDns.preferPrivate("https://example.com/live/1.ts"));
-        assertNull(StreamDns.preferPrivate("http://1.2.3.4/live/1.ts"));
-        PrivateDns.enabled = false;
-        assertNull(StreamDns.preferPrivate("http://example.com/live/1.ts"));
     }
 }

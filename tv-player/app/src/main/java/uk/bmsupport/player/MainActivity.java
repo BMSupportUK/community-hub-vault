@@ -767,10 +767,8 @@ public class MainActivity extends Activity {
                     .put("title", prefs.getString("np_title", "")).put("category", prefs.getString("np_cat", ""))
                     .put("player", prefs.getString("np_player", "BM Player")).put("since", since)
                     .put("preview", prefs.getBoolean("np_preview", false));
-            // Tells the website how this channel reached its server: the stream's own encrypted
-            // lookup wins over the channel list's, and neither is reported when both were normal.
-            String dnsUsed = PrivateDns.reported(prefs.getBoolean("np_dns", false), PrivateDns.listUsed);
-            if (dnsUsed != null) w.put("private_dns", dnsUsed);
+            // Tells the website when the channel list and TV guide were looked up privately.
+            if (PrivateDns.listUsed) w.put("private_dns", "list");
             b.put("watching", w);
         }
         int kbps = WatchSpeed.sample(android.net.TrafficStats.getUidRxBytes(android.os.Process.myUid()), android.os.SystemClock.elapsedRealtime());
@@ -794,12 +792,9 @@ public class MainActivity extends Activity {
     /** Preview playback is flagged so the website shows it on Live connections but never counts it in viewing hours. */
     private void setNowPlaying(Item it, boolean vlc, boolean preview) {
         long since = System.currentTimeMillis();
-        // Preview carried into full screen keeps the same stream, so keep its Private DNS marker.
-        boolean sameStream = it.name != null && it.name.equals(prefs.getString("np_title", null)) && prefs.getLong("np_since", 0) != 0;
-        boolean keepDns = sameStream && prefs.getBoolean("np_dns", false);
         prefs.edit().putString("np_kind", it.kind).putString("np_title", it.name == null ? "" : it.name)
                 .putString("np_cat", "").putString("np_player", vlc ? "VLC" : "BM Player").putLong("np_since", since)
-                .putBoolean("np_preview", preview).remove("channel_link_snapshot").putBoolean("np_dns", keepDns).apply();
+                .putBoolean("np_preview", preview).remove("channel_link_snapshot").apply();
         io.execute(() -> {
             String cat = ""; try { cat = categoryName(it); } catch (Exception ignored) {}
             if (prefs.getLong("np_since", 0) == since) prefs.edit().putString("np_cat", cat == null ? "" : cat).apply();
@@ -809,7 +804,7 @@ public class MainActivity extends Activity {
 
     private void clearNowPlaying() {
         if (prefs.getLong("np_since", 0) == 0) return;
-        prefs.edit().putLong("np_since", 0).putBoolean("np_preview", false).remove("np_host").remove("np_port").remove("np_dns").apply();
+        prefs.edit().putLong("np_since", 0).putBoolean("np_preview", false).remove("np_host").remove("np_port").apply();
         io.execute(this::pollOnce);
     }
 
@@ -3781,15 +3776,6 @@ public class MainActivity extends Activity {
                             prefs.edit().putBoolean(PrivateDns.PREF, !pdns).apply();
                             PrivateDns.enabled = !pdns; PrivateDns.clear(); showSettings(); })
                         .setNegativeButton("Cancel", null).show()));
-        if (pdns) {
-            boolean always = prefs.getBoolean(StreamDns.ALWAYS_PREF, false);
-            boxes.add(settingBox("🕶", "Always use Private DNS for channels: " + (always ? "On" : "Off"), "Look up every channel privately", v ->
-                    new AlertDialog.Builder(this).setTitle("Always use Private DNS for channels")
-                            .setMessage("Every channel looks up its server through Private DNS straight away, instead of only when your broadband blocks it. Some channels may buffer more because the server picked can be further away. Secure (https) channels always use a normal lookup.")
-                            .setPositiveButton(always ? "Switch off" : "Switch on", (d, w) -> {
-                                prefs.edit().putBoolean(StreamDns.ALWAYS_PREF, !always).apply(); showSettings(); })
-                            .setNegativeButton("Cancel", null).show()));
-        }
         advanced.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
         advanced.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));

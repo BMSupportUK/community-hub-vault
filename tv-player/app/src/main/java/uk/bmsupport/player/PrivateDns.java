@@ -27,11 +27,6 @@ final class PrivateDns {
     /** True once a provider-list lookup went through Private DNS; reset when the switch changes. */
     static volatile boolean listUsed;
 
-    /** What the check-in tells the website about the playback: the stream's own lookup wins over the list's. */
-    static String reported(boolean streamViaPrivate, boolean listViaPrivate) {
-        return streamViaPrivate ? "stream" : listViaPrivate ? "list" : null;
-    }
-
     interface Fetcher { String fetch(String url, int timeoutMs) throws Exception; }
     static Fetcher fetcher = PrivateDns::httpGet;
 

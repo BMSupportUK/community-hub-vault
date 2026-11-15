@@ -27,8 +27,4 @@ public class StreamProtectTest {
         r.blocky(0, 0); r.blocky(5, 1000); r.blocky(5, 2000);
         assertFalse(r.blocky(6, 12000));
     }
-    @Test public void streamUrlHostSwappedForIp() {
-        assertEquals("http://1.2.3.4:8080/live/a/b/1.ts", StreamDns.withIp("http://srv.example.com:8080/live/a/b/1.ts", "1.2.3.4"));
-        assertEquals("http://x.com/a", StreamDns.withIp("http://x.com/a", null));
-    }
 }

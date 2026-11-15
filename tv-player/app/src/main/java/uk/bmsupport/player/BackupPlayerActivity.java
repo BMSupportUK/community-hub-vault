@@ -443,17 +443,8 @@ public class BackupPlayerActivity extends Activity {
                 StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
     }
 
-    private boolean alwaysDnsTried;
     private void open() {
         if (mp == null) return;
-        if (isLive() && !alwaysDnsTried && PlayerActivity.prefs(this).getBoolean(StreamDns.ALWAYS_PREF, false)) {
-            // Always use Private DNS for channels: look the stream server up privately before the first open.
-            alwaysDnsTried = true; dnsTried = true; final int idx = at; final String u = urls[idx];
-            new Thread(() -> { String fixed = StreamDns.preferPrivate(u); ui.post(() -> {
-                if (fixed != null) { urls[idx] = fixed; PlayerActivity.prefs(this).edit().putBoolean("np_dns", true).apply(); }
-                if (!isFinishing()) open(); }); }).start();
-            return;
-        }
         reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), true);
         // Count the reconnect before clearing started, otherwise no reconnect is ever recorded.
         if (started || retryQueued) link.reconnected(android.os.SystemClock.elapsedRealtime());
@@ -521,7 +512,6 @@ public class BackupPlayerActivity extends Activity {
     }
 
     private int errors;
-    private boolean dnsTried;
     private final LiveReconnect reconnect = new LiveReconnect();
     private boolean retryQueued;
     private final Runnable retryLive = () -> {
@@ -535,16 +525,6 @@ public class BackupPlayerActivity extends Activity {
             // A channel that drops keeps reconnecting by itself for up to two minutes instead of closing.
             long nowMs = android.os.SystemClock.elapsedRealtime();
             if (reconnect.wantsBackup(nowMs) && PlayerActionControls.autoBackup(this, () -> { if (mp != null) mp.stop(); })) return;
-            if (!started && !dnsTried) {
-                // Never got going: the broadband provider may be blocking the stream server's name.
-                dnsTried = true; final int idx = at; final String u = urls[idx];
-                retryQueued = true;
-                new Thread(() -> { String fixed = StreamDns.unblock(u); ui.post(() -> { if (fixed != null) { urls[idx] = fixed;
-                        // This channel is now reached through an address found by an encrypted lookup.
-                        PlayerActivity.prefs(this).edit().putBoolean("np_dns", true).apply(); }
-                    retryQueued = false; if (!isFinishing()) open(); }); }).start();
-                return;
-            }
             long wait = reconnect.failed(nowMs);
             if (wait >= 0) {
                 String name = getIntent().getStringExtra("content_name");
