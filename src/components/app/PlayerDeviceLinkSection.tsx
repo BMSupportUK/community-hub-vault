@@ -12,7 +12,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BoxVpnColumn } from "./BoxVpnColumn";
 import { notMePlayerDevice, requestPlayerHomeMove, sendLoginToDevice, sendLoginWithCode } from "@/lib/player.functions";
 
 const platformLabel: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Android phone", windows: "Windows PC", mac: "Mac", web: "iPhone / iPad browser" };
@@ -112,7 +111,7 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
         <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">Link Device</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground sm:text-base">Open BM Player to get your 6-digit linking code. Enter the app’s code below and press Link this device. Linked devices stay signed in.</p>
       </div>
-      <div className="mt-6 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <form onSubmit={submit} className="space-y-5 rounded-2xl border border-primary/30 bg-background/55 p-6 shadow-2xl backdrop-blur-md">
           {target ? <div className="flex items-center justify-between rounded-md border border-primary/40 bg-primary/10 p-3 text-sm">
             <span>Sending to <strong>{target.name}</strong></span>
@@ -181,7 +180,6 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
             }}>I've moved / new broadband</Button>
           </div> : null}
         </aside>
-        <BoxVpnColumn boxes={visibleDevices.map((d) => ({ id: d.id, name: readableName(d), platform: d.platform }))} />
       </div>
     </div>
   </section>;
