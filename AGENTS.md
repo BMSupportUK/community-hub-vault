@@ -39,7 +39,7 @@
 - Manual registration exceptions persist on checkout links, enforced by admin-only RPCs and a write trigger; creation saves atomically and PIN access remains independent.
 <!-- LOVABLE:END -->
 - playSound resolves uploaded overrides for all web callers; closed-app Android tones require an APK rebuild.
-- Tests run with `bun run test` (isolated per file so mock.module never leaks; e2e specs excluded, run via test:e2e); no Vitest APIs; restore swapped globals.
+- Tests: `bun run test` (per-file isolation; e2e via test:e2e); no Vitest APIs; restore globals.
 - Customer payment notifications contain no passwords; copy actions fetch through an authenticated owner-only read RPC without changing payment methods.
 - DB triggers give bannerless sports guides a cover; adverts always render, so every save path keeps both.
 - Profit uses pence; unknown fees provisional, known fees fixed. Orders/profit use settled groups; invoice sync repairs rows; demos never affect totals. Stripe retries missing resources across accounts. Pay by bank provider is a server-resolved app setting, GoCardless only when its secrets exist (switch without rebuild).
