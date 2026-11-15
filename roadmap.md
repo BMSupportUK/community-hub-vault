@@ -1,7 +1,7 @@
 # Roadmap
 
 - [x] Released all three apps: Android 5.56 (367), Windows 0.4.102, Mac 0.1.105; each built, obfuscated/packaged, signed, uploaded and switched to current in app_builds. Download endpoints report the new versions.
-- [ ] Publish the website so the exact rating rules and Details connection history go live (previous publish attempt did not start).
+- [x] Publish the website so the exact rating rules and Details connection history go live; publish scheduled 15 Nov 2026, site responds 200 at https://bmsupport.uk.
 
 - [x] Align website ratings with the box's exact two-minute ping/stall/reconnect/delivery snapshot; prepare atomic playback-bound player reporting. 15 website tests and six Android ChannelLink tests pass; website build OK.
 - [x] Requested website publication for the exact rating rules on 15 Nov 2026; deployment completion is not yet confirmed.
