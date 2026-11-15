@@ -1,2 +1,3 @@
 - Direct Install step buttons and Next share directStepAccess derived from the active run reports; navigation never creates completion, so unconfirmed steps cannot be skipped while earlier confirmed instructions remain accessible.
 - Customer subscription-card live viewing shares one cached device poll across cards and scopes displayed rows to the owner and credential, avoiding a separate request per card.
+- Member-home stream information reuses the live viewing panel beneath subscriptions with a separate owner/credential-keyed read, so customer sessions never reuse the admin-wide device cache.

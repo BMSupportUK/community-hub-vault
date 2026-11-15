@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Restore member-home stream information immediately beneath Subscription Details, using owner/profile-scoped live devices and showing title, category, device, player, elapsed playback and measured stream connection.
+
 - [x] Built, BM-signed and publicly released Android 5.45 (356) with both warning corrections; 339 Android tests and ten timer/watchdog checks pass. Public updater reports 5.45 and installer matches SHA-256 18481c5641997be7421aeaaadd75c04d441330a17a89781dc0fe191c6f64a3b8. Crash mapping retained privately.
 - [x] Traced automatic crashes to next-open delivery using the device's linked website owner (not an active provider login); reproduced detached warning exit failure and fixed both exit and destroyed-owner cleanup with explicit dialog ownership. Included in public 5.45.
 - [x] Correct Android's unanswered inactivity exit with an independent shutdown deadline; ten timer/watchdog checks pass, including blocked screen shutdown and cancelling on Continue viewing.
