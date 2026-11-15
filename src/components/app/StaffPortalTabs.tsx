@@ -12,7 +12,7 @@ import { AccountNumberPill } from "@/components/app/AccountNumberPill";
 import { LockNowPill } from "@/components/app/ScreenLockProvider";
 import { SwitchProfilePill, useProfilePortal } from "@/components/app/AccountProfiles";
 import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
-import { adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
+import { adminPanelLabel, adminPanelToolAllowed, canOpenAdminPanel } from "@/lib/admin-panel-access";
 import { canOpenTvRemoteOverview } from "@/lib/tv-remote";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -56,7 +56,7 @@ export function StaffPortalTabs() {
           </Button>
         </TooltipTrigger><TooltipContent>{adminPanelLabel(roles)}</TooltipContent></Tooltip>
       )}
-      {(roles.includes("admin") || roles.includes("management")) && (
+      {adminPanelToolAllowed({ to: "/admin-player" }, roles, perms) && (
         <Tooltip><TooltipTrigger asChild>
           <Button asChild variant={p.startsWith("/admin-player") ? "default" : "ghost"} size="icon">
             <Link to="/admin-player" aria-label="BM Player Admin Dashboard"><TvMinimalPlay className="size-4" /></Link>
