@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Correct Android's unanswered inactivity exit with an independent shutdown deadline; ten timer/watchdog checks pass, including blocked screen shutdown and cancelling on Continue viewing. No installer built or publicly released.
+- [ ] Verify the unanswered warning closes on a physical TV box; blocked by no connected box.
+
 - [x] Built and publicly released BM-signed Android 5.36 (347) with pending preview layering, search entry and proper on-request speed-test fixes; 326 tests pass. Public updater reports 5.36; public download matches SHA-256 21a9b9824a83b86be20aeb8b701e35087971b87af88d1678d0f2a7cfda15c187. Real-box playback and Fire TV microphone dictation remain unverified because no box is connected.
 
 - [x] Fire TV voice entry bypasses Amazon speech activities and clears keyboard-blocking flags after the search dialog opens; 16 focused Android tests pass. No new installer released.

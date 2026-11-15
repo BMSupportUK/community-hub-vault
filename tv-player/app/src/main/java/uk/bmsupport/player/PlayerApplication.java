@@ -20,6 +20,7 @@ public final class PlayerApplication extends Application implements Application.
     private final List<Activity> activities = new ArrayList<>();
     private Activity foreground;
     private AlertDialog prompt;
+    private final InactivityWatchdog inactivityExit = new InactivityWatchdog();
     private long lastInput = SystemClock.elapsedRealtime(), promptedAt = -1;
     private boolean exiting;
     // Admin announcement shown along the bottom of whichever screen is open, refreshed every 15s.
@@ -41,7 +42,7 @@ public final class PlayerApplication extends Application implements Application.
     static final int MAJOR_ICON_SLOT_DP = 64;
     static void interaction(Activity activity) {
         PlayerApplication app = (PlayerApplication) activity.getApplication();
-        if (app.prompt == null) app.lastInput = SystemClock.elapsedRealtime();
+        if (app.promptedAt < 0 && !app.exiting) app.lastInput = SystemClock.elapsedRealtime();
     }
     @Override public void onCreate() {
         super.onCreate(); registerActivityLifecycleCallbacks(this);
@@ -70,10 +71,19 @@ public final class PlayerApplication extends Application implements Application.
         }
         Activity a = foreground;
         if (a == null || a.isFinishing() || !InactivityPolicy.prompt(lastInput, now)) return;
-        if (promptedAt < 0) promptedAt = now;
+        if (promptedAt < 0) {
+            promptedAt = now;
+            inactivityExit.arm(InactivityPolicy.RESPONSE_MS,
+                    () -> ui.post(this::exitToHome),
+                    () -> android.os.Process.killProcess(android.os.Process.myPid()));
+        }
         prompt = new AlertDialog.Builder(a).setTitle("Still watching?")
                 .setMessage("Continue viewing?")
-                .setPositiveButton("Continue viewing", (d, w) -> { prompt = null; promptedAt = -1; lastInput = SystemClock.elapsedRealtime(); })
+                .setPositiveButton("Continue viewing", (d, w) -> {
+                    long answeredAt = SystemClock.elapsedRealtime();
+                    if (exiting || InactivityPolicy.exit(promptedAt, answeredAt)) { exitToHome(); return; }
+                    inactivityExit.cancel(); prompt = null; promptedAt = -1; lastInput = answeredAt;
+                })
                 .setNegativeButton("Close app", (d, w) -> exitToHome())
                 .setCancelable(false).create();
         prompt.setOnShowListener(d -> { if (prompt != null) prompt.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus(); });
@@ -300,7 +310,11 @@ public final class PlayerApplication extends Application implements Application.
         return true;
     }
     private void exitToHome() {
+        if (exiting) return;
         exiting = true;
+        // Arm before touching activities: native video cleanup can block the main thread.
+        inactivityExit.cancel();
+        inactivityExit.arm(0, () -> {}, () -> android.os.Process.killProcess(android.os.Process.myPid()));
         pinPassed = false;
         promptedAt = -1;
         if (prompt != null) { prompt.dismiss(); prompt = null; }
@@ -308,10 +322,8 @@ public final class PlayerApplication extends Application implements Application.
         getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putLong("np_since", 0).apply();
         try { startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
         catch (Exception ignored) {}
-        // Make sure the app really closes even if a screen refused to finish: end the process shortly after.
-        ui.postDelayed(() -> android.os.Process.killProcess(android.os.Process.myPid()), 1500);
     }
-    @Override public void onActivityCreated(Activity a, Bundle b) { if (exiting) { exiting = false; lastInput = SystemClock.elapsedRealtime(); } activities.add(a); if (!(a instanceof IntroActivity)) FrameRateMatch.prefer50(a); }
+    @Override public void onActivityCreated(Activity a, Bundle b) { if (exiting) { a.finishAndRemoveTask(); return; } activities.add(a); if (!(a instanceof IntroActivity)) FrameRateMatch.prefer50(a); }
     @Override public void onActivityResumed(Activity a) { foreground = a; showAnnouncement(); showMajorIcon(); }
     @Override public void onActivityPaused(Activity a) { if (foreground == a) foreground = null; }
     @Override public void onActivityDestroyed(Activity a) {
