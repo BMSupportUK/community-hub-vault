@@ -59,6 +59,7 @@ const Body = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("vpn"), device_token: Token }),
+  z.object({ action: z.literal("vpn_command"), device_token: Token, command: z.enum(["best", "on", "off"]) }),
   z.object({ action: z.literal("vpn_status"), device_token: Token, status: z.enum(["connecting", "on", "off", "failed"]), server: z.string().trim().max(120).optional(), detail: z.string().trim().max(200).optional(), bad_server: z.boolean().optional() }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
@@ -416,6 +417,14 @@ export const Route = createFileRoute("/api/public/player")({
           if (built.server !== cfg.server || cfg.reselect_at) await supabaseAdmin.from("player_vpn_configs").update({ server: built.server, reselect_at: null, status: "connecting", status_detail: null }).eq("device_id", device.id);
           // "rev" changes whenever the server changes, so the box knows to reconnect.
           return json({ vpn: { enabled: true, provider: prov.id, provider_name: prov.name, server: built.server, load: built.load, config: built.config } });
+        }
+
+        if (body.action === "vpn_command") {
+          // The box's own home-screen icons: best server now, or switch the VPN on/off.
+          const now = new Date().toISOString();
+          const patch = body.command === "off" ? { enabled: false, updated_at: now } : body.command === "on" ? { enabled: true, updated_at: now } : { enabled: true, reselect_at: now, updated_at: now };
+          await supabaseAdmin.from("player_vpn_configs").update(patch).eq("device_id", device.id);
+          return json({ ok: true });
         }
 
         if (body.action === "vpn_status") {

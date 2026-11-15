@@ -23,7 +23,25 @@ final class BoxVpn {
         @Override public void onStateChange(State s) { }
     };
 
+    /** Last website answer, so the home screen knows whether to show the VPN icons. */
+    static volatile boolean present, enabled;
+    static volatile String server = "";
+
     private BoxVpn() { }
+
+    /** Home-screen VPN icons: "best" = move to the best server now, "on"/"off" = switch the VPN. */
+    static void command(Activity a, String token, String what, Runnable after) {
+        new Thread(() -> {
+            try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", what).toString()); } catch (Exception ignored) { }
+            sync(a, token);
+            if (after != null) a.runOnUiThread(after);
+        }).start();
+    }
+
+    /** Label for the on/off icon. */
+    static String toggleLabel(boolean enabled, boolean running) {
+        return enabled ? (running ? "🔒 VPN: On" : "🔒 VPN: Connecting") : "🔓 VPN: Off";
+    }
 
     /** What to do with the website's answer: switch on a new setup, switch off, or leave it running. */
     static Step decide(boolean present, boolean enabled, String config, String running) {
@@ -38,6 +56,7 @@ final class BoxVpn {
             JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn").put("device_token", token).toString()));
             JSONObject v = r.optJSONObject("vpn");
             String config = v == null ? null : v.optString("config", "");
+            present = v != null; enabled = v != null && v.optBoolean("enabled"); server = v == null ? "" : v.optString("server", "");
             Step s = decide(v != null, v != null && v.optBoolean("enabled"), config, applied);
             if (s == Step.DOWN) { down(a); report(token, "off", null, "Turned off from the website", false); return; }
             if (s != Step.UP) return;

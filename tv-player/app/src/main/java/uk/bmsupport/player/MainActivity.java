@@ -872,7 +872,11 @@ public class MainActivity extends Activity {
             String pb = pollBody().toString();
             JSONObject r = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", pb));
             lastPingMs = streamPingMs();
-            if (hasLogin()) BoxVpn.sync(this, prefs.getString("token", ""));
+            if (hasLogin()) {
+                boolean hadVpn = BoxVpn.present, wasOn = BoxVpn.enabled;
+                BoxVpn.sync(this, prefs.getString("token", ""));
+                if ((hadVpn != BoxVpn.present || wasOn != BoxVpn.enabled) && "home".equals(screen)) ui.post(this::showHome);
+            }
             Checkin.setSlow(r.optInt("slow", 1));
             JSONObject mt = r.optJSONObject("maintenance");
             boolean down = mt != null && mt.optBoolean("enabled");
@@ -1391,6 +1395,22 @@ public class MainActivity extends Activity {
             top.addView(hz);
         }
         top.addView(headerPill("🔍 Search", v -> chooseHomeSearch()));
+        if (BoxVpn.present) {
+            // Only once a VPN has been sent from the website's Link Device page.
+            String tok = prefs.getString("token", "");
+            Button best = headerPill("🌐 Best server", v -> {
+                Toast.makeText(this, "Finding the best VPN server…", Toast.LENGTH_SHORT).show();
+                BoxVpn.command(this, tok, "best", () -> { Toast.makeText(this, BoxVpn.server.isEmpty() ? "VPN server changed" : "VPN server: " + BoxVpn.server, Toast.LENGTH_LONG).show(); if ("home".equals(screen)) showHome(); });
+            });
+            best.setContentDescription("Switch the VPN to the best server available");
+            top.addView(best);
+            Button vpn = headerPill(BoxVpn.toggleLabel(BoxVpn.enabled, BoxVpn.on()), v -> {
+                boolean turnOn = !BoxVpn.enabled;
+                BoxVpn.command(this, tok, turnOn ? "on" : "off", () -> { Toast.makeText(this, turnOn ? "VPN switched on" : "VPN switched off", Toast.LENGTH_SHORT).show(); if ("home".equals(screen)) showHome(); });
+            });
+            vpn.setContentDescription(BoxVpn.enabled ? "VPN is on, press to switch off" : "VPN is off, press to switch on");
+            top.addView(vpn);
+        }
         top.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0); // the 📣 icon has its own corner
         root.addView(top);
         TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
