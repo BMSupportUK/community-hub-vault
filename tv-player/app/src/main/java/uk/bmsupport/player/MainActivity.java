@@ -4195,17 +4195,17 @@ public class MainActivity extends Activity {
     private void speedTest() {
         if (broadbandBusy) return;
         new AlertDialog.Builder(this).setTitle("Broadband speed test")
-                .setMessage("Test against Cloudflare? This can use up to 456 MB of data and may affect playback while testing.")
+                .setMessage("Measure this box's broadband download, upload and response time against Cloudflare? Uses up to 457 MB and may affect anything playing. This is separate from a channel's download rate.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Test", (d, w) -> {
             broadbandBusy = true;
             AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Broadband speed test")
                     .setMessage("Testing download, upload and latency…").setPositiveButton("Close", null).show();
             io.execute(() -> {
                 try {
-                    BroadbandTest.Result r = BroadbandTest.run(); broadbandResult = r;
+                    BroadbandTest.Result r = BroadbandTest.run(message -> ui.post(() -> { if (dlg.isShowing()) dlg.setMessage(message); })); broadbandResult = r;
                     io.execute(this::pollOnce);
                     ui.post(() -> { if (dlg.isShowing()) dlg.setMessage(String.format(java.util.Locale.UK,
-                            "Download: %.1f Mbps\nUpload: %.1f Mbps\nBroadband latency: %d ms\nTest server: Cloudflare",
+                            "Box download: %.1f Mbps\nBox upload: %.1f Mbps\nResponse time: %d ms\nTest server: Cloudflare\n\nMeasured on this box's Wi-Fi or Ethernet connection, not your broadband package's advertised speed.",
                             r.down / 1000.0, r.up / 1000.0, r.ping)); });
                 } catch (Exception e) {
                     ui.post(() -> { if (dlg.isShowing()) dlg.setMessage("Test failed: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()) + "\nCheck the box is online and try again."); });

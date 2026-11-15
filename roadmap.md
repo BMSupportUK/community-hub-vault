@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Improve Android broadband test with longer measured transfers, setup-time exclusion and visible phase progress; 356 Android tests pass. Stream traffic remains separate from broadband capacity.
+- [ ] Build/release the improved broadband test with buffering notices; verify measured speeds on a physical box (no connected box available).
+
 - [x] Add five-minute reported playback reliability from current-session stalls/reconnects, separate from throughput; 20 tests pass and website build OK. Batched device reports mean this is not an instantaneous signal meter.
 - [ ] Publish playback reliability and verify populated customer screen; existing password/PIN gate blocks browser verification.
 
