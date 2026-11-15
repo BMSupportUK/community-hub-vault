@@ -3,7 +3,7 @@ import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { customerStatsDays, customerStatsSegments, connectionStrength, playbackReliability, latestConnectionReading, mbps, type Strength } from '@/lib/player-customer-stats';
+import { customerStatsDays, customerStatsSegments, connectionStrength, playbackReliability, latestConnectionReading, mbps, channelLinkRating, type Strength } from '@/lib/player-customer-stats';
 import { viewingDuration } from '@/lib/player-watch-activity';
 
 const colors = ['var(--accent)', 'var(--success)', 'var(--warning)', 'var(--destructive)', 'var(--primary)', 'var(--muted-foreground)'];
@@ -43,7 +43,7 @@ function Stats({ userId }: { userId: string }) {
   const ids = (owned.data ?? []).map(d => d.id);
   const [stats, devices, buffers] = await Promise.all([
    supabase.from('player_customer_daily_stats').select('*').eq('user_id', userId).gte('day', days[6]).lte('day', days[0]).order('last_watched_at', { ascending: false }),
-   supabase.from('player_devices').select('id,watching_title,watching_preview,watching_since,last_seen_at,iptv_username').eq('user_id', userId).gte('last_seen_at', new Date(Date.now()-180000).toISOString()),
+   supabase.from('player_devices').select('id,watching_title,watching_preview,watching_since,last_seen_at,iptv_username,net_ping_ms').eq('user_id', userId).gte('last_seen_at', new Date(Date.now()-180000).toISOString()),
    supabase.from('player_buffer_events').select('device_id,content_name,stall_ms,occurred_at,reconnected').in('device_id', ids.length ? ids : ['00000000-0000-0000-0000-000000000000']).gte('occurred_at', new Date(Date.now()-8*86400000).toISOString()).order('occurred_at', { ascending: false }).limit(2000),
   ]);
   if (stats.error) throw new Error('Could not load customer viewing statistics.');
@@ -60,7 +60,8 @@ function Stats({ userId }: { userId: string }) {
   {data.devices.filter(device => device.watching_title && !device.watching_preview).map(device => {
    const reading = data.rows.find(row => row.device_id === device.id && row.title === device.watching_title && row.login === device.iptv_username && row.day === days[0]);
    const speed = reading ? latestConnectionReading(reading, device) : null;
-   return <div key={device.id} className="flex flex-wrap items-center gap-3 text-sm"><strong className="break-words">{device.watching_title}</strong><Bars strength={playbackReliability(device, data.reliabilityEvents)} title="Reported stalls and reconnects in this viewing session; reports may arrive after the interruption." />{speed !== null ? <span className="text-xs text-muted-foreground">Stream download: {mbps(speed)} · Updated {time(reading?.speed_latest_at ?? device.last_seen_at)} UK</span> : <span className="text-xs text-muted-foreground">Waiting for a fresh download reading</span>}</div>;
+   const rel = playbackReliability(device, data.reliabilityEvents), rating = channelLinkRating((device as { net_ping_ms?: number | null }).net_ping_ms, rel);
+   return <div key={device.id} className="flex flex-wrap items-center gap-3 text-sm"><strong className="break-words">{device.watching_title}</strong><Bars strength={rel} title="Reported stalls and reconnects in this viewing session; reports may arrive after the interruption." />{rating && <span className="text-xs font-semibold">Channel connection: {rating} · Ping {(device as { net_ping_ms?: number | null }).net_ping_ms} ms</span>}{speed !== null ? <span className="text-xs text-muted-foreground">Stream download: {mbps(speed)} · Updated {time(reading?.speed_latest_at ?? device.last_seen_at)} UK</span> : <span className="text-xs text-muted-foreground">Waiting for a fresh download reading</span>}</div>;
   })}
   {!data.devices.some(device => device.watching_title && !device.watching_preview) && <p className="text-sm text-muted-foreground">Not watching now</p>}
  </div><Tabs value={day} onValueChange={setDay}>

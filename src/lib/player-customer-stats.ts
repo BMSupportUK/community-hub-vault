@@ -54,3 +54,11 @@ export function latestConnectionReading(
  if (!Number.isFinite(at) || !Number.isFinite(seen) || now - at > 180000 || now - seen > 180000 || at > now || seen > now) return null;
  return row.speed_latest_kbps && row.speed_latest_kbps > 0 ? row.speed_latest_kbps : null;
 }
+/** Same bands as the BM Player pill: ping to the channel's own server plus reported playback reliability. */
+export function channelLinkRating(pingMs: number | null | undefined, reliability: Strength): string | null {
+ if (pingMs == null || pingMs <= 0) return null;
+ if (pingMs > 400 || reliability.level === 'very_weak') return 'Poor';
+ if (pingMs > 200 || reliability.level === 'weak' || reliability.level === 'ok') return 'Fair';
+ if (pingMs > 80) return 'Good';
+ return 'Excellent';
+}
