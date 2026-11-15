@@ -64,7 +64,7 @@ function Stats({ userId }: { userId: string }) {
  const rows = data.rows.filter(row => row.day === day), segments = customerStatsSegments(rows);
  const total = segments.reduce((sum, row) => sum+row.seconds, 0);
  return <><div className="space-y-3 border-b border-border py-3">
-  <h3 className="text-sm font-semibold">Playback reliability · Last 5 minutes reported</h3>
+  <h3 className="text-sm font-semibold">Playback reliability · Last 2 minutes reported</h3>
   {data.devices.filter(device => device.watching_title && !device.watching_preview).map(device => {
    const reading = data.rows.find(row => row.device_id === device.id && row.title === device.watching_title && row.login === device.iptv_username && row.day === days[0]);
    const speed = reading ? latestConnectionReading(reading, device) : null;

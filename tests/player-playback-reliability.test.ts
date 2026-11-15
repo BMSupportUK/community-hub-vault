@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { playbackReliability } from '../src/lib/player-customer-stats';
 const now = Date.parse('2026-11-15T13:00:00Z');
-const device = { id: 'box', watching_title: 'TNT', watching_preview: false, watching_since: new Date(now - 300000).toISOString(), last_seen_at: new Date(now).toISOString() };
+const device = { id: 'box', watching_title: 'TNT', watching_preview: false, watching_since: new Date(now - 120000).toISOString(), last_seen_at: new Date(now).toISOString() };
 const event = (stall_ms: number, reconnected = false) => ({ device_id: 'box', content_name: 'TNT', stall_ms, reconnected, occurred_at: new Date(now - 10000).toISOString() });
 test('no reported interruptions gives stable playback regardless of channel bitrate', () => expect(playbackReliability(device, [], now).bars).toBe(4));
 test('short interruptions, 3 percent stalled and 10 percent stalled give distinct bands', () => {
@@ -14,7 +14,7 @@ test('two and three reported reconnects reduce reliability', () => {
  expect(playbackReliability(device, [event(0,true),event(0,true),event(0,true)], now).bars).toBe(1);
 });
 test('other devices, channels and previous sessions do not affect current rating', () => {
- const events = [{...event(300000),device_id:'other'}, {...event(300000),content_name:'Other'}, {...event(300000),occurred_at:new Date(now-300001).toISOString()}];
+ const events = [{...event(120000),device_id:'other'}, {...event(120000),content_name:'Other'}, {...event(120000),occurred_at:new Date(now-300001).toISOString()}];
  expect(playbackReliability(device, events, now).bars).toBe(4);
 });
 test('offline, preview, newly started or unavailable reports never look healthy', () => {

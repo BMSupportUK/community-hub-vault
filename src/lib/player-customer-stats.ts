@@ -15,6 +15,8 @@ export function customerStatsSegments<T extends { title: string; kind: string; s
 }
 export type Strength = { level: 'strong' | 'ok' | 'weak' | 'very_weak' | 'none'; bars: 0 | 1 | 2 | 3 | 4; label: string };
 /** Five-minute reported playback reliability, never a broadband capacity diagnosis. */
+/** Same look-back as the box ChannelLink window so both screens recover together. */
+export const PLAYBACK_WINDOW_MS = 120000;
 export function playbackReliability(
  device: { id: string; watching_title: string | null; watching_preview: boolean; watching_since: string | null; last_seen_at: string } | undefined,
  events: { device_id: string; content_name: string; stall_ms: number; occurred_at: string; reconnected: boolean }[] | null,
@@ -24,7 +26,7 @@ export function playbackReliability(
  const unknown: Strength = { level: 'none', bars: 0, label: 'Awaiting playback evidence' };
  const since = Date.parse(device?.watching_since ?? ''), seen = Date.parse(device?.last_seen_at ?? '');
  if (!device?.watching_title || device.watching_preview || events === null || !Number.isFinite(since) || !Number.isFinite(seen) || seen > now || now - seen > 180000 || now - since < 60000) return unknown;
- const start = Math.max(since, now - 300000);
+ const start = Math.max(since, now - PLAYBACK_WINDOW_MS);
  const recent = events.filter(e => e.device_id === device.id && e.content_name === device.watching_title && Date.parse(e.occurred_at) >= start && Date.parse(e.occurred_at) <= now);
  const stalled = recent.reduce((sum, e) => sum + Math.max(0, e.stall_ms), 0);
  const reconnects = recent.filter(e => e.reconnected).length;
