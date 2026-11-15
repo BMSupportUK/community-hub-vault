@@ -1,6 +1,7 @@
 # Roadmap
 
-- [x] Traced automatic crashes to next-open delivery using the device's linked website owner (not an active provider login); reproduced detached warning exit failure and fixed both exit and destroyed-owner cleanup with explicit dialog ownership. All 339 Android tests pass. Additional correction is not in the public 5.44 installer; no new release requested.
+- [x] Built, BM-signed and publicly released Android 5.45 (356) with both warning corrections; 339 Android tests and ten timer/watchdog checks pass. Public updater reports 5.45 and installer matches SHA-256 18481c5641997be7421aeaaadd75c04d441330a17a89781dc0fe191c6f64a3b8. Crash mapping retained privately.
+- [x] Traced automatic crashes to next-open delivery using the device's linked website owner (not an active provider login); reproduced detached warning exit failure and fixed both exit and destroyed-owner cleanup with explicit dialog ownership. Included in public 5.45.
 - [x] Correct Android's unanswered inactivity exit with an independent shutdown deadline; ten timer/watchdog checks pass, including blocked screen shutdown and cancelling on Continue viewing.
 - [x] Built, BM-signed and publicly released Android 5.44 (355) with the inactivity fix; 337 Android tests and ten timer/watchdog checks pass. Public updater reports 5.44; installer matches SHA-256 5cd0be286410074e4e9c063b63e8be2fe6d83582c2cc8448526b52adc44ae436. Crash mapping retained privately.
 - [ ] Verify the unanswered warning closes on a physical TV box; blocked by no connected box.
