@@ -155,3 +155,4 @@
 - [x] Viewing stats: connection strength bars, buffering count and slow-internet/channel diagnosis (website)
 - [ ] Android 5.33 sends measured speed (code done, APK build pending — sandbox build tools wiped)
 - [ ] Windows/Mac send measured speed (not started)
+- [x] 5.46: dropped Live TV channels auto-reconnect for up to 2 minutes (published)

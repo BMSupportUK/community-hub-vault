@@ -144,6 +144,7 @@ public class BackupPlayerActivity extends Activity {
                     cuRetries = 0;
                     feedStatus.playing(android.os.SystemClock.elapsedRealtime());
                     feedNote.setVisibility(TextView.GONE);
+                    reconnect.recovered();
                     applyBoost();
                     ride.playing(android.os.SystemClock.elapsedRealtime());
                     break;
@@ -432,8 +433,27 @@ public class BackupPlayerActivity extends Activity {
     }
 
     private int errors;
+    private final LiveReconnect reconnect = new LiveReconnect();
     private void next() {
         if (mp == null || isFinishing()) return;
+        if (isLive() && (started || reconnect.active() || errors >= urls.length * 3)) {
+            // A channel that drops keeps reconnecting by itself for up to two minutes instead of closing.
+            long wait = reconnect.failed(android.os.SystemClock.elapsedRealtime());
+            if (wait >= 0) {
+                if (!started && at + 1 < urls.length) at++; else if (!started) at = 0;
+                String name = getIntent().getStringExtra("content_name");
+                ui.postDelayed(() -> {
+                    if (mp == null || isFinishing()) return;
+                    open();
+                    feedNote.setText("Reconnecting" + (name == null ? "" : " to " + name) + "…");
+                    feedNote.setVisibility(TextView.VISIBLE);
+                }, wait);
+                feedNote.setText("Reconnecting" + (name == null ? "" : " to " + name) + "…");
+                feedNote.setVisibility(TextView.VISIBLE);
+                return;
+            }
+            errors = Integer.MAX_VALUE / 2;
+        }
         if (++errors > urls.length * 3) {
             if (isLive() && getIntent().getBooleanExtra("backup_first", false)) {
                 // Backup engine played first and gave up: try the main player once before failing.
