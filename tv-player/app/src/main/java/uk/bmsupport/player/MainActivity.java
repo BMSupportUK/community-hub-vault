@@ -3293,6 +3293,7 @@ public class MainActivity extends Activity {
     private void remember(String key, Item it) {
         JSONArray a = saved(key), out = new JSONArray();
         if ("recent".equals(key) && !recentAllowed(it, recentCategoryNames())) return;
+        fillLiveLogo(it);
         out.put(it.toJson());
         for (int i = 0; i < a.length() && out.length() < 30; i++) {
             JSONObject o = a.optJSONObject(i);
@@ -3341,8 +3342,24 @@ public class MainActivity extends Activity {
     }
 
     private void toggleSaved(String key, Item it) {
-        if ("fav".equals(key)) { toggleSavedLocal(key, it); pushFavourites(); return; }
-        toggleSavedLocal(key, it);
+        if ("fav".equals(key)) { toggleSavedLocal(key, it); pushFavourites(); }
+        else toggleSavedLocal(key, it);
+        // The open Favourites / Recently watched screen redraws at once, so a removed card disappears without a refresh.
+        if (key.equals(screen)) ui.post(() -> { if (key.equals(screen)) showSaved(key, "fav".equals(key) ? "Favourites" : "Recently watched"); });
+    }
+
+    /** Live channels saved without a picture borrow the provider logo from the channel list or a favourite of the same channel. */
+    private void fillLiveLogo(Item it) {
+        if (!"live".equals(it.kind) || (it.poster != null && it.poster.startsWith("http"))) return;
+        if (liveChannels != null) for (Item c : liveChannels)
+            if (it.id.equals(c.id) && c.poster != null && c.poster.startsWith("http")) { it.poster = c.poster; return; }
+        try {
+            JSONArray f = new JSONArray(prefs.getString("fav", "[]"));
+            for (int i = 0; i < f.length(); i++) {
+                JSONObject o = f.optJSONObject(i);
+                if (o != null && "live".equals(o.optString("kind")) && it.id.equals(o.optString("id")) && o.optString("poster").startsWith("http")) { it.poster = o.optString("poster"); return; }
+            }
+        } catch (Exception ignored) {}
     }
     private void toggleSavedLocal(String key, Item it) {
         if (isSaved(key, it)) {
@@ -3371,6 +3388,7 @@ public class MainActivity extends Activity {
             JSONObject o = a.optJSONObject(i);
             if (o == null) continue;
             Item it = Item.fromJson(o);
+            fillLiveLogo(it);
             // Recently watched never shows adult-category items, even ones saved before this rule.
             if (key.equals("recent") && isAdultCategory(it.category)) { droppedAdult = true; continue; }
             list.add(it);
@@ -4395,6 +4413,7 @@ public class MainActivity extends Activity {
     private static Item liveItem(JSONObject o) {
         Item it = new Item("live", o.optString("stream_id"), o.optString("name"), "ts", o.optString("category_id"));
         if (o.optInt("tv_archive", 0) == 1) it.archiveDays = Math.max(1, o.optInt("tv_archive_duration", 1));
+        it.poster = o.optString("stream_icon");
         return it;
     }
 
