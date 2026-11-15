@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
 import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
 import { isPageAllowed, pageKeyForPath, usePagePermissions } from "@/lib/page-access";
+import { playerPageAllowed } from "@/lib/player-sections";
 import { DemoRoleBanner } from "@/components/app/DemoRoleBanner";
 import { useIsDemoAccount, isDemoLockedPath } from "@/hooks/use-demo-account";
 import { Link } from "@tanstack/react-router";
@@ -57,7 +58,9 @@ function ApprovedLayout() {
     key !== "staff-portal" &&
     key !== "portal" &&
     !isFanZonePath(path) &&
-    !isPageAllowed(key, roles, perms);
+    !isPageAllowed(key, roles, perms) &&
+    // BM Player pages are opened by the BM Player section ticks instead.
+    !playerPageAllowed(key, roles, perms);
   if (blocked) return <Navigate to="/home" replace />;
 
   if (isFanZonePath(path)) {

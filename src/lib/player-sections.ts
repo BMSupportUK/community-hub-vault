@@ -26,3 +26,13 @@ export function playerSectionAllowed(section: string, roles: readonly string[], 
 export function anyPlayerSectionAllowed(roles: readonly string[], perms: PagePermMap | null): boolean {
   return roles.includes("admin") || PLAYER_GRANTABLE_SECTIONS.some((s) => playerSectionAllowed(s, roles, perms));
 }
+
+/**
+ * BM Player admin pages are opened by the BM Player section ticks, not by the
+ * BM Support page list. True when these roles may open this page key.
+ */
+export function playerPageAllowed(pageKey: string, roles: readonly string[], perms: PagePermMap | null): boolean {
+  if (pageKey === "admin-player") return anyPlayerSectionAllowed(roles, perms);
+  if (pageKey === "admin-player-live") return playerSectionAllowed("live", roles, perms);
+  return false;
+}
