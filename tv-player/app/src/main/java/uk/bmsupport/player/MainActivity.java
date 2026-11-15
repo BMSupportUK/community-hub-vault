@@ -768,7 +768,7 @@ public class MainActivity extends Activity {
         int kbps = WatchSpeed.sample(android.net.TrafficStats.getUidRxBytes(android.os.Process.myUid()), android.os.SystemClock.elapsedRealtime());
         if (since > 0 && !prefs.getBoolean("np_preview", false) && kbps > 0) b.put("speed_kbps", kbps);
         BroadbandTest.Result tested = broadbandResult;
-        if (tested != null) b.put("broadband_test", new JSONObject().put("down", tested.down).put("up", tested.up)
+        if (tested != null && tested.down > 0 && tested.up > 0) b.put("broadband_test", new JSONObject().put("down", tested.down).put("up", tested.up)
                 .put("measured_at", tested.measuredAt).put("method", "cloudflare-adaptive-v1"));
         if (since > 0 && lastPingMs > 0) b.put("ping_ms", lastPingMs);
         return b;
@@ -4195,7 +4195,7 @@ public class MainActivity extends Activity {
     private void speedTest() {
         if (broadbandBusy) return;
         new AlertDialog.Builder(this).setTitle("Broadband speed test")
-                .setMessage("Measure this box's broadband download, upload and response time against Cloudflare? Uses up to 457 MB and may affect anything playing. This is separate from a channel's download rate.")
+                .setMessage("Measure this box's broadband download, upload and response time? Takes about 25 seconds and may affect anything playing. This is separate from a channel's download rate.")
                 .setNegativeButton("Cancel", null).setPositiveButton("Test", (d, w) -> {
             broadbandBusy = true;
             AlertDialog dlg = new AlertDialog.Builder(this).setTitle("Broadband speed test")
@@ -4205,8 +4205,8 @@ public class MainActivity extends Activity {
                     BroadbandTest.Result r = BroadbandTest.run(message -> ui.post(() -> { if (dlg.isShowing()) dlg.setMessage(message); })); broadbandResult = r;
                     io.execute(this::pollOnce);
                     ui.post(() -> { if (dlg.isShowing()) dlg.setMessage(String.format(java.util.Locale.UK,
-                            "Box download: %.1f Mbps\nBox upload: %.1f Mbps\nResponse time: %d ms\nTest server: Cloudflare\n\nMeasured on this box's Wi-Fi or Ethernet connection, not your broadband package's advertised speed.",
-                            r.down / 1000.0, r.up / 1000.0, r.ping)); });
+                            "Box download: %.1f Mbps\nBox upload: %s\nResponse time: %d ms\nTest server: %s\n\nMeasured on this box's Wi-Fi or Ethernet connection, not your broadband package's advertised speed.",
+                            r.down / 1000.0, r.up > 0 ? String.format(java.util.Locale.UK, "%.1f Mbps", r.up / 1000.0) : "Couldn't measure", r.ping, r.server)); });
                 } catch (Exception e) {
                     ui.post(() -> { if (dlg.isShowing()) dlg.setMessage("Test failed: " + (e.getMessage() == null ? e.getClass().getSimpleName() : e.getMessage()) + "\nCheck the box is online and try again."); });
                 } finally { broadbandBusy = false; }
