@@ -3381,6 +3381,17 @@ public class MainActivity extends Activity {
         screen = key; back = this::showHome;
         LinearLayout root = column();
         root.addView(text(title, 26, TEXT, true));
+        // Each list clears from its own screen (moved out of Settings).
+        boolean fav = "fav".equals(key);
+        Button clear = button(fav ? "🗑 Clear favourites" : "🗑 Clear history", v -> new AlertDialog.Builder(this)
+                .setMessage(fav ? "Remove all favourites from all your BM Players?" : "Clear everything in Recently watched?")
+                .setPositiveButton("Clear", (d, w) -> {
+                    prefs.edit().remove(key).apply();
+                    if (fav) pushFavourites();
+                    Toast.makeText(this, fav ? "Favourites cleared" : "Recently watched cleared", Toast.LENGTH_SHORT).show();
+                    showSaved(key, title);
+                }).setNegativeButton("Cancel", null).show());
+        root.addView(clear, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         JSONArray a = saved(key);
         List<Item> list = new ArrayList<>();
         boolean droppedAdult = false;
@@ -3736,23 +3747,7 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "Cache cleared – lists will reload", Toast.LENGTH_SHORT).show();
         }));
         boxes.add(settingBox("⬆", "Update app", "Version " + appVersion(), v -> checkForUpdate(true)));
-        boxes.add(settingBox("👤", "Change login", prefs.getString("user", ""), v -> new AlertDialog.Builder(this)
-                .setTitle("Change login?")
-                .setMessage("Selecting this logs you out and takes you back to the login screen. You'll need to sign in again to use the app.")
-                .setPositiveButton("Log out", (d, w) -> {
-                    prefs.edit().remove("user").remove("pass").apply();
-                    showLink();
-                })
-                .setNegativeButton("Cancel", null).show()));
-        boxes.add(settingBox("🕘", "Clear history", "Recently watched", v -> {
-            prefs.edit().remove("recent").apply();
-            Toast.makeText(this, "Recently watched cleared", Toast.LENGTH_SHORT).show();
-        }));
-        boxes.add(settingBox("★", "Clear favourites", "All favourites", v -> new AlertDialog.Builder(this)
-                .setMessage("Remove all favourites from all your BM Players?")
-                .setPositiveButton("Clear", (d, w) -> { prefs.edit().remove("fav").apply(); pushFavourites(); Toast.makeText(this, "Favourites cleared", Toast.LENGTH_SHORT).show(); })
-                .setNegativeButton("Cancel", null).show()));
-        boxes.add(settingBox("🔗", "Unlink device", "Remove login", v -> new AlertDialog.Builder(this)
+        boxes.add(settingBox("🔗", "Unlink device", "Removes the login – use to change login", v -> new AlertDialog.Builder(this)
                 .setMessage("This removes the login from this device. You'll need a new code to link it again.")
                 .setPositiveButton("Unlink", (d, w) -> io.execute(() -> {
                     try { Net.postJson(Net.SITE + "/api/public/player",
