@@ -480,11 +480,12 @@ public class BackupPlayerActivity extends Activity {
             media.release();
             if (st != null) link.bytes(st.readBytes, st.demuxReadBytes, now);
             boolean noData = st != null && isLive() && started && reconnect.noData(st.readBytes, now);
-            if (st != null && isLive() && (reconnect.stalled(st.displayedPictures, st.decodedAudio, now) | noData)) {
+            boolean mute = st != null && isLive() && started && !noData && reconnect.soundLost(st.displayedPictures, st.decodedAudio, now);
+            if (st != null && isLive() && (reconnect.stalled(st.displayedPictures, st.decodedAudio, now) | noData | mute)) {
                 // A drop is always reported, even when VLC never raised a Buffering event.
                 link.stalled(now);
                 BufferReporter.record(this, "live", getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"),
-                        noData ? LiveReconnect.NO_DATA_MS : LiveReconnect.STALL_MS, true, false, "network_drop", "direct", activeDecoder,
+                        (noData || mute) ? LiveReconnect.NO_DATA_MS : LiveReconnect.STALL_MS, true, false, mute ? "audio_drop" : "network_drop", "direct", activeDecoder,
                         StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
                 next();
             } else if (started && st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now)) {

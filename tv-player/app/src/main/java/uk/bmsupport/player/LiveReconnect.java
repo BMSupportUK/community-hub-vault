@@ -14,7 +14,16 @@ final class LiveReconnect {
         lastPictures = pictures; lastAudio = audio;
         return progressAt >= 0 && now - progressAt >= STALL_MS;
     }
-    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; }
+    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; soundSeen = false; muteAudio = -1; muteAt = -1; }
+
+    static final long SILENT_MS = 8000;
+    private boolean soundSeen; private long muteAudio = -1, muteAt = -1;
+    /** Sound dropped out while the picture keeps going: once a channel has had audio, 8s without new audio means reopen it. */
+    boolean soundLost(long pictures, long audio, long now) {
+        if (muteAudio >= 0 && audio > muteAudio) soundSeen = true;
+        if (muteAudio < 0 || audio > muteAudio) { muteAudio = audio; muteAt = now; return false; }
+        return soundSeen && pictures > 0 && now - muteAt >= SILENT_MS;
+    }
 
     private long lastBytes = -1, bytesAt = -1;
     static final long NO_DATA_MS = 8000;

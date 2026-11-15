@@ -35,4 +35,17 @@ public class LiveReconnectTest {
         r.opened(0);
         for (int i = 1; i <= 20; i++) assertFalse(r.noData(i * 1000L, i * 1000L));
     }
+    @Test public void soundStoppingWhilePictureContinuesIsADrop() {
+        LiveReconnect r = new LiveReconnect();
+        r.opened(0);
+        assertFalse(r.soundLost(10, 100, 0));
+        assertFalse(r.soundLost(20, 200, 1000));
+        assertFalse(r.soundLost(100, 200, 8000));
+        assertTrue(r.soundLost(110, 200, 9000));
+    }
+    @Test public void channelWithoutSoundIsNotReopened() {
+        LiveReconnect r = new LiveReconnect();
+        r.opened(0);
+        for (int i = 0; i <= 20; i++) assertFalse(r.soundLost(i * 10L, 0, i * 1000L));
+    }
 }
