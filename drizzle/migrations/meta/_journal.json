@@ -2591,6 +2591,13 @@
       "when": 1794767763392,
       "tag": "0369_vpn_provider_auth_kind",
       "breakpoints": true
+    },
+    {
+      "idx": 370,
+      "version": "7",
+      "when": 1794768774875,
+      "tag": "0370_vpn_providers_enabled_only",
+      "breakpoints": true
     }
   ]
 }

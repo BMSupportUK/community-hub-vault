@@ -1,0 +1,2 @@
+DROP POLICY IF EXISTS "Signed-in users read VPN providers" ON public.vpn_providers;
+CREATE POLICY "Signed-in users read switched-on VPN providers" ON public.vpn_providers FOR SELECT TO authenticated USING (enabled OR public.has_role(auth.uid(), 'admin'));
