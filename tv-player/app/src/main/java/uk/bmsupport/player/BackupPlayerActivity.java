@@ -51,6 +51,10 @@ public class BackupPlayerActivity extends Activity {
     private boolean paused;
     private long resume;
     private final BackupFeedStatus feedStatus = new BackupFeedStatus();
+    private final ChannelLink link = new ChannelLink();
+    private TextView linkNote;
+    private boolean wasStalled;
+    private long lastLinkPing;
     private final BackupStallTracker stallTracker = new BackupStallTracker();
     private String activeDecoder = "backup:hardware";
     private final Runnable reportTick = new Runnable() {
@@ -74,11 +78,44 @@ public class BackupPlayerActivity extends Activity {
         if (mp == null || feedNote == null) return;
         // VLC can stop reporting isPlaying during rebuffering; only an explicit user pause suppresses a stall.
         boolean stalled = isLive() && feedStatus.stalled(started, !paused, android.os.SystemClock.elapsedRealtime());
-        reportStall(stallTracker.update(stalled, android.os.SystemClock.elapsedRealtime()), false);
+        long nowMs = android.os.SystemClock.elapsedRealtime();
+        reportStall(stallTracker.update(stalled, nowMs), false);
+        if (stalled && !wasStalled) link.stalled(nowMs);
+        wasStalled = stalled;
+        updateLink(nowMs);
         String name = getIntent().getStringExtra("content_name");
         feedNote.setText(retryQueued || reconnect.active()
                 ? "Reconnecting" + (name == null ? "" : " to " + name) + "…" : FeedStatus.BUFFERING);
         feedNote.setVisibility(stalled || retryQueued || reconnect.active() ? TextView.VISIBLE : TextView.GONE);
+    }
+
+    /** Pings the channel's own server every 15s off the main thread and refreshes the connection pill. */
+    private void updateLink(long now) {
+        if (linkNote == null) return;
+        if (!isLive() && !catchup()) { linkNote.setVisibility(TextView.GONE); return; }
+        if (now - lastLinkPing >= 15000) {
+            lastLinkPing = now;
+            String url = urls != null && at < urls.length ? urls[at] : null;
+            if (url != null) new Thread(() -> {
+                try {
+                    java.net.URI u = java.net.URI.create(url);
+                    int port = u.getPort() > 0 ? u.getPort() : ("https".equalsIgnoreCase(u.getScheme()) ? 443 : 80);
+                    long t0 = android.os.SystemClock.elapsedRealtime();
+                    try (java.net.Socket sk = new java.net.Socket()) {
+                        sk.connect(new java.net.InetSocketAddress(u.getHost(), port), 5000);
+                        int ms = (int) (android.os.SystemClock.elapsedRealtime() - t0);
+                        ui.post(() -> link.ping(Math.max(1, ms)));
+                    }
+                } catch (Exception e) { ui.post(() -> link.ping(5000)); }
+            }, "channel-ping").start();
+        }
+        String rating = link.rating(now);
+        linkNote.setText(link.label(now));
+        linkNote.setBackgroundColor("Poor".equals(rating) ? 0xE0B91C1C : "Fair".equals(rating) ? 0xE0B45309
+                : "Checking".equals(rating) ? 0xB30B1220 : 0xE0166534);
+        // Shown with the controls only, so the picture stays clear; a Poor link also shows while the feed is struggling.
+        boolean controls = controlsRow != null && controlsRow.getVisibility() == android.view.View.VISIBLE;
+        linkNote.setVisibility(controls || ("Poor".equals(rating) && feedNote.getVisibility() == TextView.VISIBLE) ? TextView.VISIBLE : TextView.GONE);
     }
 
     @Override protected void onCreate(Bundle b) {
@@ -100,6 +137,12 @@ public class BackupPlayerActivity extends Activity {
         feedNote.setBackgroundColor(0xB30B1220);
         feedNote.setVisibility(TextView.GONE);
         root.addView(feedNote, new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END));
+        linkNote = new TextView(this);
+        linkNote.setTextColor(Color.WHITE); linkNote.setTextSize(15); linkNote.setPadding(24, 10, 24, 10);
+        linkNote.setVisibility(TextView.GONE);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        lp.topMargin = 16;
+        root.addView(linkNote, lp);
         installControls(root);
         setContentView(root);
         liveDrawer = new LiveDrawerOverlay(this, root, getIntent().getStringExtra("content_id"));
@@ -389,6 +432,8 @@ public class BackupPlayerActivity extends Activity {
         reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), true);
         started = false;
         paused = false;
+        if (started || retryQueued) link.reconnected(android.os.SystemClock.elapsedRealtime());
+        link.reset();
         reconnect.opened(android.os.SystemClock.elapsedRealtime());
         ride.stopped(); ride.resetSamples();
         feedStatus.reset(android.os.SystemClock.elapsedRealtime());
@@ -419,6 +464,7 @@ public class BackupPlayerActivity extends Activity {
             if (media == null) return;
             org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
             media.release();
+            if (st != null) link.bytes(st.readBytes, st.demuxReadBytes, now);
             if (st != null && isLive() && reconnect.stalled(st.displayedPictures, st.decodedAudio, now)) {
                 next();
             } else if (started && st != null && ride.frozen(st.displayedPictures, st.decodedAudio, now)) {
