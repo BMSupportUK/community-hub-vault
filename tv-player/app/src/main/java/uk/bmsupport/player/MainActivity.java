@@ -3099,8 +3099,13 @@ public class MainActivity extends Activity {
         wait.setOnCancelListener(d -> liveVoiceRequest++); wait.show();
         io.execute(() -> {
             try {
-                JSONArray channels = new JSONArray(cachedGet("live", "get_live_streams", ""));
-                JSONArray categories = new JSONArray(cachedGet("live", "get_live_categories", ""));
+                JSONArray allChannels = new JSONArray(cachedGet("live", "get_live_streams", ""));
+                JSONArray allCategories = new JSONArray(cachedGet("live", "get_live_categories", ""));
+                java.util.Set<String> adultIds = new java.util.HashSet<>();
+                JSONArray categories = new JSONArray();
+                for (int i = 0; i < allCategories.length(); i++) { JSONObject o = allCategories.optJSONObject(i); if (o == null) continue; if (hideAdult(o.optString("category_name"))) adultIds.add(o.optString("category_id")); else categories.put(o); }
+                JSONArray channels = new JSONArray();
+                for (int i = 0; i < allChannels.length(); i++) { JSONObject o = allChannels.optJSONObject(i); if (o != null && !adultIds.contains(o.optString("category_id"))) channels.put(o); }
                 List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories, channels, spoken);
                 ui.post(() -> {
                     dismissQuietly(wait);
