@@ -6027,7 +6027,7 @@ public class MainActivity extends Activity {
         View scrim = new View(this);
         scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                 PlayerTheme.shading(prefs.getString(PlayerTheme.SHADE, "medium"))));
-        if (themed != null) { bg.setScaleType(ImageView.ScaleType.MATRIX); topCrop(bg, themed); glassTiles(content, PlayerTheme.accent(prefs, ACCENT)); } else glassTiles(content, ACCENT);
+        if (themed != null) { glassTiles(content, PlayerTheme.accent(prefs, ACCENT)); } else glassTiles(content, ACCENT);
         frame.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         content.setBackgroundColor(Color.TRANSPARENT);
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
