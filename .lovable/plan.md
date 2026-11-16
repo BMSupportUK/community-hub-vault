@@ -13,7 +13,7 @@ Football themes use each club's own home stadium as the background picture, show
 
 Kids and family
 - Kids Cartoon (bright, bubbly, rounded tiles)
-- Fairy-tale Magic (castle, starry sky, sparkles, Disney-inspired but original, no Disney characters)
+- Fairy-tale Magic: castle, starry sky and sparkles, with a cast of our own original cartoon characters (a princess, a brave knight, a friendly dragon, a talking animal sidekick) drawn in a classic animated-film style. Real Disney characters can't be used because Disney owns them and BM Player is given out to customers.
 
 Holidays
 - Christmas, Halloween, Valentine's, Easter, Bonfire Night, New Year
