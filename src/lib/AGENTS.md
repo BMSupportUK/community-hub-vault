@@ -1,4 +1,5 @@
 # src/lib rules
+- Restored sign-ins revalidate MFA before protected route loaders; global function middleware rejects pending MFA except self recovery, so reloads and direct function calls cannot skip verification.
 - Player device, buffering, voting, connection-count and cron-hook rules live in `src/routes/api/public/AGENTS.md`.
 - Customer viewing stats, connection strength, broadband capacity, Link Device, box VPN and ticket setup display rules live in `src/components/app/AGENTS.md`.
 - Inbox deletion uses a participant-checked, thread-locked RPC for selected messages or the current conversation on both ends; reported evidence stays protected, empty threads are removed, and authoritative reads clear selection/cache state.

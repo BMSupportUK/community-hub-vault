@@ -27,6 +27,7 @@ import { reportNativeInstall } from "@/lib/app-transfer.functions";
 import { ANDROID_RELEASE } from "@/lib/android-release";
 import { SupportNotificationScope } from "@/components/app/SupportNotificationScope";
 import { PlayerLoginApproval } from "@/components/app/PlayerLoginApproval";
+import { mfaAccessState } from "@/lib/mfa-access";
 
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
@@ -98,13 +99,18 @@ function NativeInstallReporter() {
 
 
 export const Route = createFileRoute("/_authenticated")({
+  ssr: false,
   beforeLoad: async ({ location }) => {
-    // Skip during SSR/prerender — Supabase session lives in localStorage and
-    // is unavailable on the server, which would falsely redirect signed-in
-    // users to /login on every F5/page reload.
-    if (typeof window === "undefined") return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/login", search: { redirect: location.href } as never });
+    // Revalidate enrolled factors with Auth, not the saved session's user snapshot.
+    const assurance = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(session.access_token);
+    const access = mfaAccessState(assurance.data?.currentLevel, assurance.data?.nextLevel, assurance.error);
+    if (access === "error") throw new Error("Couldn't verify two-factor authentication. Please try again.");
+    if (access === "challenge") {
+      try { sessionStorage.setItem("post-login-next", location.href); } catch { /* destination is optional */ }
+      throw redirect({ to: "/mfa-challenge" });
+    }
     // An account password-change request must be completed before continuing.
     const { data: mustChange, error: resetError } = await supabase
       .from("password_change_required")

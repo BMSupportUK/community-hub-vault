@@ -6,8 +6,17 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requestMfaReset } from "@/lib/mfa-reset-request.functions";
 import mfaBg from "@/assets/mfa-security-bg.jpg";
+import { mfaAccessState } from "@/lib/mfa-access";
 
 export const Route = createFileRoute("/mfa-challenge")({
+  head: () => ({ meta: [
+    { title: "Two-factor verification | BM Support" },
+    { name: "description", content: "Complete your BM Support sign-in with two-factor verification." },
+    { property: "og:title", content: "Two-factor verification | BM Support" },
+    { property: "og:description", content: "Complete your BM Support sign-in with two-factor verification." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
     const { data: { session } } = await supabase.auth.getSession();
@@ -38,8 +47,12 @@ function MfaChallengePage() {
 
   useEffect(() => {
     (async () => {
-      const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-      if (aal.data?.currentLevel === "aal2") {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { navigate({ to: "/login", replace: true }); return; }
+      const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(session.access_token);
+      const access = mfaAccessState(aal.data?.currentLevel, aal.data?.nextLevel, aal.error);
+      if (access === "error") { toast.error("Couldn't verify two-factor authentication. Please try again."); setLoading(false); return; }
+      if (access === "allowed") {
         navigate({ to: "/home", replace: true });
         return;
       }
@@ -47,8 +60,9 @@ function MfaChallengePage() {
       if (error) { toast.error(error.message); setLoading(false); return; }
       const totp = (data?.totp ?? []).find((f) => f.status === "verified");
       if (!totp) {
-        // No factor — nothing to challenge. Send them home.
-        navigate({ to: "/home", replace: true });
+        // An unresolved challenge must never grant access.
+        toast.error("Couldn't load your two-factor app. Please reload or request a reset.");
+        setLoading(false);
         return;
       }
       setFactorId(totp.id);

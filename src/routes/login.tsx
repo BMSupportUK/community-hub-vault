@@ -11,6 +11,7 @@ import { refreshVpnUserSet } from "@/lib/vpn-flags";
 import { clearScreenLockState } from "@/lib/screen-lock-hash";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
+import { mfaAccessState } from "@/lib/mfa-access";
 
 async function getClientIpHint(): Promise<string | null> {
   try {
@@ -39,6 +40,14 @@ function safeNext(value: unknown): string | undefined {
 }
 
 export const Route = createFileRoute("/login")({
+  head: () => ({ meta: [
+    { title: "Sign in | BM Support" },
+    { name: "description", content: "Secure sign-in for BM Support members and staff." },
+    { property: "og:title", content: "Sign in | BM Support" },
+    { property: "og:description", content: "Secure sign-in for BM Support members and staff." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   validateSearch: (search: Record<string, unknown>): { next?: string } => {
     const next = safeNext(search.next);
     return next ? { next } : {};
@@ -83,9 +92,13 @@ function LoginPage() {
       console.warn("[login] location history check failed", locationError);
     }
     // If the account has a verified 2FA factor, require it before proceeding.
-    const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setBusy(false); return toast.error("Please sign in again."); }
+    const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(session.access_token);
+    const access = mfaAccessState(aal.data?.currentLevel, aal.data?.nextLevel, aal.error);
     setBusy(false);
-    if (aal.data?.nextLevel === "aal2" && aal.data?.currentLevel !== "aal2") {
+    if (access === "error") return toast.error("Couldn't verify two-factor authentication. Please try again.");
+    if (access === "challenge") {
       try {
         if (next) sessionStorage.setItem(POST_LOGIN_NEXT_KEY, next);
       } catch { /* storage unavailable */ }

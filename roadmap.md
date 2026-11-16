@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Close refresh bypass of pending website 2FA; signed-in browser stays at the code screen after protected-page entry and reload; server functions reject pending verification. Valid-code completion still requires the user's authenticator.
+
 - [x] Released all three apps: Android 5.56 (367), Windows 0.4.102, Mac 0.1.105; each built, obfuscated/packaged, signed, uploaded and switched to current in app_builds. Download endpoints report the new versions.
 - [x] Publish the website so the exact rating rules and Details connection history go live; publish scheduled 15 Nov 2026, site responds 200 at https://bmsupport.uk.
 
