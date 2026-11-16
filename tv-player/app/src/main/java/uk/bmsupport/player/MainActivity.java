@@ -1404,8 +1404,13 @@ public class MainActivity extends Activity {
         top.addView(headerPill("🔍 Search", v -> chooseHomeSearch()));
         top.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0); // the 📣 icon has its own corner
         root.addView(top);
-        TextView account = text("Signed in as " + prefs.getString("user", ""), 15, MUTED, false);
-        root.addView(account);
+        TextView account = text("Signed in as " + prefs.getString("user", ""), 15, 0xFFFFFFFF, true);
+        account.setShadowLayer(4f, 0f, 1f, 0xFF000000);
+        android.graphics.drawable.GradientDrawable abg = new android.graphics.drawable.GradientDrawable();
+        abg.setColor(0xB3000000); abg.setCornerRadius(dp(12));
+        account.setBackground(abg); account.setPadding(dp(12), dp(5), dp(12), dp(5));
+        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        root.addView(account, alp);
 
         LinearLayout tiles = row();
         tiles.setPadding(0, dp(20), 0, dp(12));
