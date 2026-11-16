@@ -158,4 +158,4 @@ select{color-scheme:dark}select option,select optgroup{background:var(--surface)
 .home:not(.themed) .tile .big,.home:not(.themed) .tile .refresh,.home:not(.themed) .home-nav button,.home:not(.themed) .playing-status{background:#10121966;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #ffffff2e}
 .home:not(.themed) .account{color:var(--foreground);text-shadow:0 1px 3px #000c}
 
-.home .account{width:fit-content;color:#fff;font-weight:700;padding:6px 14px;border-radius:12px;background:rgba(0,0,0,.7);text-shadow:0 1px 3px #000}.home .account.rooms{margin-top:-24px}
+.home .account{width:fit-content;color:#fff;font-weight:700;padding:6px 14px;border-radius:12px;background:rgba(0,0,0,.7);text-shadow:0 1px 3px #000}.home .account:has(+.rooms){margin-bottom:8px}
