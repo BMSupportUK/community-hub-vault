@@ -36,3 +36,4 @@ dist-ssr
 tv-remote-helper/local.properties
 tv-player/releases/
 .release-tmp/
+release-upload/
