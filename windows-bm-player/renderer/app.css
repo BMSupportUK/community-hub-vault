@@ -20,6 +20,7 @@
 .preview-hint{margin:0 0 10px;font-size:13px}
 
 /* Live TV like Android/Amazon: preview + info, slim date row, guide grid. */
+.channel-logo{display:flex;align-items:center;justify-content:center;flex:0 0 42px;width:42px;height:36px;overflow:hidden;color:var(--muted)}.channel-logo img{display:block;width:100%;height:100%;object-fit:contain}.channel-label{display:block;flex:1;min-width:0;overflow:hidden}.lg-ch>button:first-child:has(.channel-logo),.mp-row:has(.channel-logo),.channel-result{display:flex;align-items:center;gap:10px}.channel-label small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .live-guide-view{height:calc(100vh - 72px);display:flex;flex-direction:column;padding:12px 20px 8px}
 .lg{display:flex;flex-direction:column;flex:1;min-height:0}
 .lg-top{display:flex;gap:18px;align-items:flex-start}
@@ -142,7 +143,7 @@ select{color-scheme:dark}select option,select optgroup{background:var(--surface)
 .multi-picker{height:calc(100vh - 72px);display:flex;flex-direction:column;padding:12px 20px 8px;gap:10px}.mp-head{display:flex;align-items:center;gap:16px}.mp-head h2{margin:0}
 .mp-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(12rem,18rem) 1fr;gap:14px}.mp-cats,.mp-list{overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px}
 .mp-cats button{text-align:left;flex:none}.mp-cats .selected{border-color:var(--accent);background:var(--raised);font-weight:700}
-.mp-row{flex:none;text-align:left;display:flex;flex-direction:column;gap:4px}.mp-row small{opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-row{flex:none;text-align:left;display:flex;flex-direction:row;gap:10px}.mp-row small{opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .watch-panes section.audible-pane{outline:4px solid var(--accent);outline-offset:-4px;padding:6px;border-radius:6px}
 .mp-row:focus,.mp-row:hover{outline:3px solid var(--accent);outline-offset:-3px}

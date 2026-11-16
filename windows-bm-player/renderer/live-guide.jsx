@@ -3,6 +3,7 @@ import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
 import guideActions from '../guide-action.cjs';
 import {ChannelName} from './channel-name';
+import {ChannelLogo} from './channel-logo';
 import guideAxis from '../guide-axis.cjs';
 import {channelLabel,eventProgramme} from '../event-channel.cjs';
 
@@ -21,7 +22,7 @@ const GuideRow=memo(function GuideRow({ch,n,on,rows,listed,start,now,axisWidth,g
  const axis=guideAxis.guideAxis(start,start+WINDOW,[],gridWidth);
  const shown=listed.filter(p=>p.end>start&&p.start<start+WINDOW);
  return <div className="lg-row" data-ch={ch.id} style={{width:axisWidth+240}}>
-    <div className={'lg-ch'+(on?' on':'')}><button onClick={()=>h.pick(ch,null)} onFocus={()=>h.focusCh(ch)}><ChannelName>{channelLabel(ch.name,n)}</ChannelName>{query.trim()&&<small className="lg-search-category" title={category}>{category||'Uncategorised'}</small>}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>h.catchup(ch)}>🕘</button>}</div>
+    <div className={'lg-ch'+(on?' on':'')}><button onClick={()=>h.pick(ch,null)} onFocus={()=>h.focusCh(ch)}><ChannelLogo channel={ch}/><span className="channel-label"><ChannelName>{channelLabel(ch.name,n)}</ChannelName>{query.trim()&&<small className="lg-search-category" title={category}>{category||'Uncategorised'}</small>}</span></button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>h.catchup(ch)}>🕘</button>}</div>
     <div className="lg-line">
      {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:axis.x(now)}}/>}
      {shown.map(p=>{const live=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=h.isSet(ch,p);return <div key={p.id} className={'lg-prog'+(live&&on?' on':'')} style={{left:axis.x(Math.max(start,p.start)),width:axis.x(Math.min(start+WINDOW,p.end))-axis.x(Math.max(start,p.start))}} onMouseEnter={()=>h.focus(ch,p)}>

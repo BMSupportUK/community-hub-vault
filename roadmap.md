@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Restore provider channel logos in the shared Windows/Mac guide, multi-screen picker and voice results; browser checks confirm logos and failed-image fallbacks, and 21 desktop checks pass. Installers are not rebuilt or published; real-provider desktop verification requires a linked Windows/Mac app.
+
 - [x] Close refresh bypass of pending website 2FA; signed-in browser stays at the code screen after protected-page entry and reload; server functions reject pending verification. Valid-code completion still requires the user's authenticator.
 
 - [x] Released all three apps: Android 5.56 (367), Windows 0.4.102, Mac 0.1.105; each built, obfuscated/packaged, signed, uploaded and switched to current in app_builds. Download endpoints report the new versions.

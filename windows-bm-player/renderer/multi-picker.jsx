@@ -1,5 +1,6 @@
 import React from 'react';
 import {ChannelName} from './channel-name';
+import {ChannelLogo} from './channel-logo';
 
 // Multi-screen channel picker: categories on the left, channels with what's on now on the right.
 // Uses the complete startup guide; selecting or scrolling rows never fetches programmes.
@@ -8,7 +9,7 @@ const clock=t=>new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-
 function Row({ch,epg,cache,onPick}){
  const nowOf=list=>{const t=Date.now();return (list||[]).find(p=>p.start<=t&&p.end>t)||null;};
  const prog=nowOf(cache?.peek?.(ch.id));
- return <button className="mp-row" onClick={()=>onPick(ch)}><ChannelName>{ch.name}</ChannelName><small>{prog?<>Now: {prog.title}  ·  {clock(prog.start)}–{clock(prog.end)}</>:'No listing'}</small></button>;
+ return <button className="mp-row" onClick={()=>onPick(ch)}><ChannelLogo channel={ch}/><span className="channel-label"><ChannelName>{ch.name}</ChannelName><small>{prog?<>Now: {prog.title}  ·  {clock(prog.start)}–{clock(prog.end)}</>:'No listing'}</small></span></button>;
 }
 
 export function MultiPicker({channels,categories,category,onCategory,allCount,epg,cache,onPick,screen,onBack}){
