@@ -170,6 +170,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        AppForeground.watch(getApplication());
         StreamClaim.host = this;
         StreamClaim.onMainTaken = () -> {
             stopPreview(); stopMulti();
@@ -5612,6 +5613,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onResume() {
+        if (AppForeground.consumeLeft()) adultUnlocked = false; // "until the app closes": leaving BM Player re-hides adult categories
         PreviewHandoff.drop(); // a hand-off nobody claimed must not keep the decoder or provider connection
         takeBackPreview();
         VlcPreview.forward.drop();
