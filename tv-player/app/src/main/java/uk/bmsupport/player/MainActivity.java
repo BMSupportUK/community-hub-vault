@@ -4062,8 +4062,12 @@ public class MainActivity extends Activity {
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
         col.addView(tile(label, icon, v -> browse(kind)), new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(170)));
-        TextView status = text(plQueued.contains(kind) ? "Updating…" : refreshedLabel(kind), 13, MUTED, false);
+        TextView status = text(plQueued.contains(kind) ? "Updating…" : refreshedLabel(kind), 14, 0xFFFFFFFF, true);
         status.setGravity(Gravity.CENTER);
+        status.setShadowLayer(4f, 0f, 1f, 0xFF000000);
+        android.graphics.drawable.GradientDrawable sbg = new android.graphics.drawable.GradientDrawable();
+        sbg.setColor(0xB3000000); sbg.setCornerRadius(dp(12));
+        status.setBackground(sbg); status.setPadding(dp(10), dp(4), dp(10), dp(4));
         tileStatus.put(kind, status);
         Button r = button("⟳  Refresh " + label, v -> refreshSection(kind, status));
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
