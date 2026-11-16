@@ -20,7 +20,6 @@
 - BM Support alerts use the shared SupportNotificationScope/useSupportNotifications boundary, including Fan Zone-origin sports guides; Fan Zone listeners stay independent so dual-role staff do not receive support pop-ups in Fan Zone.
 - Direct Install starts a fresh progress row for either setup path; website reads are scoped to that run, and already-installed runs have no download capability, so history cannot advance a new wizard.
 - Staff display role refreshes retain the last successful map until replacement succeeds; one ref-counted focus listener prevents app-return colour/order flicker.
-- Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.
 - Order staff-help tickets start pending remote setup; their existing ticket layout notifies staff after confirmation, while self-install links retain paid-order guide access.
 - Every customer checkout requires the entered order password, including signed-in shop owners; paid, non-cancelled orders can open published guides through the same credentials.
 - Customer password-request notifications use an owner-only RPC and contain no credentials; copy actions retrieve the password separately.
@@ -38,3 +37,4 @@
 - Manual customer creation saves contact-only rows; checkout emails use an authenticated role-checked RPC to bind an explicit order and resolve its saved recipient, preventing premature Auth accounts and arbitrary-recipient sends.
 - Enabler rules (login PIN issuance/status and confirmation status) live in `src/routes/api/public/AGENTS.md`.
 - BM Player dashboard sections are granted per role via `bm-player-<section>` page_permissions rows (own Role permissions tab); client uses `src/lib/player-sections.ts`, server/RLS use `player_section_allowed` — owner-only sections (DNS, maintenance, channel matching, customer logins) are never grantable. BM Player admin pages open through `playerPageAllowed` (section ticks), not the BM Support page list, and an action inside a page keeps its own section gate (messaging a box needs `announcements`, so a live-only role is never shown that button).
+- Install Guides handoff rules live in `src/components/app/AGENTS.md`.

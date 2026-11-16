@@ -9,3 +9,4 @@
 - VPN on your box is retired: the Link Device column and box VPN buttons are removed and all providers are switched off; the server code stays dormant (vpn action returns nothing) so existing boxes switch any VPN off.
 - Ticket setup stages are presentation-only, derived from scoped ticket checks and available website codes; code creation advances instructions but never proves redemption or TV readiness.
 - Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
+- Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.
