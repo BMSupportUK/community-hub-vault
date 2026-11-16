@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Package and release all pending Windows 0.4.105 and Mac 0.1.106 updates, including channel logos; upload before switching current downloads and verify both public files.
+
 - [x] Restore provider channel logos in the shared Windows/Mac guide, multi-screen picker and voice results; browser checks confirm logos and failed-image fallbacks, and 21 desktop checks pass. Installers are not rebuilt or published; real-provider desktop verification requires a linked Windows/Mac app.
 
 - [x] Close refresh bypass of pending website 2FA; signed-in browser stays at the code screen after protected-page entry and reload; server functions reject pending verification. Valid-code completion still requires the user's authenticator.
