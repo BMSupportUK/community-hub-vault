@@ -69,6 +69,28 @@ async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[
  const homeItemsRef=useRef([]);
  useEffect(()=>{if(view!=='home'||!state?.signedIn){setRooms([]);return;}let live=true;const load=()=>bm.rooms().then(r=>{if(!live)return;setRooms(Array.isArray(r?.rooms)?r.rooms:[]);if(r?.connections)setPkgCons(r.connections);}).catch(()=>{});load();const t=setInterval(load,5000);return()=>{live=false;clearInterval(t);};},[view,state?.signedIn,state?.maxConnections]);
  const [multi,setMulti]=useState(1),[loading,setLoading]=useState(false),[issue,setIssue]=useState(''),[speed,setSpeed]=useState(null);
+ // Home screen selection: arrow keys move the accent ring, Enter opens. Hooks must sit before the early returns below.
+ useEffect(()=>{if(view==='home')setHomeSel(0);},[view]);
+ useEffect(()=>{
+  if(view!=='home'||modal||voiceResults||progress)return;
+  const onKey=e=>{
+   if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.key))return;
+   if(/INPUT|TEXTAREA|SELECT/.test(e.target?.tagName||''))return;
+   e.preventDefault();
+   const items=homeItemsRef.current;
+   setHomeSel(sel=>{
+    const last=items.length-1;let next=sel;
+    if(e.key==='ArrowRight')next=Math.min(last,sel+1);
+    else if(e.key==='ArrowLeft')next=Math.max(0,sel-1);
+    else if(e.key==='ArrowDown')next=Math.min(last,sel+3);
+    else if(e.key==='ArrowUp')next=Math.max(0,sel-3);
+    else if(e.key==='Enter'){items[Math.min(sel,last)]?.open();return sel;}
+    return next;
+   });
+  };
+  window.addEventListener('keydown',onKey);
+  return()=>window.removeEventListener('keydown',onKey);
+ },[view,modal,voiceResults,progress]);
  const pane=useRef(null),channelPane=useRef(null),previewTimer=useRef(null),previewSequence=useRef(0);
  const [playingView,setPlayingView]=useState(false),[volume,setVolume]=useState(100);
  const [feed,setFeed]=useState({});
@@ -151,27 +173,6 @@ async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[
   {key:'settings',icon:'⚙',name:'Settings',open:()=>{setPlayingView(false);setView('settings');}},
  ];
  homeItemsRef.current=homeItems;
- useEffect(()=>{if(view==='home')setHomeSel(0);},[view]);
- useEffect(()=>{
-  if(view!=='home'||modal||voiceResults||progress)return;
-  const onKey=e=>{
-   if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Enter'].includes(e.key))return;
-   if(/INPUT|TEXTAREA|SELECT/.test(e.target?.tagName||''))return;
-   e.preventDefault();
-   const items=homeItemsRef.current;
-   setHomeSel(sel=>{
-    const last=items.length-1;let next=sel;
-    if(e.key==='ArrowRight')next=Math.min(last,sel+1);
-    else if(e.key==='ArrowLeft')next=Math.max(0,sel-1);
-    else if(e.key==='ArrowDown')next=Math.min(last,sel+3);
-    else if(e.key==='ArrowUp')next=Math.max(0,sel-3);
-    else if(e.key==='Enter'){items[Math.min(sel,last)]?.open();return sel;}
-    return next;
-   });
-  };
-  window.addEventListener('keydown',onKey);
-  return()=>window.removeEventListener('keydown',onKey);
- },[view,modal,voiceResults,progress]);
  return <div className="app">{header}
  {playingView&&(playing.length>0||multi>1)?<main className={'watch-screen'+(controlsShown?'':' controls-hidden')+(isFs?' is-fullscreen':'')}><div className="watch-heading"><button onClick={()=>{setPlayingView(false);setMulti(1);bm.stop();}}>← Back</button><h2>{playing.map(p=>p.item.name).join(' · ')}</h2><button title="Full screen (F)" onClick={toggleFs}>⛶</button></div><div className={'watch-panes screens-'+multi}>{playing.map(p=><section key={p.index} tabIndex={-1} className={multi>1&&audibleIdx===p.index?'audible-pane':undefined} onPointerDown={()=>{setAudibleIdx(p.index);bm.control({index:p.index,action:'audio'});}} onDoubleClick={toggleFs}><VideoSurface index={p.index} visible={!hidden}/>{feed[p.index]&&<div role="status" className={'feed-pill '+feed[p.index]}>{FEED_LABELS[feed[p.index]]}</div>}<PlayerControls p={p} bm={bm} volume={volume} onVolume={value=>{setVolume(value);setAudibleIdx(p.index);bm.control({index:p.index,action:'volume',volume:value});}} actions={<><button title={'Sound booster: '+boostLevel(state.settings.boost).label+(boostLevel(state.settings.boost).id==='high'?' — '+HIGH_NOTE:'')} aria-label="Sound booster" onClick={()=>bm.control({index:p.index,action:'boost',level:nextBoost(boostLevel(state.settings.boost).id)})}>🔊 {boostLevel(state.settings.boost).id==='off'?'Boost off':boostLevel(state.settings.boost).label.split(' ')[0]}</button>{favouriteButton(p.item)}{playerControls.canReport(p.item.kind)&&<button title="Report a problem" onClick={()=>{setIssue('');setModal({type:'report',item:p.item});}}>⚠</button>}{p.item.kind==='live'&&!p.item.catchup&&<button title="Swap channel" aria-label="Swap channel" onClick={async()=>{const r=await bm.swap(p.index);if(r?.items?.length)setModal({type:'alternate-feed',auto:false,index:p.index,items:r.items,eventKey:r.eventKey});else toast('No other versions of this channel found.');}}>⇄ Swap</button>}{multi>1&&<button onClick={()=>{setPlayingView(false);browse('live');}}>＋ Channel</button>}{multi===1&&p.item.kind==='live'&&!p.item.catchup&&Math.min(3,(state.providerConnections||pkgCons||state.maxConnections)||1)>=2&&<button title="Add a second screen and keep this channel playing" onClick={()=>{setMulti(2);setPlayingView(false);browse('live');}}>＋ Add screen</button>}</>}/></section>)}{multi>1&&Array.from({length:Math.max(0,multi-playing.length)},(_,n)=><section key={'empty'+n} className="empty-screen"><p>Screen {playing.length+n+1}</p><button className="primary" onClick={()=>{setPlayingView(false);browse('live');}}>＋ Choose channel</button></section>)}</div></main>:!state.linked?<SigninScreen bm={bm} platformName={state.platformName} code={state.code}/>:
  view==='home'?<main className={'home'+(themeStyle(state.settings?.theme)?' themed':'')} style={themeStyle(state.settings?.theme,state.settings?.themeShade)}><p className="account">Signed in as {state.user}{state.status?' · '+state.status:''}{state.expiry?' (expires '+new Date(state.expiry).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+')':' (no expiry)'}{' · '+((state.providerConnections||pkgCons||state.maxConnections))+(((state.providerConnections||pkgCons||state.maxConnections))===1?' connection':' connections')}</p>{rooms.length>0&&<p className="account rooms">Also watching on your login: {rooms.map(r=>r.name+(r.screens>1?' ('+r.screens+' screens)':'')+(r.title?' – '+r.title:'')).join(' · ')}</p>}<div className="tiles">{homeItems.filter(i=>i.tile).map((item,i)=><div className={'tile'+(homeSel===i?' selected':'')} key={item.key} onMouseEnter={()=>setHomeSel(i)}><button className="big" onClick={item.open}><span>{item.icon}</span>{item.name}</button><button className="refresh" title={'Refresh '+item.name} onClick={()=>act(()=>bm.refresh())}>⟳  Refresh {item.name}</button><span className="refreshed">{stamp(state.refreshed?.[item.key])}</span></div>)}</div><nav className="home-nav">{homeItems.filter(i=>!i.tile).map((item,i)=><button key={item.key} className={homeSel===i+3?'selected':''} onMouseEnter={()=>setHomeSel(i+3)} onClick={item.open}>{item.icon} {item.name}</button>)}</nav>{state.playing.length>0&&<div className="playing-status"><span>▶ {state.playing.map(p=>p.item.name).join(' · ')}</span><button onClick={()=>bm.stop()}>■ Stop playback</button></div>}</main>:
