@@ -1,7 +1,7 @@
 # Roadmap
 
 - [x] Theme improvements: lighter middle shading, see-through tiles, scene-at-top 1920x1080 pictures, Light/Medium/Strong shading setting, theme-colour selected outline (Android, Windows, Mac). Tests pass, box app compiles.
-- [ ] Publish website and release box 5.72 / Windows 0.4.107 / Mac 0.1.108 with theme improvements (awaiting go-ahead).
+- [x] Released box 5.72, Windows 0.4.107 and Mac 0.1.108 with theme improvements; website publish scheduled.
 
 - [x] Home-screen themes: 12 outside-stadium football, Kids cartoon, Fairy tale magic and 6 seasonal; website Themes section (switch off/delete), Android Settings › Theme, Windows/Mac Settings › Theme; 178 desktop checks pass.
 - [ ] Build and release Android, Windows and Mac with themes (Android build tools need reinstalling; awaiting go-ahead to release).
