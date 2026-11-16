@@ -14,3 +14,9 @@ test('the PIN must be exactly 4 numbers',()=>{
  expect(p.validPin('123')).toBe(false);
  expect(p.validPin('12a4')).toBe(false);
 });
+test('categories hidden under parental control disappear from that list only',()=>{
+ const r=p.hideChosen(data,['1']);
+ expect(r.categories.map(c=>c.id)).toEqual([2,3]);
+ expect(r.items.map(i=>i.id)).toEqual(['b','c','d']);
+ expect(p.hideChosen(data,[])).toBe(data);
+});

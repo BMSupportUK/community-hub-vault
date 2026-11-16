@@ -3768,7 +3768,7 @@ public class MainActivity extends Activity {
         List<View> advanced = new ArrayList<>();
         boxes.add(settingBox("🔒", "Parental control", prefs.getString("pin", "").isEmpty() ? "Set PIN" : adultUnlocked ? "Unlocked" : "On", v -> parentalControl()));
         for (String kind : new String[]{"live", "film", "series"}) {
-            boxes.add(settingBox("⇅", sectionName(kind) + " categories", "Rearrange / hide categories", v -> editCategoryOrder(kind)));
+            boxes.add(settingBox("⇅", sectionName(kind) + " categories", "Rearrange categories", v -> editCategoryOrder(kind)));
         }
         String[] cuL = {"Exact guide time", "+1 minute", "+2 minutes", "+3 minutes", "+5 minutes"};
         int cuNow = CatchupStart.offset(prefs);
@@ -3892,11 +3892,11 @@ public class MainActivity extends Activity {
                     List<String[]> rows = CategoryOrder.apply(original, prefs.getString(CategoryOrder.key(prefs, kind), "[]"));
                     java.util.Set<String> hidden = CategoryOrder.hidden(prefs, kind);
                     LinearLayout content = column();
-                    ListView list = CategoryEditor.create(this, rows, hidden);
+                    ListView list = CategoryEditor.create(this, rows, hidden, false);
                     content.addView(list, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Math.min(dp(240), getResources().getDisplayMetrics().heightPixels / 2)));
                     compactDialog(new AlertDialog.Builder(this).setTitle(sectionName(kind) + " category order").setView(content)
                         .setPositiveButton("Save", (d,w) -> { CategoryOrder.save(prefs, kind, rows); prefs.edit().putStringSet(CategoryOrder.hiddenKey(prefs, kind), new java.util.HashSet<>(hidden)).apply(); showSettings(); Toast.makeText(this, "Categories saved", Toast.LENGTH_SHORT).show(); })
-                        .setNeutralButton("Reset", (d,w) -> { CategoryOrder.save(prefs, kind, original); prefs.edit().remove(CategoryOrder.hiddenKey(prefs, kind)).apply(); showSettings(); })
+                        .setNeutralButton("Reset", (d,w) -> { CategoryOrder.save(prefs, kind, original); showSettings(); })
                         .setNegativeButton("Cancel", null).create());
                     list.requestFocus(); list.setSelection(0);
                 });
@@ -4222,17 +4222,50 @@ public class MainActivity extends Activity {
             });
             return;
         }
-        String[] opts = {adultUnlocked ? "Lock adult categories again" : "Unlock adult categories (until the app closes)", "Change PIN", "Turn parental control off"};
+        String[] opts = {adultUnlocked ? "Lock adult categories again" : "Unlock adult categories (until the app closes)", "Hide categories", "Change PIN", "Turn parental control off"};
         new AlertDialog.Builder(this).setTitle("Parental control").setItems(opts, (d, w) -> {
             if (w == 0 && adultUnlocked) { adultUnlocked = false; showSettings(); return; }
             askPin("Enter your PIN", p -> {
                 if (!p.equals(prefs.getString("pin", ""))) { Toast.makeText(this, "Wrong PIN", Toast.LENGTH_SHORT).show(); return; }
                 if (w == 0) adultUnlocked = true;
-                else if (w == 1) { askPin("Set a new parental PIN", next -> { prefs.edit().putString("pin", next).apply(); adultUnlocked = false; showSettings(); }); return; }
+                else if (w == 1) { pickHideKind(); return; }
+                else if (w == 2) { askPin("Set a new parental PIN", next -> { prefs.edit().putString("pin", next).apply(); adultUnlocked = false; showSettings(); }); return; }
                 else { prefs.edit().remove("pin").apply(); adultUnlocked = false; }
                 showSettings();
             });
         }).show();
+    }
+
+    /** Parental control › Hide categories: PIN already checked; tick categories to hide them from that list. */
+    private void pickHideKind() {
+        String[] kinds = {"live", "film", "series"};
+        String[] names = {sectionName("live"), sectionName("film"), sectionName("series")};
+        new AlertDialog.Builder(this).setTitle("Hide categories in…").setItems(names, (d, w) -> hideCategories(kinds[w])).setNegativeButton("Cancel", null).show();
+    }
+
+    private void hideCategories(String kind) {
+        Toast.makeText(this, "Loading categories…", Toast.LENGTH_SHORT).show();
+        io.execute(() -> {
+            try {
+                JSONArray categories = new JSONArray(cachedGet(kind, catActionFor(kind), ""));
+                List<String[]> rows = new ArrayList<>();
+                for (int i = 0; i < categories.length(); i++) {
+                    JSONObject o = categories.getJSONObject(i);
+                    if (!hideAdult(o.optString("category_name"))) rows.add(new String[]{o.optString("category_id"), o.optString("category_name")});
+                }
+                ui.post(() -> {
+                    if (!"settings".equals(screen)) return;
+                    java.util.Set<String> hidden = CategoryOrder.hidden(prefs, kind);
+                    String[] names = new String[rows.size()]; boolean[] ticked = new boolean[rows.size()];
+                    for (int i = 0; i < rows.size(); i++) { names[i] = rows.get(i)[1]; ticked[i] = hidden.contains(rows.get(i)[0]); }
+                    compactDialog(new AlertDialog.Builder(this).setTitle("Tick categories to hide · " + sectionName(kind))
+                        .setMultiChoiceItems(names, ticked, (d, i, on) -> { if (on) hidden.add(rows.get(i)[0]); else hidden.remove(rows.get(i)[0]); })
+                        .setPositiveButton("Save", (d, w) -> { prefs.edit().putStringSet(CategoryOrder.hiddenKey(prefs, kind), new java.util.HashSet<>(hidden)).apply(); showSettings(); Toast.makeText(this, "Hidden categories saved", Toast.LENGTH_SHORT).show(); })
+                        .setNeutralButton("Show all", (d, w) -> { prefs.edit().remove(CategoryOrder.hiddenKey(prefs, kind)).apply(); showSettings(); })
+                        .setNegativeButton("Cancel", null).create());
+                });
+            } catch (Exception e) { ui.post(() -> Toast.makeText(this, "Couldn't load categories. Try Refresh.", Toast.LENGTH_LONG).show()); }
+        });
     }
 
     // ---------- speed test + account ----------

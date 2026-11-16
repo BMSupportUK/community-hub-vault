@@ -159,3 +159,4 @@ select{color-scheme:dark}select option,select optgroup{background:var(--surface)
 .home:not(.themed) .account{color:var(--foreground);text-shadow:0 1px 3px #000c}
 
 .home .account{width:fit-content;color:#fff;font-weight:700;padding:6px 14px;border-radius:12px;background:rgba(0,0,0,.7);text-shadow:0 1px 3px #000}.home .account:has(+.rooms){margin-bottom:8px}
+.hide-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--border)}

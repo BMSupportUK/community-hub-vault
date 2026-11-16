@@ -7,4 +7,10 @@ function filterCatalog(data,locked){
  const hidden=new Set((data.categories||[]).filter(c=>isAdult(c.name)).map(c=>String(c.id)));
  return {...data,categories:(data.categories||[]).filter(c=>!hidden.has(String(c.id))),items:(data.items||[]).filter(i=>!hidden.has(String(i.category))&&!isAdult(i.categoryName))};
 }
-module.exports={isAdult,validPin,filterCatalog};
+// Categories the parent hid (Parental control › Hide categories), per list kind.
+function hideChosen(data,ids){
+ if(!data||!Array.isArray(ids)||!ids.length)return data;
+ const hidden=new Set(ids.map(String));
+ return {...data,categories:(data.categories||[]).filter(c=>!hidden.has(String(c.id))),items:(data.items||[]).filter(i=>!hidden.has(String(i.category)))};
+}
+module.exports={isAdult,validPin,filterCatalog,hideChosen};

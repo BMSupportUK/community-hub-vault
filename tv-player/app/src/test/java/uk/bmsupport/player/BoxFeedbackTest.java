@@ -45,10 +45,17 @@ public class BoxFeedbackTest {
         if(v instanceof ViewGroup)for(int i=0;i<((ViewGroup)v).getChildCount();i++){EditText e=entry(((ViewGroup)v).getChildAt(i));if(e!=null)return e;}
         return null;
     }
+    @Test public void rearrangeOnlyEditorOffersNoHideChoice() {
+        Activity a=Robolectric.buildActivity(Activity.class).setup().get();
+        List<String[]> rows=new ArrayList<>(Arrays.asList(new String[]{"1","News"},new String[]{"2","Sport"}));
+        Set<String> hidden=new HashSet<>(); ListView list=CategoryEditor.create(a,rows,hidden,false);a.setContentView(list);
+        list.performItemClick(null,0,0);
+        assertEquals(2,ShadowAlertDialog.getLatestAlertDialog().getListView().getAdapter().getCount());
+    }
     @Test public void movingThenHidingTargetsThePickedCategoryAndPersists() {
         Activity a=Robolectric.buildActivity(Activity.class).setup().get();
         List<String[]> rows=new ArrayList<>(Arrays.asList(new String[]{"1","News"},new String[]{"2","Sport"},new String[]{"3","Drama"}));
-        Set<String> hidden=new HashSet<>(); ListView list=CategoryEditor.create(a,rows,hidden);a.setContentView(list);
+        Set<String> hidden=new HashSet<>(); ListView list=CategoryEditor.create(a,rows,hidden,true);a.setContentView(list);
         list.performItemClick(null,2,2);
         ShadowAlertDialog.getLatestAlertDialog().getListView().performItemClick(null,0,0);
         assertEquals("3",rows.get(1)[0]);assertEquals("2",rows.get(2)[0]);
