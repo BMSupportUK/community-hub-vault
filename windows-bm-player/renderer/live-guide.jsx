@@ -1,4 +1,4 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{memo,useEffect,useRef,useState} from 'react';
 import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
 import guideActions from '../guide-action.cjs';
@@ -13,6 +13,25 @@ const SLOT=1800000,WINDOW=4*SLOT;
 const clock=v=>new Date(v).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
 const slotOf=t=>Math.floor(t/SLOT)*SLOT;
 let tapAt=0;
+
+const reminderKeyFor=(reminders,id)=>reminders.filter(r=>String(r.id).startsWith(id+':')).map(r=>r.id).join(',');
+// One guide row, redrawn only when its own channel, listings, time window or selection changes,
+// so hovering/focusing a programme no longer redraws every channel in the guide.
+const GuideRow=memo(function GuideRow({ch,n,on,rows,listed,start,now,axisWidth,gridWidth,query,category,h}){
+ const axis=guideAxis.guideAxis(start,start+WINDOW,[],gridWidth);
+ const shown=listed.filter(p=>p.end>start&&p.start<start+WINDOW);
+ return <div className="lg-row" data-ch={ch.id} style={{width:axisWidth+240}}>
+    <div className={'lg-ch'+(on?' on':'')}><button onClick={()=>h.pick(ch,null)} onFocus={()=>h.focusCh(ch)}><ChannelName>{channelLabel(ch.name,n)}</ChannelName>{query.trim()&&<small className="lg-search-category" title={category}>{category||'Uncategorised'}</small>}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>h.catchup(ch)}>🕘</button>}</div>
+    <div className="lg-line">
+     {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:axis.x(now)}}/>}
+     {shown.map(p=>{const live=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=h.isSet(ch,p);return <div key={p.id} className={'lg-prog'+(live&&on?' on':'')} style={{left:axis.x(Math.max(start,p.start)),width:axis.x(Math.min(start+WINDOW,p.end))-axis.x(Math.max(start,p.start))}} onMouseEnter={()=>h.focus(ch,p)}>
+      <button className="lg-prog-title" title={p.title} onFocus={e=>{e.currentTarget.parentElement?.scrollIntoView({block:'nearest',inline:'nearest'});h.focus(ch,p);}} onClick={()=>h.pick(ch,p)}><span>{p.title}</span></button>
+      {eligible&&<button className={'lg-reminder'+(set?' set':'')} title={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-label={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-pressed={set} onFocus={e=>{e.currentTarget.parentElement?.scrollIntoView({block:'nearest',inline:'nearest'});h.focus(ch,p);}} onClick={()=>h.reminder(ch,p)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>{set&&<path d="m8 10 3 3 5-5"/>}</svg></button>}
+     </div>;})}
+     {rows&&!shown.length&&<span className="lg-empty">No guide information for this time</span>}
+    </div>
+   </div>;
+});
 
 export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg,cache,feedLabel}){
  const [start,setStart]=useState(slotOf(Date.now()));
@@ -49,6 +68,8 @@ export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,categ
  const nx=shownCh&&shownProg?nextAfter(shownCh.id,shownProg):null;
  const dateLabel=new Date(start).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})+', '+clock(now);
  const axis=guideAxis.guideAxis(start,start+WINDOW,[],gridWidth);
+ const live$=useRef({});live$.current={pick,setFocus,onAt,onReminder,onCatchup,reminders};
+ const handlers=useRef({pick:(c,p)=>live$.current.pick(c,p),focusCh:c=>live$.current.setFocus({channel:c,programme:live$.current.onAt(c.id,Date.now())}),focus:(c,p)=>live$.current.setFocus({channel:c,programme:p}),reminder:(c,p)=>live$.current.onReminder(c,p),catchup:c=>live$.current.onCatchup(c),isSet:(c,p)=>live$.current.reminders.some(r=>r.id===c.id+':'+p.start)}).current;
  return <div className="lg">
   <div className="lg-top">
    <div className="lg-preview" role="button" title={selected?'Double-click for full screen':undefined} onClick={()=>{if(!selected){toast('Click a channel to preview it');return;}const t=Date.now();if(t-tapAt<500){tapAt=0;onFull(selected);}else tapAt=t;}}>
@@ -78,17 +99,7 @@ export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,categ
   </div>
   <div className="lg-grid" ref={grid}>
    <div className="lg-row lg-head" style={{width:axis.width+240}}><div className="lg-ch">{new Date(start).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div><div className="lg-times">{axis.times.slice(0,-1).map(t=><span key={t} style={{left:axis.x(t)}}>{clock(t)}</span>)}</div></div>
-   {channels.map((ch,n)=><div className="lg-row" key={ch.id} data-ch={ch.id} style={{width:axis.width+240}}>
-    <div className={'lg-ch'+(selected?.id===ch.id?' on':'')}><button onClick={()=>pick(ch,null)} onFocus={()=>setFocus({channel:ch,programme:onAt(ch.id,now)})}><ChannelName>{channelLabel(ch.name,n)}</ChannelName>{query.trim()&&<small className="lg-search-category" title={catName(ch.category)}>{catName(ch.category)||'Uncategorised'}</small>}</button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>onCatchup(ch)}>🕘</button>}</div>
-    <div className="lg-line">
-     {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:axis.x(now)}}/>}
-     {list(ch.id).filter(p=>p.end>start&&p.start<start+WINDOW).map(p=>{const on=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=reminders.some(r=>r.id===ch.id+':'+p.start);return <div key={p.id} className={'lg-prog'+(on&&selected?.id===ch.id?' on':'')} style={{left:axis.x(Math.max(start,p.start)),width:axis.x(Math.min(start+WINDOW,p.end))-axis.x(Math.max(start,p.start))}} onMouseEnter={()=>setFocus({channel:ch,programme:p})}>
-      <button className="lg-prog-title" title={p.title} onFocus={e=>{e.currentTarget.parentElement?.scrollIntoView({block:'nearest',inline:'nearest'});setFocus({channel:ch,programme:p});}} onClick={()=>pick(ch,p)}><span>{p.title}</span></button>
-      {eligible&&<button className={'lg-reminder'+(set?' set':'')} title={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-label={(set?'Remove reminder for ':'Set reminder for ')+p.title} aria-pressed={set} onFocus={e=>{e.currentTarget.parentElement?.scrollIntoView({block:'nearest',inline:'nearest'});setFocus({channel:ch,programme:p});}} onClick={()=>onReminder(ch,p)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>{set&&<path d="m8 10 3 3 5-5"/>}</svg></button>}
-     </div>;})}
-     {guide[ch.id]&&!list(ch.id).some(p=>p.end>start&&p.start<start+WINDOW)&&<span className="lg-empty">No guide information for this time</span>}
-    </div>
-   </div>)}
+   {channels.map((ch,n)=><GuideRow key={ch.id} ch={ch} n={n} on={selected?.id===ch.id} rows={guide[ch.id]} listed={list(ch.id)} start={start} now={now} axisWidth={axis.width} gridWidth={gridWidth} query={query} category={catName(ch.category)} reminderKey={reminderKeyFor(reminders,ch.id)} h={handlers}/>)}
    {!channels.length&&<p className="empty">No channels in {currentCat}.</p>}
   </div>
   {catOpen&&<div className="lg-scrim" onClick={()=>setCatOpen(false)}><div className="lg-cats" role="dialog" aria-label="Categories" onClick={e=>e.stopPropagation()}>
