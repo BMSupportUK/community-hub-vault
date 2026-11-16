@@ -53,14 +53,38 @@ final class PlayerTheme {
         return true;
     }
 
+    static final String ACCENT = "theme_accent", SHADE = "theme_shade";
+    static final String[] SHADE_IDS = {"light", "medium", "strong"};
+    static final String[] SHADE_LABELS = {"Light (brightest picture)", "Medium", "Strong (easiest to read)"};
+
+    /** Top, middle and bottom shading over the theme picture; the middle stays lightest so the picture shows. */
+    static int[] shading(String id) {
+        if ("light".equals(id)) return new int[]{0x4D0B1220, 0x0D0B1220, 0x400B1220};
+        if ("strong".equals(id)) return new int[]{0xB30B1220, 0x660B1220, 0xA60B1220};
+        return new int[]{0x730B1220, 0x260B1220, 0x660B1220};
+    }
+
+    static String shadeLabel(String id) {
+        for (int i = 0; i < SHADE_IDS.length; i++) if (SHADE_IDS[i].equals(id)) return SHADE_LABELS[i];
+        return "Medium";
+    }
+
+    /** The theme's own colour for the selected outline, or the fallback when it has none. */
+    static int accent(SharedPreferences prefs, int fallback) { return parseAccent(prefs.getString(ACCENT, ""), fallback); }
+
+    static int parseAccent(String hex, int fallback) {
+        if (hex == null || !hex.matches("#[0-9A-Fa-f]{6}")) return fallback;
+        return 0xFF000000 | Integer.parseInt(hex.substring(1), 16);
+    }
+
     static void clear(Context c, SharedPreferences prefs) {
-        prefs.edit().remove(PREF).apply();
+        prefs.edit().remove(PREF).remove(ACCENT).apply();
         //noinspection ResultOfMethodCallIgnored
         file(c).delete();
     }
 
     /** Downloads the theme picture then saves the choice. Runs off the main thread. */
-    static boolean choose(Context c, SharedPreferences prefs, String id, String image) {
+    static boolean choose(Context c, SharedPreferences prefs, String id, String image, String accent) {
         if (!image.startsWith(Net.SITE + "/")) return false; // only pictures from our own website
         File tmp = new File(c.getFilesDir(), "theme.part");
         try {
@@ -73,7 +97,7 @@ final class PlayerTheme {
             }
             if (BitmapFactory.decodeFile(tmp.getAbsolutePath()) == null) return false;
             if (!tmp.renameTo(file(c))) return false;
-            prefs.edit().putString(PREF, id).apply();
+            prefs.edit().putString(PREF, id).putString(ACCENT, accent == null ? "" : accent).apply();
             return true;
         } catch (Throwable e) { return false; }
         finally { //noinspection ResultOfMethodCallIgnored

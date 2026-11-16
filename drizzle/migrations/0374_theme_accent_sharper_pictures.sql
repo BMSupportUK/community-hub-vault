@@ -1,0 +1,3 @@
+ALTER TABLE public.player_themes ADD COLUMN IF NOT EXISTS accent text NOT NULL DEFAULT '#E11D48' CHECK (accent ~ '^#[0-9A-Fa-f]{6}$');
+UPDATE public.player_themes t SET image_path = t.id || '-v3.jpg', accent = v.a FROM (VALUES
+('middlesbrough','#E11D2E'),('man-utd','#DA291C'),('liverpool','#C8102E'),('arsenal','#EF0107'),('chelsea','#3B82F6'),('man-city','#6CABDD'),('spurs','#E2E8F0'),('newcastle','#E5E7EB'),('sunderland','#EB172B'),('leeds','#FFCD00'),('aston-villa','#95BFE5'),('england','#CF142B'),('kids-cartoon','#22C55E'),('fairy-tale-magic','#A78BFA'),('christmas','#EF4444'),('halloween','#F97316'),('valentines','#EC4899'),('easter','#FACC15'),('bonfire-night','#F59E0B'),('new-year','#FBBF24')) AS v(id,a) WHERE t.id = v.id;

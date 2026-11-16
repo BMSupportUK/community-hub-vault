@@ -2619,6 +2619,13 @@
       "when": 1794837011348,
       "tag": "0373_clean_theme_pictures",
       "breakpoints": true
+    },
+    {
+      "idx": 374,
+      "version": "7",
+      "when": 1794837765746,
+      "tag": "0374_theme_accent_sharper_pictures",
+      "breakpoints": true
     }
   ]
 }

@@ -6979,6 +6979,7 @@ export type Database = {
       }
       player_themes: {
         Row: {
+          accent: string
           created_at: string
           enabled: boolean
           grp: string
@@ -6988,6 +6989,7 @@ export type Database = {
           sort: number
         }
         Insert: {
+          accent?: string
           created_at?: string
           enabled?: boolean
           grp?: string
@@ -6997,6 +6999,7 @@ export type Database = {
           sort?: number
         }
         Update: {
+          accent?: string
           created_at?: string
           enabled?: boolean
           grp?: string

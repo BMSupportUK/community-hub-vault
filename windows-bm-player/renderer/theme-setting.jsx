@@ -1,6 +1,6 @@
 import React,{useEffect,useState} from 'react';
 // Settings › Theme: the owner's switched-on home-screen themes plus the standard look.
-export function ThemeSetting({current,onPick}){
+export function ThemeSetting({current,shade,onPick,onShade}){
  const [items,setItems]=useState(null),[error,setError]=useState(false);
  useEffect(()=>{let on=true;window.bm.themes().then(r=>{if(on)setItems(r||[]);}).catch(()=>{if(on)setError(true);});return()=>{on=false;};},[]);
  const groups=[...new Set((items||[]).map(t=>t.group))];
@@ -9,5 +9,6 @@ export function ThemeSetting({current,onPick}){
   <select aria-label="Theme" value={current?.id||''} onChange={e=>{const t=items.find(x=>x.id===e.target.value);onPick(t||null);}}>
    <option value="">Standard (BM Player)</option>
    {groups.map(g=><optgroup key={g} label={g}>{items.filter(t=>t.group===g).map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</optgroup>)}
-  </select>}</div>;
+  </select>}
+  {current&&<select aria-label="Picture shading" value={shade||'medium'} onChange={e=>onShade(e.target.value)}><option value="light">Shading: Light (brightest picture)</option><option value="medium">Shading: Medium</option><option value="strong">Shading: Strong (easiest to read)</option></select>}</div>;
 }

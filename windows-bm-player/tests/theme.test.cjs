@@ -10,3 +10,15 @@ test('only pictures from the BM Support website are used',()=>{
  expect(theme.safeImage({image:'https://bmsupport.uk/player-themes/a.jpg") , url("x'})).toBe(null);
  expect(theme.safeImage(boro)).toBe(boro.image);
 });
+test('theme colour is only a plain hex colour',()=>{
+ expect(theme.clean([{...boro,accent:'#E11D2E'}])[0].accent).toBe('#E11D2E');
+ expect(theme.clean([{...boro,accent:'red;}'}])[0].accent).toBe(null);
+});
+test('shading defaults to medium and strong is darker than light',()=>{
+ expect(theme.shadeId('nonsense')).toBe('medium');
+ expect(theme.SHADES.strong[1]).toBeGreaterThan(theme.SHADES.light[1]);
+ const s=theme.homeStyle({...boro,accent:'#E11D2E'},'light');
+ expect(s['--accent']).toBe('#E11D2E');
+ expect(s.backgroundImage).toContain(boro.image);
+ expect(theme.homeStyle(null,'light')).toBe(undefined);
+});

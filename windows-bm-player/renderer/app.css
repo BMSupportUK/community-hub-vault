@@ -150,3 +150,7 @@ select{color-scheme:dark}select option,select optgroup{background:var(--surface)
 
 .app:has(.watch-screen.is-fullscreen)>.bar{display:none}.watch-screen.is-fullscreen{height:100vh}.watch-screen.is-fullscreen.controls-hidden{padding:0;gap:0;cursor:none}.watch-screen.is-fullscreen.controls-hidden .watch-heading,.watch-screen.is-fullscreen.controls-hidden .playback-controls{display:none}.watch-screen.is-fullscreen.controls-hidden .watch-panes{gap:0}
 
+
+/* Themed home: frosted see-through tiles in the same places; the selected outline takes the theme colour. */
+.home.themed .tile .big,.home.themed .tile .refresh,.home.themed .home-nav button,.home.themed .playing-status{background:#10121959;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);border:1px solid #ffffff2e}
+.home.themed .account{color:var(--foreground);text-shadow:0 1px 3px #000c}

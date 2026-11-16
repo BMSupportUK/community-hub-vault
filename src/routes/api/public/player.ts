@@ -161,7 +161,7 @@ async function currentAnnouncement(admin: { from: (t: "player_announcements") =>
   announcementCache = { at: Date.now(), value: row ? { id: row.id, message: row.message, sent_at: Date.parse(row.created_at), target_user_id: row.target_user_id, target_device_id: row.target_device_id ?? null } : null };
   return announcementCache.value;
 }
-let themeCache: { at: number; items: { id: string; name: string; grp: string; image_path: string }[] } | null = null;
+let themeCache: { at: number; items: { id: string; name: string; grp: string; image_path: string; accent: string }[] } | null = null;
 let majorCache: { at: number; items: { id: string; title: string; body: string; created_at: string }[] } | null = null;
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: CORS });
 
@@ -329,12 +329,12 @@ export const Route = createFileRoute("/api/public/player")({
           // Home-screen themes the owner has left switched on; pictures are served from /player-themes/.
           const now = Date.now();
           if (!themeCache || now - themeCache.at > 60_000) {
-            const { data } = await supabaseAdmin.from("player_themes").select("id, name, grp, image_path")
+            const { data } = await supabaseAdmin.from("player_themes").select("id, name, grp, image_path, accent")
               .eq("enabled", true).order("sort", { ascending: true });
             themeCache = { at: now, items: data ?? [] };
           }
           const origin = new URL(request.url).origin;
-          return json({ items: themeCache.items.map((t) => ({ id: t.id, name: t.name, group: t.grp, image: `${origin}/player-themes/${t.image_path}` })) });
+          return json({ items: themeCache.items.map((t) => ({ id: t.id, name: t.name, group: t.grp, accent: t.accent, image: `${origin}/player-themes/${t.image_path}` })) });
         }
 
         if (body.action === "major_announcements") {

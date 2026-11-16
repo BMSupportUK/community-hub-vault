@@ -3802,6 +3802,8 @@ public class MainActivity extends Activity {
                                 : "Non 4K Device\n\nThis TV or streaming device can't show 4K. 4K channels and films may not play smoothly.")
                         .setPositiveButton("OK", null).show()));
         boxes.add(settingBox("🎨", "Theme", prefs.getString(PlayerTheme.PREF + "_name", "Standard"), v -> chooseTheme()));
+        if (!prefs.getString(PlayerTheme.PREF, "").isEmpty())
+            boxes.add(settingBox("🌗", "Theme shading", PlayerTheme.shadeLabel(prefs.getString(PlayerTheme.SHADE, "medium")), v -> chooseThemeShade()));
         String[] timeL = {"24 hour", "12 hour"}, timeV = {"24", "12"};
         boxes.add(settingBox("🕒", "Time format", label("time_format", "24", timeL, timeV),
                 v -> choose("Time format", "time_format", "24", timeL, timeV)));
@@ -5949,6 +5951,29 @@ public class MainActivity extends Activity {
         return l;
     }
 
+    /** Settings › Theme shading: how dark the picture behind the home screen is. */
+    private void chooseThemeShade() {
+        String cur = prefs.getString(PlayerTheme.SHADE, "medium"); int sel = 1;
+        for (int i = 0; i < PlayerTheme.SHADE_IDS.length; i++) if (PlayerTheme.SHADE_IDS[i].equals(cur)) sel = i;
+        new AlertDialog.Builder(this).setTitle("Theme shading").setSingleChoiceItems(PlayerTheme.SHADE_LABELS, sel, (d, w) -> {
+            d.dismiss(); prefs.edit().putString(PlayerTheme.SHADE, PlayerTheme.SHADE_IDS[w]).apply(); showSettings();
+        }).setNegativeButton("Cancel", null).show();
+    }
+
+    /** Themed home: tiles and buttons stay where they are but turn see-through, outlined in the theme colour when selected. */
+    private void glassTiles(View v, int accent) {
+        if (v instanceof ViewGroup) { ViewGroup g = (ViewGroup) v; for (int i = 0; i < g.getChildCount(); i++) glassTiles(g.getChildAt(i), accent); }
+        if (!v.isFocusable() || !(v.getBackground() instanceof StateListDrawable)) return;
+        float r = v instanceof Button ? dp(12) : dp(20);
+        GradientDrawable on = new GradientDrawable(); on.setColor(0x990B1220); on.setCornerRadius(r); on.setStroke(dp(3), accent);
+        GradientDrawable off = new GradientDrawable(); off.setColor(0x660B1220); off.setCornerRadius(r); off.setStroke(dp(1), 0x40FFFFFF);
+        StateListDrawable s = new StateListDrawable();
+        s.addState(new int[]{android.R.attr.state_focused}, on);
+        s.addState(new int[]{android.R.attr.state_pressed}, on);
+        s.addState(new int[]{}, off);
+        v.setBackground(s);
+    }
+
     /** Settings › Theme: the owner's switched-on themes, grouped, plus the standard look. */
     private void chooseTheme() {
         Toast.makeText(this, "Loading themes…", Toast.LENGTH_SHORT).show();
@@ -5971,12 +5996,22 @@ public class MainActivity extends Activity {
                     org.json.JSONObject t = items.optJSONObject(w - 1);
                     Toast.makeText(this, "Downloading " + t.optString("name") + "…", Toast.LENGTH_SHORT).show();
                     io.execute(() -> {
-                        boolean ok = PlayerTheme.choose(this, prefs, t.optString("id"), t.optString("image"));
+                        boolean ok = PlayerTheme.choose(this, prefs, t.optString("id"), t.optString("image"), t.optString("accent"));
                         if (ok) prefs.edit().putString(PlayerTheme.PREF + "_name", t.optString("name")).apply();
                         ui.post(() -> { Toast.makeText(this, ok ? t.optString("name") + " theme on — see your home screen" : "Couldn't download that theme. Try again.", Toast.LENGTH_LONG).show(); showSettings(); });
                     });
                 }).setNegativeButton("Cancel", null).show();
             });
+        });
+    }
+
+    /** Theme pictures fill the screen from the top, so the stadium or scene is never cut off above. */
+    private void topCrop(ImageView iv, android.graphics.Bitmap b) {
+        iv.addOnLayoutChangeListener((v, l, t, r, bt, ol, ot, or, ob) -> {
+            int w = r - l, h = bt - t; if (w <= 0 || h <= 0) return;
+            float sc = Math.max(w / (float) b.getWidth(), h / (float) b.getHeight());
+            android.graphics.Matrix m = new android.graphics.Matrix(); m.setScale(sc, sc); m.postTranslate((w - b.getWidth() * sc) / 2f, 0);
+            iv.setImageMatrix(m);
         });
     }
 
@@ -5991,7 +6026,8 @@ public class MainActivity extends Activity {
         frame.addView(bg, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         View scrim = new View(this);
         scrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                themed != null ? new int[]{0x730B1220, 0x330B1220, 0x8C0B1220} : new int[]{0xE60B1220, 0x8C0B1220, 0xE60B1220}));
+                themed != null ? PlayerTheme.shading(prefs.getString(PlayerTheme.SHADE, "medium")) : new int[]{0xE60B1220, 0x8C0B1220, 0xE60B1220}));
+        if (themed != null) { bg.setScaleType(ImageView.ScaleType.MATRIX); topCrop(bg, themed); glassTiles(content, PlayerTheme.accent(prefs, ACCENT)); }
         frame.addView(scrim, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         content.setBackgroundColor(Color.TRANSPARENT);
         android.widget.ScrollView sc = new android.widget.ScrollView(this);
