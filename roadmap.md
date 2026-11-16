@@ -221,3 +221,4 @@
 - [x] Seal server address and username on the box (Keystore)
 - [x] Remove outside video players (exposed the stream address)
 - [x] Release box 5.77
+- [x] Remove old VLC app hand-off; release box 5.78

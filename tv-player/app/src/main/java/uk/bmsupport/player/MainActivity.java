@@ -734,13 +734,11 @@ public class MainActivity extends Activity {
         stopPolling();
         pollTask = new Runnable() {
             @Override public void run() {
-                // A backgrounded app (Home pressed, not closed) stops checking in so it drops off Live connections,
-                // except while external VLC is playing something it handed off.
-                boolean vlcPlaying = prefs.getLong("np_since", 0) > 0 && "VLC".equals(prefs.getString("np_player", ""));
+                // A backgrounded app (Home pressed, not closed) stops checking in so it drops off Live connections.
                 // Self-heal: a preview that is playing must always report itself, even if a resume cleared it.
                 if (preview != null && previewItem != null && preview.getPlaybackState() == androidx.media3.common.Player.STATE_READY
                         && prefs.getLong("np_since", 0) == 0) { previewCounted = true; setNowPlaying(previewItem, false, true); }
-                if (PlayerApplication.onScreen() || vlcPlaying || !hasLogin()) {
+                if (PlayerApplication.onScreen() || !hasLogin()) {
                     if (!safeRun(io, MainActivity.this::pollOnce)) return;
                 }
                 ui.postDelayed(this, maintenance ? Checkin.delay(15000) : hasLogin() ? Checkin.delay(60000) : 5000);
@@ -2721,41 +2719,6 @@ public class MainActivity extends Activity {
         String url = streamUrl(it);
         noteStreamHost(url);
         setNowPlaying(it, vlc);
-        if (vlc) {
-            Intent i = new Intent(Intent.ACTION_VIEW).setPackage("org.videolan.vlc").setDataAndTypeAndNormalize(Uri.parse(url), "video/*");
-            i.putExtra("title", it.name);
-            i.putExtra("position", position);
-            i.putExtra("from_start", position <= 0);
-            if (WatchProgress.eligible(it.kind)) i.putExtra("subtitles_enabled", subtitles);
-            vlcKey = WatchProgress.eligible(it.kind) ? watchKey(it.kind, it.id) : null;
-            vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
-            // Some Android boxes can't hardware-decode provider recordings; VLC's software decoder plays them.
-            if ("catchup".equals(it.kind)) i.putExtra("disable_hardware", true);
-            if (!SoundBoost.fixed() && !"off".equals(SoundBoost.current(this))) Toast.makeText(this, "Sound booster doesn't work in VLC – use VLC's own volume.", Toast.LENGTH_LONG).show();
-            vlcCatchup = "catchup".equals(it.kind) ? it : null; vlcStarted = android.os.SystemClock.elapsedRealtime();
-            // Live: VLC gets the channel's next address and software decoding on each retry, then BM Player takes over.
-            if ("live".equals(it.kind)) {
-                if (vlcLive != it) { vlcLive = it; vlcLiveTry = 0; }
-                // VLC rejects the provider's raw .ts live address ("location couldn't be played"), so it starts on HLS.
-                String[] urls = vlcLiveOrder(streamUrls(it));
-                i.setDataAndTypeAndNormalize(Uri.parse(urls[Math.min(vlcLiveTry, urls.length - 1)]), "video/*");
-                if (vlcLiveTry > 0) i.putExtra("disable_hardware", true);
-                i.removeExtra("position"); i.removeExtra("from_start");
-            } else vlcLive = null;
-            // Close the preview's provider connection first and give the panel a moment to drop it:
-            // with a 1-connection login, VLC opening while the preview still holds the stream gets refused.
-            boolean hadPreview = preview != null;
-            stopPreview(); stopMulti();
-            ui.postDelayed(() -> {
-                try { startActivityForResult(i, VLC_REQUEST); }
-                catch (Exception e) {
-                    new AlertDialog.Builder(this).setTitle("VLC isn't installed")
-                            .setMessage("Install VLC from your app store (or Downloader) to use it as the player. Playing in BM Player instead.")
-                            .setPositiveButton("OK", (d, w) -> beginPlayback(it, false, position, subtitles)).show();
-                }
-            }, hadPreview ? 1500 : 0);
-            return;
-        }
         Intent intent = new Intent(this, PlayerActivity.class).putExtra("url", url)
                 .putExtra("content_kind", it.kind).putExtra("content_id", it.id).putExtra("content_name", it.name)
                 .putExtra("report_kind", savedKind(it)).putExtra("report_category", categoryName(it))
@@ -2834,15 +2797,6 @@ public class MainActivity extends Activity {
         if (hadPreview) ui.postDelayed(() -> startActivity(intent), 600); else startActivity(intent);
     }
 
-    private static final int VLC_REQUEST = 4242;
-    private Item vlcLive; private int vlcLiveTry;
-    static String[] vlcLiveOrder(String[] urls) {
-        java.util.List<String> out = new java.util.ArrayList<>();
-        for (String u : urls) if (u.endsWith(".m3u8")) out.add(u);
-        for (String u : urls) if (!u.endsWith(".m3u8")) out.add(u);
-        return out.toArray(new String[0]);
-    }
-    private Item vlcCatchup; private long vlcStarted;
 
     // ---------- search (TV / Movies / Series, typed or by voice) ----------
     private static final int VOICE_REQUEST = 4343;
@@ -3166,7 +3120,6 @@ public class MainActivity extends Activity {
             } catch (Exception ex) { ui.post(() -> { dismissQuietly(wait); if (request == liveVoiceRequest) Toast.makeText(this, "Couldn’t search — try refreshing your playlist", Toast.LENGTH_LONG).show(); }); }
         });
     }
-    private String vlcKey, vlcSeriesKey;
 
     /** VLC reports where the customer stopped, so VLC playback also keeps watched progress. */
     @Override protected void onActivityResult(int req, int res, Intent data) {
@@ -3183,37 +3136,6 @@ public class MainActivity extends Activity {
             }
             return;
         }
-        if (req == VLC_REQUEST && vlcCatchup != null) {
-            Item cu = vlcCatchup; vlcCatchup = null;
-            long pos = data == null ? -1 : data.getLongExtra("extra_position", -1);
-            if (CatchupFallback.vlcFailed(res, android.os.SystemClock.elapsedRealtime() - vlcStarted, pos)) {
-                Toast.makeText(this, "VLC couldn't play this recording, playing it in BM Player instead", Toast.LENGTH_LONG).show();
-                beginPlayback(cu, false, 0, false);
-            }
-            return;
-        }
-        if (req == VLC_REQUEST && vlcLive != null) {
-            Item lv = vlcLive;
-            long pos = data == null ? -1 : data.getLongExtra("extra_position", -1);
-            if (!CatchupFallback.vlcFailed(res, android.os.SystemClock.elapsedRealtime() - vlcStarted, pos)) { vlcLive = null; return; }
-            if (++vlcLiveTry < Math.min(3, streamUrls(lv).length)) { beginPlayback(lv, true, 0, false); return; }
-            vlcLive = null;
-            Toast.makeText(this, "VLC couldn't play this channel (VLC code " + res + "), playing it in BM Player instead", Toast.LENGTH_LONG).show();
-            beginPlayback(lv, false, 0, false);
-            return;
-        }
-        if (req != VLC_REQUEST || data == null || vlcKey == null) return;
-        long position = data.getLongExtra("extra_position", -1), duration = data.getLongExtra("extra_duration", -1);
-        if (position < 0 || duration <= 0) return;
-        if (position >= duration - 15000) position = duration;
-        SharedPreferences.Editor e = prefs.edit();
-        WatchProgress.store(prefs, e, vlcKey, position, duration);
-        if (vlcSeriesKey != null) e.putLong(vlcSeriesKey + ":position", position).putLong(vlcSeriesKey + ":duration", duration);
-        ProgressSync.touch(prefs, e, vlcKey, vlcSeriesKey);
-        e.apply();
-        ProgressSync.push(this, true);
-        vlcKey = null; vlcSeriesKey = null;
-        if (watchedAdapter != null) watchedAdapter.notifyDataSetChanged();
     }
 
     private String watchKey(String kind, String id) {
