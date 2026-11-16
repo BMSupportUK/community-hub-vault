@@ -69,4 +69,22 @@ final class SecureLogin {
         }
         return open(raw);
     }
+
+    /** Server address or username, sealed like the password; older plain values are sealed on first read. */
+    static String field(SharedPreferences prefs, String name) {
+        String raw = prefs.getString(name, "");
+        if (raw != null && !raw.isEmpty() && !raw.startsWith(PREFIX)) {
+            String sealed = seal(raw);
+            if (sealed.startsWith(PREFIX)) prefs.edit().putString(name, sealed).apply();
+            return raw;
+        }
+        return open(raw);
+    }
+
+    /** Saves a sealed value, leaving it alone when unchanged so polls don't rewrite storage. */
+    static SharedPreferences.Editor put(SharedPreferences prefs, SharedPreferences.Editor ed, String name, String value) {
+        if (value == null) value = "";
+        if (value.equals(field(prefs, name)) && (value.isEmpty() || prefs.getString(name, "").startsWith(PREFIX))) return ed;
+        return ed.putString(name, seal(value));
+    }
 }

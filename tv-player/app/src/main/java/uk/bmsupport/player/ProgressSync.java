@@ -26,7 +26,7 @@ final class ProgressSync {
     /** "watch:<hash>:" for the current login, matching MainActivity.watchKey. */
     static String prefix(SharedPreferences p) {
         try {
-            String scope = p.getString("dns", "").replaceAll("/+$", "") + "\n" + p.getString("user", "");
+            String scope = SecureLogin.field(p, "dns").replaceAll("/+$", "") + "\n" + SecureLogin.field(p, "user");
             byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(scope.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return "watch:" + Base64.encodeToString(hash, Base64.NO_WRAP) + ":";
         } catch (java.security.NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
@@ -60,7 +60,7 @@ final class ProgressSync {
         lastPush = now;
         IO.execute(() -> {
             SharedPreferences p = prefs(c);
-            String token = p.getString("token", ""), login = p.getString("user", "");
+            String token = p.getString("token", ""), login = SecureLogin.field(p, "user");
             Set<String> dirty = new HashSet<>(p.getStringSet("psync_dirty", new HashSet<>()));
             if (token.isEmpty() || login.isEmpty() || dirty.isEmpty()) return;
             String pre = prefix(p);
@@ -100,7 +100,7 @@ final class ProgressSync {
         lastPull = now;
         IO.execute(() -> {
             SharedPreferences p = prefs(c);
-            String token = p.getString("token", ""), login = p.getString("user", "");
+            String token = p.getString("token", ""), login = SecureLogin.field(p, "user");
             if (token.isEmpty() || login.isEmpty()) return;
             String pre = prefix(p);
             try {

@@ -128,7 +128,7 @@ public final class PlayerApplication extends Application implements Application.
     private void fetchMajor() {
         if (majorBusy) return;
         // Major announcements are for signed-in viewers only: a logged-out app keeps no list and shows no icon.
-        if (!MainActivity.isUnlocked() || getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty()) {
+        if (!MainActivity.isUnlocked() || SecureLogin.field(getSharedPreferences("bmplayer", MODE_PRIVATE), "user").isEmpty()) {
             if (majorItems.length() > 0) { majorItems = new org.json.JSONArray(); showMajorIcon(); }
             return;
         }
@@ -159,7 +159,7 @@ public final class PlayerApplication extends Application implements Application.
     private void showMajorIcon() {
         Activity a = foreground;
         boolean want = a instanceof MainActivity && ((MainActivity) a).showsAnnouncementIcon() && !a.isFinishing() && MainActivity.isUnlocked()
-                && !getSharedPreferences("bmplayer", MODE_PRIVATE).getString("user", "").isEmpty();
+                && !SecureLogin.field(getSharedPreferences("bmplayer", MODE_PRIVATE), "user").isEmpty();
         if (majorIcon != null && (!want || majorIcon.getContext() != a)) {
             if (majorBox != null && majorBox.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) majorBox.getParent()).removeView(majorBox);
             majorIcon = null; majorBox = null;

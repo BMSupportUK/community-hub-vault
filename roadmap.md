@@ -216,3 +216,8 @@
 - [x] Outside-stadium versions of the 12 football themes for comparison
 - [x] Released themes: box 5.71 (382), Windows 0.4.106, Mac 0.1.107; public downloads byte-identical to builds. Real-device check unavailable.
 - [x] Admin Themes page: owner can switch off/remove themes
+
+## Stream address protection
+- [x] Seal server address and username on the box (Keystore)
+- [x] Remove outside video players (exposed the stream address)
+- [x] Release box 5.77

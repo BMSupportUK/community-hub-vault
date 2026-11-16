@@ -178,6 +178,7 @@ public class MainActivity extends Activity {
         };
         PlayerActivity.loadHeavy(this);
         prefs = getSharedPreferences("bmplayer", MODE_PRIVATE);
+        prefs.edit().remove("external_players").apply(); // Outside players were removed: they exposed the stream address.
         PrivateDns.enabled = prefs.getBoolean(PrivateDns.PREF, true);
         if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
@@ -726,7 +727,7 @@ public class MainActivity extends Activity {
 
     private boolean hasLogin() {
         // A login copied from another box can't be unlocked here, so it doesn't count.
-        return !prefs.getString("user", "").isEmpty() && !prefs.getString("dns", "").isEmpty() && !SecureLogin.password(prefs).isEmpty();
+        return !SecureLogin.field(prefs, "user").isEmpty() && !SecureLogin.field(prefs, "dns").isEmpty() && !SecureLogin.password(prefs).isEmpty();
     }
 
     private void startPolling() {
@@ -760,7 +761,7 @@ public class MainActivity extends Activity {
     /** Poll also reports what is on screen so admins see live connections. */
     private JSONObject pollBody() throws Exception {
         JSONObject b = new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", ""))
-                .put("login", prefs.getString("user", "")).put("version", appVersion()).put("sig", appSignature());
+                .put("login", SecureLogin.field(prefs, "user")).put("version", appVersion()).put("sig", appSignature());
         long since = prefs.getLong("np_since", 0);
         if (since > 0) {
             JSONObject w = new JSONObject().put("kind", prefs.getString("np_kind", "live"))
@@ -821,7 +822,7 @@ public class MainActivity extends Activity {
     /** Ask the provider for actual account connections, including other apps/devices. */
     private void checkConnectionLimit() {
         try {
-            String login = prefs.getString("dns", "") + "|" + prefs.getString("user", "");
+            String login = SecureLogin.field(prefs, "dns") + "|" + SecureLogin.field(prefs, "user");
             if (!login.equals(checkedLogin)) { checkedLogin = login; excessSince = 0; excessReported = false; }
             if (!hasLogin() || maintenance) { excessSince = 0; excessReported = false; return; }
             JSONObject info = new JSONObject(Net.get(api(""))).optJSONObject("user_info");
@@ -834,7 +835,7 @@ public class MainActivity extends Activity {
             if (excessReported || !ConnectionLimit.sustained(excessElapsed, elapsed)) return;
             JSONObject report = new JSONObject().put("action", "connection_alert")
                     .put("device_token", prefs.getString("token", "")).put("active", active).put("max", max)
-                    .put("exceeded_since", excessSince).put("login", prefs.getString("user", "")).put("version", appVersion());
+                    .put("exceeded_since", excessSince).put("login", SecureLogin.field(prefs, "user")).put("version", appVersion());
             JSONObject result = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", report.toString()));
             if (!result.optBoolean("reported")) return;
             excessReported = true;
@@ -893,11 +894,11 @@ public class MainActivity extends Activity {
             boolean verifiedBefore = linkVerified;
             linkVerified = r.optBoolean("linked", false) || r.optJSONObject("credentials") != null;
             boolean had = hasLogin();
-            SharedPreferences.Editor ed = prefs.edit().putString("dns", r.optString("dns", ""));
+            SharedPreferences.Editor ed = SecureLogin.put(prefs, prefs.edit(), "dns", r.optString("dns", ""));
             JSONObject c = r.optJSONObject("credentials");
             // A login sent from the website (link code or the owner's device list) is the account holder's own
             // action, so it counts as the sign-in: no account number needed until log out or cleared data.
-            if (c != null) { ed.putString("user", c.optString("username")).putString("pass", SecureLogin.seal(c.optString("password"))).putString("unlocked_for", prefs.getString("token", "")); unlocked = true; }
+            if (c != null) { SecureLogin.put(prefs, ed, "user", c.optString("username")).putString("pass", SecureLogin.seal(c.optString("password"))).putString("unlocked_for", prefs.getString("token", "")); unlocked = true; }
             ed.apply();
             boolean now = hasLogin();
             // Older releases saved credentials without a sign-in marker. Only restore after the
@@ -946,7 +947,7 @@ public class MainActivity extends Activity {
         screen = "link"; back = null;
         LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL);
         root.addView(text("Welcome to BM Player", 26, TEXT, true));
-        if (prefs.getString("dns", "").isEmpty() && !prefs.getString("user", "").isEmpty()) {
+        if (SecureLogin.field(prefs, "dns").isEmpty() && !SecureLogin.field(prefs, "user").isEmpty()) {
             root.addView(text("Login received — waiting for the server address from BM Support.", 16, MUTED, false));
             setContentView(familyFrame(root)); return;
         }
@@ -1404,7 +1405,7 @@ public class MainActivity extends Activity {
         top.addView(headerPill("🔍 Search", v -> chooseHomeSearch()));
         top.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0); // the 📣 icon has its own corner
         root.addView(top);
-        TextView account = text("Signed in as " + prefs.getString("user", ""), 15, 0xFFFFFFFF, true);
+        TextView account = text("Signed in as " + SecureLogin.field(prefs, "user"), 15, 0xFFFFFFFF, true);
         account.setShadowLayer(4f, 0f, 1f, 0xFF000000);
         android.graphics.drawable.GradientDrawable abg = new android.graphics.drawable.GradientDrawable();
         abg.setColor(0xB3000000); abg.setCornerRadius(dp(12));
@@ -1449,7 +1450,7 @@ public class MainActivity extends Activity {
                 if ("expired".equalsIgnoreCase(status) || (hasExp && expMs < System.currentTimeMillis())) {
                     ui.post(this::showExpired); return;
                 }
-                String line = "Signed in as " + prefs.getString("user", "") + (status.isEmpty() ? "" : " · " + status);
+                String line = "Signed in as " + SecureLogin.field(prefs, "user") + (status.isEmpty() ? "" : " · " + status);
                 java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.UK);
                 line += hasExp ? " (expires " + f.format(new java.util.Date(expMs)) + ")" : " (no expiry)";
                 // The provider account info (same number as Settings > Account information) wins; the website package and the last saved number are only fallbacks.
@@ -1501,7 +1502,7 @@ public class MainActivity extends Activity {
     private String[] roomsInfo() {
         try {
             JSONObject res = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject()
-                    .put("action", "rooms").put("device_token", prefs.getString("token", "")).put("login", prefs.getString("user", "")).toString()));
+                    .put("action", "rooms").put("device_token", prefs.getString("token", "")).put("login", SecureLogin.field(prefs, "user")).toString()));
             int c = res.optInt("connections", 0);
             String pkg = c >= 1 && c <= 3 ? String.valueOf(c) : "";
             org.json.JSONArray rooms = res.optJSONArray("rooms");
@@ -1521,9 +1522,9 @@ public class MainActivity extends Activity {
     // ---------- browse ----------
 
     private String api(String action) throws Exception {
-        String u = URLEncoder.encode(prefs.getString("user", ""), "UTF-8");
+        String u = URLEncoder.encode(SecureLogin.field(prefs, "user"), "UTF-8");
         String p = URLEncoder.encode(SecureLogin.password(prefs), "UTF-8");
-        return prefs.getString("dns", "") + "/player_api.php?username=" + u + "&password=" + p + (action.isEmpty() ? "" : "&action=" + action);
+        return SecureLogin.field(prefs, "dns") + "/player_api.php?username=" + u + "&password=" + p + (action.isEmpty() ? "" : "&action=" + action);
     }
 
     private String streamUrl(Item it) { return streamUrls(it)[0]; }
@@ -1531,7 +1532,7 @@ public class MainActivity extends Activity {
     /** Addresses to try in order. Live tries MPEG-TS first (what most panels serve), then HLS. */
     private String[] streamUrls(Item it) {
         if (it.url != null && !it.url.isEmpty()) return new String[]{it.url};
-        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = SecureLogin.password(prefs);
+        String d = SecureLogin.field(prefs, "dns").replaceAll("/+$", ""), u = SecureLogin.field(prefs, "user"), p = SecureLogin.password(prefs);
         switch (it.kind) {
             case "live": {
                 String base = d + "/live/" + u + "/" + p + "/" + it.id;
@@ -2348,12 +2349,8 @@ public class MainActivity extends Activity {
             final boolean cast2 = platform().equals("phone");
             if (cast2) { o2 = java.util.Arrays.copyOf(o2, o2.length + 1); o2[o2.length - 1] = "📺 Cast to TV"; }
             final int cast2At = o2.length - 1;
-            final List<android.content.pm.ResolveInfo> external = ExternalPlayers.enabled(this, prefs);
-            final int externalAt = o2.length;
-            o2 = appendExternalOptions(o2, external);
             compactDialog(new AlertDialog.Builder(this).setTitle(it.name).setItems(o2, (d, w) -> {
-                if (w >= externalAt) playExternal(it, external.get(w - externalAt), pos);
-                else if (cast2 && w == cast2At) castToTv(it);
+                if (cast2 && w == cast2At) castToTv(it);
                 else if (w == 0) startPlayback(it, defaultVlc(), pos);
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
                 else if (w == 2) toggleSaved("fav", it);
@@ -2369,12 +2366,8 @@ public class MainActivity extends Activity {
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
-        final List<android.content.pm.ResolveInfo> external = ExternalPlayers.enabled(this, prefs);
-        final int externalAt = opts.length;
-        opts = appendExternalOptions(opts, external);
         compactDialog(new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
-            if (w >= externalAt) playExternal(it, external.get(w - externalAt), 0);
-            else if (w == catchupAt) showCatchup(it, () -> showTvGuide(returnCategory, true));
+            if (w == catchupAt) showCatchup(it, () -> showTvGuide(returnCategory, true));
             else if (cast && w == castAt) castToTv(it);
             else if (w == 0) play(it, defaultVlc());
             else if (w == 1) toggleSaved("fav", it);
@@ -2695,17 +2688,6 @@ public class MainActivity extends Activity {
     }
 
     private void play(Item it, boolean vlc) {
-        if ("episode".equals(it.kind) && !vlc) {
-            List<android.content.pm.ResolveInfo> players = ExternalPlayers.enabled(this, prefs);
-            if (!players.isEmpty()) {
-                String[] labels = appendExternalOptions(new String[]{"Play in BM Player"}, players);
-                new AlertDialog.Builder(this).setTitle(it.name).setItems(labels, (d,w) -> {
-                    if (w == 0) playInternalWithResume(it, false);
-                    else playExternalWithResume(it, players.get(w - 1));
-                }).show();
-                return;
-            }
-        }
         playInternalWithResume(it, vlc);
     }
 
@@ -2800,7 +2782,7 @@ public class MainActivity extends Activity {
         }
         if ("catchup".equals(it.kind) && it.catchupEnd > it.catchupStart) {
             // Providers often close timeshift streams early; the player reconnects from where it stopped.
-            intent.putExtra("catchup_prefix", prefs.getString("dns", "").replaceAll("/+$", "") + "/timeshift/" + prefs.getString("user", "") + "/" + SecureLogin.password(prefs) + "/")
+            intent.putExtra("catchup_prefix", SecureLogin.field(prefs, "dns").replaceAll("/+$", "") + "/timeshift/" + SecureLogin.field(prefs, "user") + "/" + SecureLogin.password(prefs) + "/")
                     .putExtra("catchup_id", it.catchupId).putExtra("catchup_start", it.catchupStart).putExtra("catchup_end", it.catchupEnd)
                     .putExtra("catchup_listed", it.catchupListed > 0 ? it.catchupListed : it.catchupStart)
                     .putExtra("catchup_tz", prefs.getString("server_tz", "Europe/London"));
@@ -3236,7 +3218,7 @@ public class MainActivity extends Activity {
 
     private String watchKey(String kind, String id) {
         try {
-            String scope = prefs.getString("dns", "").replaceAll("/+$", "") + "\n" + prefs.getString("user", "");
+            String scope = SecureLogin.field(prefs, "dns").replaceAll("/+$", "") + "\n" + SecureLogin.field(prefs, "user");
             byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(scope.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             return "watch:" + Base64.encodeToString(hash, Base64.NO_WRAP) + ":" + kind + ":" + id;
         } catch (java.security.NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
@@ -3339,7 +3321,7 @@ public class MainActivity extends Activity {
 
     /** Favourites live on the website per account and login so every BM Player shows the same list. */
     private void syncFavourites(Runnable changed) {
-        String token = prefs.getString("token", ""), login = prefs.getString("user", "");
+        String token = prefs.getString("token", ""), login = SecureLogin.field(prefs, "user");
         if (token.isEmpty() || login.isEmpty()) return;
         ratingIo.execute(() -> {
             try {
@@ -3368,7 +3350,7 @@ public class MainActivity extends Activity {
         });
     }
     private void pushFavourites() {
-        String token = prefs.getString("token", ""), login = prefs.getString("user", ""), items = prefs.getString("fav", "[]");
+        String token = prefs.getString("token", ""), login = SecureLogin.field(prefs, "user"), items = prefs.getString("fav", "[]");
         if (token.isEmpty() || login.isEmpty()) return;
         ratingIo.execute(() -> {
             try { Net.postJson("https://bmsupport.uk/api/public/player", new JSONObject().put("action", "favourites_set").put("device_token", token).put("login", login).put("items", new JSONArray(items)).toString()); }
@@ -3633,52 +3615,6 @@ public class MainActivity extends Activity {
         try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (Exception e) { return "?"; }
     }
 
-    private String[] appendExternalOptions(String[] existing, List<android.content.pm.ResolveInfo> players) {
-        String[] labels = java.util.Arrays.copyOf(existing, existing.length + players.size());
-        for (int i = 0; i < players.size(); i++) labels[existing.length + i] = "Play in " + players.get(i).loadLabel(getPackageManager());
-        return labels;
-    }
-    private void editExternalPlayers() {
-        List<android.content.pm.ResolveInfo> players = ExternalPlayers.installed(this);
-        if (players.isEmpty()) {
-            new AlertDialog.Builder(this).setTitle("External players").setMessage("No compatible video players are installed. Install one on this device, then return here to add it. BM Player stays the main player.").setPositiveButton("OK", null).show();
-            return;
-        }
-        java.util.Set<String> selected = new java.util.HashSet<>(prefs.getStringSet(ExternalPlayers.KEY, java.util.Collections.emptySet()));
-        String[] names = new String[players.size()]; boolean[] checked = new boolean[players.size()];
-        for (int i = 0; i < players.size(); i++) { names[i] = players.get(i).loadLabel(getPackageManager()).toString(); checked[i] = selected.contains(ExternalPlayers.id(players.get(i))); }
-        new AlertDialog.Builder(this).setTitle("Add external players")
-                .setMultiChoiceItems(names, checked, (d,w,on) -> { String id = ExternalPlayers.id(players.get(w)); if (on) selected.add(id); else selected.remove(id); })
-                .setPositiveButton("Save", (d,w) -> { prefs.edit().putStringSet(ExternalPlayers.KEY, selected).apply(); showSettings(); })
-                .setNegativeButton("Cancel", null).show();
-    }
-    private void playExternalWithResume(Item it, android.content.pm.ResolveInfo player) {
-        String key = watchKey(it.kind, it.id);
-        long pos = prefs.getLong(key + ":position", 0), duration = prefs.getLong(key + ":duration", 0);
-        if (WatchProgress.resumable(pos, duration)) new AlertDialog.Builder(this).setTitle(it.name)
-                .setItems(new String[]{"Resume", "Play from beginning"}, (d,w) -> playExternal(it, player, w == 0 ? pos : 0)).show();
-        else playExternal(it, player, 0);
-    }
-    private void playExternal(Item it, android.content.pm.ResolveInfo player, long position) {
-        StreamClaim.check(this, it.kind, it.name, false, (busy, who) -> {
-            Runnable launch = () -> {
-                Intent intent = ExternalPlayers.intent(ExternalPlayers.id(player), streamUrl(it), it.name, position);
-                stopPreview(); stopMulti();
-                vlcLive = null; vlcCatchup = null;
-                vlcKey = WatchProgress.eligible(it.kind) ? watchKey(it.kind, it.id) : null;
-                vlcSeriesKey = WatchProgress.eligible(it.kind) && !it.seriesId.isEmpty() ? watchKey("series", it.seriesId) : null;
-                try {
-                    startActivityForResult(intent, VLC_REQUEST);
-                    setNowPlaying(it, true);
-                    if (!isAdultCategory(it.category) && !"catchup".equals(it.kind)) remember("recent", it);
-                } catch (android.content.ActivityNotFoundException | SecurityException e) {
-                    Toast.makeText(this, "That player is unavailable. Opening BM Player.", Toast.LENGTH_LONG).show();
-                    startPlayback(it, false, position);
-                }
-            };
-            if (busy) askTakeover(it, who, launch); else launch.run();
-        });
-    }
     private void chooseExplained(String title, String explanation, String key, String def, String[] labels, String[] values) {
         new AlertDialog.Builder(this).setTitle(title).setMessage(explanation)
                 .setPositiveButton("Choose", (d,w) -> choose(title, key, def, labels, values))
@@ -3756,7 +3692,7 @@ public class MainActivity extends Activity {
         screen = "settings"; back = this::showHome; drawnVersion = appVersion();
         LinearLayout root = column();
         root.addView(text("Settings", 26, TEXT, true));
-        root.addView(text("Account: " + prefs.getString("user", "") + "  ·  " + deviceLabel() + "  ·  Version " + appVersion(), 15, MUTED, false));
+        root.addView(text("Account: " + SecureLogin.field(prefs, "user") + "  ·  " + deviceLabel() + "  ·  Version " + appVersion(), 15, MUTED, false));
 
         String[] playerL = {"BM Player (built-in, with backup engine)"}, playerV = {"internal"};
         String[] fmtL = {"Auto", "MPEG-TS (.ts)", "HLS (.m3u8)"}, fmtV = {"auto", "ts", "hls"};
@@ -3787,7 +3723,6 @@ public class MainActivity extends Activity {
                             prefs.edit().putBoolean(PrivateDns.PREF, !pdns).apply();
                             PrivateDns.enabled = !pdns; PrivateDns.clear(); showSettings(); })
                         .setNegativeButton("Cancel", null).show()));
-        advanced.add(settingBox("▶", "External players", "Add / remove installed players", v -> editExternalPlayers()));
         advanced.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
         advanced.add(settingBox("🛡", "Anti-Freeze: On", "Automatic stream recovery",
@@ -4542,7 +4477,7 @@ public class MainActivity extends Activity {
 
     /** Xtream timeshift address: /timeshift/user/pass/minutes/YYYY-MM-DD:HH-MM/stream.ts (provider time). */
     private String catchupUrl(Item ch, long st, long en) {
-        String d = prefs.getString("dns", "").replaceAll("/+$", ""), u = prefs.getString("user", ""), p = SecureLogin.password(prefs);
+        String d = SecureLogin.field(prefs, "dns").replaceAll("/+$", ""), u = SecureLogin.field(prefs, "user"), p = SecureLogin.password(prefs);
         long mins = Math.max(1, ((en > st ? en : st + 3600) - st + 59) / 60);
         java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd:HH-mm", java.util.Locale.UK);
         f.setTimeZone(java.util.TimeZone.getTimeZone(prefs.getString("server_tz", "Europe/London")));
@@ -4657,7 +4592,7 @@ public class MainActivity extends Activity {
     private final java.util.Map<String, Long> guideCoveredTo = new java.util.HashMap<>();
     private String guideScope = null;
     private java.io.File guideFile() {
-        String scope = prefs.getString("dns", "").replaceAll("/+$", "") + "\n" + prefs.getString("user", "");
+        String scope = SecureLogin.field(prefs, "dns").replaceAll("/+$", "") + "\n" + SecureLogin.field(prefs, "user");
         return new java.io.File(new java.io.File(getCacheDir(), "guide"), Integer.toHexString(scope.hashCode()) + ".json");
     }
     /** Saved listings show straight away; with no fetch time they still refresh quietly when the row is seen. */

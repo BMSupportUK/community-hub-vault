@@ -10,7 +10,7 @@ import java.util.Map;
 /** Device-local, login-scoped category overrides. Content inside categories is untouched. */
 final class CategoryOrder {
     static String key(SharedPreferences prefs, String kind) {
-        String scope = prefs.getString("dns", "").replaceAll("/+$", "") + "\n" + prefs.getString("user", "");
+        String scope = SecureLogin.field(prefs, "dns").replaceAll("/+$", "") + "\n" + SecureLogin.field(prefs, "user");
         try {
             byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(scope.getBytes("UTF-8"));
             StringBuilder out = new StringBuilder();

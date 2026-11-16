@@ -23,7 +23,7 @@ final class StreamClaim {
     /** screens = how many screens this app will be playing (Multi-screen counts each one). */
     static void check(Context c, String kind, String title, boolean takeover, int screens, Result r) {
         android.content.SharedPreferences p = c.getSharedPreferences("bmplayer", Context.MODE_PRIVATE);
-        String token = p.getString("token", ""), user = p.getString("user", "");
+        String token = p.getString("token", ""), user = SecureLogin.field(p, "user");
         int max = Math.max(1, p.getInt("max_cons", 1));
         if (token.isEmpty() || user.isEmpty()) { r.done(false, ""); return; }
         IO.execute(() -> {
