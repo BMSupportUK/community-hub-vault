@@ -14,10 +14,12 @@
 
 ## Proposed changes
 - Lock the server address and username on the box with the same secure device key already used for the password. Move existing saved values over quietly on first start, so nobody has to link again.
-- Mark streams opened in an outside player in the play menu, with a short warning when it's switched on in Settings. Outside players stay optional, as agreed before.
-- Release as box 5.77. Windows and Mac don't need a change.
+- Remove the outside video players completely: the Settings option and the extra play-menu choices. Everything plays only inside BM Player, so the stream address is never handed to another app. Anyone who had one switched on just goes back to BM Player's own player.
+- Release as box 5.77. Windows and Mac don't use outside players, so they don't need a change.
 
 ## Technical details
 - Add `SecureLogin.dns(prefs)` / `user(prefs)` that seal the values with the Keystore AES key. Replace the `prefs.getString("dns"/"user")` reads in MainActivity, CategoryOrder and ProgressSync. Keep the existing scope strings the same after decryption, so saved watch progress and category order still match.
 - Migration: on start, if plain `dns`/`user` exist, seal them and remove the plain keys.
 - Add a test beside the existing SecureLogin tests for sealing, reading back and migrating.
+- Remove the external-handler Settings entry, its saved choice and the play-menu items it adds. Drop the related tests. Update the tv-player/app AGENTS.md rule and the "Optional external players" memory to say no outside players, because they expose the stream address.
+- Add the task to roadmap.md.
