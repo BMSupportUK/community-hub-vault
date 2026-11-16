@@ -9,7 +9,7 @@
 
 ## Gaps found
 1. **Box / phone:** the password is locked with the device's secure key, but the server address and username are saved as plain text in the app's own storage. Someone with a rooted box could read them.
-2. **All devices:** provider streams use plain http. Anyone watching the home network traffic, such as on shared Wi-Fi, can see the server address. Only the provider can fix that by offering https.
+2. **All devices:** streams go over https through Cloudflare. Someone watching the network sees only the web address name and a Cloudflare server, never the username, password or channel links. Hiding the name itself would need the provider to change it. There's nothing for us to change here.
 3. **Optional outside players:** if a customer switches on an outside video player in Settings, that player is handed the full stream address.
 
 ## Proposed changes
