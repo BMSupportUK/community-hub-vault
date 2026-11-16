@@ -1,23 +1,31 @@
-# The Italian Job theme
+# BM Player box and phone: close the app properly
 
-## What you'll get
-- A new theme called **The Italian Job**, in a new **Films** group.
-- One painted scene that brings both moments together:
-  - **The coach over the edge**: a 1960s coach goes over the edge of a winding Alpine mountain road backwards, its back end tipping down over a steep drop and gold bars sliding out of the back.
-  - **"Blow the bloody doors off"**: on the road, two men in 1960s suits blow a security van's back doors clean off with a detonator.
-- Snowy Alps, a hairpin road and a clear sky in the background. The middle of the picture stays lighter so the home-screen tiles are easy to read, like the other themes.
-- It's an original illustration in the spirit of the film. It won't show the real actors' faces, the film's logo or stills, because the film studio owns those.
+## The problem
+- **Exit BM Player** on the home screen only closes the home screen. The app carries on running in the background and stays in the phone's recent apps list.
+- **Still watching?** has a different way of closing the app, which is meant to shut it down completely after the 60-second countdown. You've seen it leave the app running on Amazon and Android boxes. I haven't been able to confirm why from the code alone, so the first step is to reproduce it.
 
-## Design preview
-- The new preview shows the coach going over the cliff backwards, its back end tipping down over the drop, its front wheels lifted off the road and gold bars spilling out of the back. On the road, two men in 1960s suits blow the security van's back doors clean off: one crouches at the detonator, the other jumps back in shock. If you approve, this exact picture becomes the theme.
+## What I'll change
+1. **One proper close for everything.** Exit BM Player, the Close app button on Still watching?, and the countdown running out will all close the app the same way:
+   - stop any video or sound that's playing,
+   - close every BM Player screen, including the player and Multi-screen,
+   - remove BM Player from the recent apps list,
+   - go back to the device's home screen,
+   - fully stop the app so nothing is left running.
+2. **Make the countdown close reliably.** The 60-second close will happen whatever screen is showing, even if the warning box has been hidden or the video screen has frozen. A backup stop a moment later shuts the app down if the normal close gets stuck.
+3. **Find the real cause on Amazon and Android boxes.** I'll recreate the countdown in the app's automatic tests to see what stops the close, then fix that too.
+4. Parental control still re-hides adult categories next time, as now, because the app starts fresh.
+5. Release a new box app (5.83), which covers boxes and phones, and check that the download on the website matches the new version.
 
-## How it goes live
-1. Use the approved preview picture, sized for the TV screen.
-2. Publish the website and wait until the picture loads from bmsupport.uk.
-3. Only then add the theme to the list, switched on, so nobody ever gets a blank background.
-4. Boxes, Windows and Mac pick it up the next time they check, with no app update needed.
+## Not changing
+- Still watching? still shows after 3 hours with no button presses and gives 60 seconds to answer.
+- Pressing Home or switching apps without choosing Exit still leaves BM Player where you were, as now.
+- Windows and Mac aren't affected.
 
 ## Technical details
-- File: `public/player-themes/italian-job-v1.jpg`, 1920x1080, quality 84.
-- New `player_themes` row: name "The Italian Job", grp "Films", sort 90, enabled true, accent #EAB308, added only once the picture returns 200 from the live site.
-- If the picture maker refuses it, I'll stop and ask you for a picture, as I did with Bart and Stewie.
+- Add `PlayerApplication.closeApp(reason)`, reusing the existing `exitToHome()` sequence. Watchdog arm first, then `finishAndRemoveTask()` on every tracked activity, then a HOME intent, then `killProcess` after 1.5s. MainActivity's "Exit" button calls it instead of `finish()`.
+- Release native players (`stopPreview`/`stopMulti` and libVLC in the player screens) before finishing, so cleanup can't block the main thread.
+- Robolectric tests:
+  - "Exit" finishes all activities and requests the process stop.
+  - An expired prompt with a destroyed owner activity, or a null foreground, still triggers exit.
+  - Continue viewing cancels the close.
+- Build, sign with the BM key, upload, register the 5.83 app_builds row, demote 5.82, and check the live SHA-256.
