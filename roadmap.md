@@ -1,6 +1,8 @@
 # Roadmap
 
-- [ ] Package and release all pending Windows 0.4.105 and Mac 0.1.106 updates, including channel logos; upload before switching current downloads and verify both public files.
+- [x] Desktop Movies opens Cinema and Series opens Recommended, fetching community ratings only for displayed posters; 182 desktop checks pass and both releases include the changes. Full startup playlist refresh is retained.
+
+- [x] Released Windows 0.4.105 and universal, ad-hoc signed Mac 0.1.106 with channel logos and all pending shared updates; uploaded before switching current downloads. Public files match local SHA-256 checksums. Native playback still requires a physical Windows/Mac check.
 
 - [x] Restore provider channel logos in the shared Windows/Mac guide, multi-screen picker and voice results; browser checks confirm logos and failed-image fallbacks, and 21 desktop checks pass. Installers are not rebuilt or published; real-provider desktop verification requires a linked Windows/Mac app.
 

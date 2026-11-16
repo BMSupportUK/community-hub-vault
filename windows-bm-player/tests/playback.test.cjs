@@ -1,5 +1,8 @@
 const {test,expect}=require('bun:test');
-const {orderBrowse,surfaceRows}=require('../playback-core.cjs');
+const {orderBrowse,surfaceRows,defaultCategory}=require('../playback-core.cjs');
+test('Movies opens Cinema instead of the whole playlist',()=>expect(defaultCategory([{id:'all',name:'All movies'},{id:'cinema',name:'UK | Cinema'}],'film')).toBe('cinema'));
+test('Series opens Recommended instead of the whole playlist',()=>expect(defaultCategory([{id:'all',name:'All series'},{id:'recommended',name:'UK | Recommended'}],'series')).toBe('recommended'));
+test('missing preferred category falls back to a provider category',()=>expect(defaultCategory([{id:'other',name:'Drama'}],'series')).toBe('other'));
 test('live channels keep Android provider order even when added dates differ',()=>{
  const items=[{id:1,name:'Z',added:1},{id:2,name:'A',added:999},{id:3,name:'M',added:9}];
  expect(orderBrowse(items,'live','added').map(i=>i.id)).toEqual([1,2,3]);

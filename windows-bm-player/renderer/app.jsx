@@ -1,7 +1,7 @@
 import React,{useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
 import {matchChannel} from '../../src/lib/player-channel-match';
-import {orderBrowse} from '../playback-core.cjs';
+import {orderBrowse,defaultCategory} from '../playback-core.cjs';
 import {forScreen as safeText} from '../safe-error.cjs';
 import {LEVELS as BOOST_LEVELS,HIGH_NOTE,level as boostLevel,next as nextBoost} from '../sound-boost.cjs';
 import {LABELS as FEED_LABELS} from '../feed-status.cjs';
@@ -90,12 +90,12 @@ async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[
   if(event.type==='watch')choose(event.item);
  });},[]);
  const catalogs=useRef({});
- const liveStart=d=>{const c=d?.categories||[];return (c.find(x=>/^uk\s*\|\s*free\s*to\s*air/i.test(x.name))||c[0])?.id||'all';};
- async function browse(nextKind,source,favourites=false){setKind(source?'live':nextKind);setCategory(source?'live':'all');setQuery('');setHeroItem(null);setSelected(null);setProgrammes([]);setView('browse');setLoading(true);setSort(state?.settings?.['sort_'+nextKind]||'added');if(source){setData({saved:true,favourites,categories:[{id:'live',name:'Live TV'},{id:'film',name:'Movies'},{id:'series',name:'Series'}],items:source.map(i=>({...i,category:i.kind==='live'?'live':i.kind==='film'?'film':'series'}))});setLoading(false);loadRatings(source);return;}const stamp=state?.refreshed?.[nextKind]||0,kept=catalogs.current[nextKind];if(kept&&(kept.preloaded||kept.stamp===stamp)&&kept.user===state?.user){if(nextKind==='live')setCategory(liveStart(kept.data));setData(kept.data);setLoading(false);pane.current?.scrollTo(0,0);return;}const result=await act(()=>bm.catalog(nextKind));if(result){catalogs.current[nextKind]={stamp:state?.refreshed?.[nextKind]||stamp,user:state?.user,data:result};if(nextKind==='live')setCategory(liveStart(result));setData(result);loadRatings(result.items);}setLoading(false);pane.current?.scrollTo(0,0);}
+ async function browse(nextKind,source,favourites=false){setKind(source?'live':nextKind);setCategory(source?'live':'all');setQuery('');setHeroItem(null);setSelected(null);setProgrammes([]);setView('browse');setLoading(true);setSort(state?.settings?.['sort_'+nextKind]||'added');if(source){setData({saved:true,favourites,categories:[{id:'live',name:'Live TV'},{id:'film',name:'Movies'},{id:'series',name:'Series'}],items:source.map(i=>({...i,category:i.kind==='live'?'live':i.kind==='film'?'film':'series'}))});setLoading(false);return;}const stamp=state?.refreshed?.[nextKind]||0,kept=catalogs.current[nextKind];if(kept&&(kept.preloaded||kept.stamp===stamp)&&kept.user===state?.user){setCategory(defaultCategory(kept.data.categories,nextKind));setData(kept.data);setLoading(false);pane.current?.scrollTo(0,0);return;}const result=await act(()=>bm.catalog(nextKind));if(result){catalogs.current[nextKind]={stamp:state?.refreshed?.[nextKind]||stamp,user:state?.user,data:result};setCategory(defaultCategory(result.categories,nextKind));setData(result);}setLoading(false);pane.current?.scrollTo(0,0);}
  const categories=data.saved?data.categories:orderCategories(data.categories,state?.settings?.['category_order_'+kind]);
  const [shown,setShown]=useState(150);useEffect(()=>setShown(150),[kind,category,query,sort,data]);
  const grow=e=>{const t=e.currentTarget;if(t.scrollTop+t.clientHeight*3>t.scrollHeight)setShown(n=>n+150);};
  const items=orderBrowse(kind==='live'&&!data.saved?filterLive(data.items,category,query):data.items.filter(i=>(category==='all'||i.category===category)&&i.name.toLowerCase().includes(query.toLowerCase())),kind,sort);
+ useEffect(()=>{if(view!=='browse'||loading||kind==='live')return;const visible=data.saved?items:items.slice(0,shown);loadRatings(visible.filter(item=>!ratings[ratingKey(item)]));},[view,loading,kind,data,category,query,sort,shown]);
  async function preview(item){
   if(playingView)return;
   if(multi>1){setSelected(item);choose(item);return;}
