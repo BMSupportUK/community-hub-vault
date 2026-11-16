@@ -32,7 +32,7 @@ function App(){
  function receiveState(next){const scope=next?.linked&&!next.locked?next.user:null;if(scope!==epgScope.current){saveGuide();epgCache.current.clear();epgScope.current=scope;if(scope)try{epgCache.current.restore(JSON.parse(localStorage.getItem(guideKey(scope))||'null'));}catch{}}setState(next);}
  function guideKey(scope){let h=0;for(const c of String(scope))h=(h*31+c.charCodeAt(0))|0;return 'bm-guide-'+(h>>>0).toString(16);}
  function saveGuide(){const scope=epgScope.current;if(!scope)return;try{localStorage.setItem(guideKey(scope),JSON.stringify(epgCache.current.snapshot()));}catch{}}
- useEffect(()=>{const t=setInterval(saveGuide,120000);window.addEventListener('beforeunload',saveGuide);return()=>{clearInterval(t);window.removeEventListener('beforeunload',saveGuide);};},[]);
+ useEffect(()=>{window.addEventListener('beforeunload',saveGuide);return()=>window.removeEventListener('beforeunload',saveGuide);},[]);
  const cachedEpg=id=>Promise.resolve(epgCache.current.peek(id)||[]);
 // Startup and manual refresh load every guide row behind the locked screen, without a time limit.
 // Startup/refresh already downloaded the playlists: hold them here so opening Live TV, Films or Series never shows "Loading playlist…" again.
