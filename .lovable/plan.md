@@ -8,8 +8,11 @@
 - Snowy Alps, a hairpin road and a clear sky in the background. The middle of the picture stays lighter so the home-screen tiles are easy to read, like the other themes.
 - It's an original illustration in the spirit of the film. It won't show the real actors' faces, the film's logo or stills, because the film studio owns those.
 
+## Design preview
+- The preview picture shows the coach tipping over the cliff edge with its gold sliding to the back, and the van on the road behind it with its doors blown off and smoke pouring out. If you approve, that exact picture becomes the theme.
+
 ## How it goes live
-1. Create the picture and size it for the TV screen.
+1. Use the approved preview picture, sized for the TV screen.
 2. Publish the website and wait until the picture loads from bmsupport.uk.
 3. Only then add the theme to the list, switched on, so nobody ever gets a blank background.
 4. Boxes, Windows and Mac pick it up the next time they check, with no app update needed.
