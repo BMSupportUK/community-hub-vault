@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Home-screen themes: 12 outside-stadium football, Kids cartoon, Fairy tale magic and 6 seasonal; website Themes section (switch off/delete), Android Settings › Theme, Windows/Mac Settings › Theme; 178 desktop checks pass.
+- [ ] Build and release Android, Windows and Mac with themes (Android build tools need reinstalling; awaiting go-ahead to release).
+
 - [x] Desktop Movies opens Cinema and Series opens Recommended, fetching community ratings only for displayed posters; 182 desktop checks pass and both releases include the changes. Full startup playlist refresh is retained.
 
 - [x] Released Windows 0.4.105 and universal, ad-hoc signed Mac 0.1.106 with channel logos and all pending shared updates; uploaded before switching current downloads. Public files match local SHA-256 checksums. Native playback still requires a physical Windows/Mac check.

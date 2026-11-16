@@ -355,6 +355,7 @@ else{
   register('report',v=>site({action:'report',kind:v.item.kind==='episode'?'series':v.item.kind,title:v.item.name,category:v.item.categoryName,episode:v.item.kind==='episode'?v.item.name:undefined,issue:String(v.issue||'').slice(0,1000),device:PLATFORM.device,version:app.getVersion()}));
   register('reminder',value=>{store.reminders=store.reminders||[];if(value.remove)store.reminders=store.reminders.filter(r=>r.id!==value.id);else{if(value.start<=Date.now())throw new Error('Reminders are only for programmes that have not started.');store.reminders.push({...value,id:String(value.item.id)+':'+value.start,notified:false});}save();return publicState();});
   register('continue',()=>{lastInput=Date.now();promptedAt=0;send({type:'inactive',seconds:0});return true;});register('exit',async()=>{await stopAll();app.quit();});
+  register('themes',async()=>{if(!store.token||!gate.unlocked)return [];const r=await site({action:'themes'});return require('../theme.cjs').clean(r&&r.items);});
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));
   register('speed',async()=>{
     if(broadbandBusy)throw new Error('A speed test is already running.');

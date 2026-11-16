@@ -1370,6 +1370,7 @@ public class MainActivity extends Activity {
         }, 3000);
     }
 
+    private static boolean themeChecked; // once per app start: is the chosen theme still offered?
     private void showHome() {
         stopPreview(); stopMulti(); // never keep a channel playing behind the main menu
         if (!unlocked && !rememberedUnlock()) { showUnlock(); return; }
@@ -1425,6 +1426,11 @@ public class MainActivity extends Activity {
         setContentView(withHomeBackground(root));
         tiles.getChildAt(0).requestFocus();
         autoUpdatePlaylists();
+        if (!prefs.getString(PlayerTheme.PREF, "").isEmpty() && !themeChecked) {
+            themeChecked = true;
+            io.execute(() -> { org.json.JSONArray offered = PlayerTheme.list(prefs);
+                if (PlayerTheme.dropIfRetired(this, prefs, offered)) { prefs.edit().remove(PlayerTheme.PREF + "_name").apply(); ui.post(() -> { if ("home".equals(screen)) showHome(); }); } });
+        }
 
         io.execute(() -> {
             try {
@@ -3795,6 +3801,7 @@ public class MainActivity extends Activity {
                                 ? "This TV and streaming device can play 4K."
                                 : "Non 4K Device\n\nThis TV or streaming device can't show 4K. 4K channels and films may not play smoothly.")
                         .setPositiveButton("OK", null).show()));
+        boxes.add(settingBox("🎨", "Theme", prefs.getString(PlayerTheme.PREF + "_name", "Standard"), v -> chooseTheme()));
         String[] timeL = {"24 hour", "12 hour"}, timeV = {"24", "12"};
         boxes.add(settingBox("🕒", "Time format", label("time_format", "24", timeL, timeV),
                 v -> choose("Time format", "time_format", "24", timeL, timeV)));
@@ -5942,12 +5949,44 @@ public class MainActivity extends Activity {
         return l;
     }
 
+    /** Settings › Theme: the owner's switched-on themes, grouped, plus the standard look. */
+    private void chooseTheme() {
+        Toast.makeText(this, "Loading themes…", Toast.LENGTH_SHORT).show();
+        io.execute(() -> {
+            org.json.JSONArray items = PlayerTheme.list(prefs);
+            ui.post(() -> {
+                if (items == null) { Toast.makeText(this, "Couldn't load themes. Check your internet and try again.", Toast.LENGTH_LONG).show(); return; }
+                if (PlayerTheme.dropIfRetired(this, prefs, items)) prefs.edit().remove(PlayerTheme.PREF + "_name").apply();
+                String cur = prefs.getString(PlayerTheme.PREF, "");
+                String[] labels = new String[items.length() + 1];
+                labels[0] = "Standard (BM Player)"; int sel = 0;
+                for (int i = 0; i < items.length(); i++) {
+                    org.json.JSONObject t = items.optJSONObject(i);
+                    labels[i + 1] = t.optString("group") + " · " + t.optString("name");
+                    if (t.optString("id").equals(cur)) sel = i + 1;
+                }
+                new AlertDialog.Builder(this).setTitle("Theme").setSingleChoiceItems(labels, sel, (d, w) -> {
+                    d.dismiss();
+                    if (w == 0) { PlayerTheme.clear(this, prefs); prefs.edit().remove(PlayerTheme.PREF + "_name").apply(); showSettings(); return; }
+                    org.json.JSONObject t = items.optJSONObject(w - 1);
+                    Toast.makeText(this, "Downloading " + t.optString("name") + "…", Toast.LENGTH_SHORT).show();
+                    io.execute(() -> {
+                        boolean ok = PlayerTheme.choose(this, prefs, t.optString("id"), t.optString("image"));
+                        if (ok) prefs.edit().putString(PlayerTheme.PREF + "_name", t.optString("name")).apply();
+                        ui.post(() -> { Toast.makeText(this, ok ? t.optString("name") + " theme on — see your home screen" : "Couldn't download that theme. Try again.", Toast.LENGTH_LONG).show(); showSettings(); });
+                    });
+                }).setNegativeButton("Cancel", null).show();
+            });
+        });
+    }
+
     /** Front screen backdrop: the family-watching-TV illustration, dimmed so text stays readable. */
     private FrameLayout withHomeBackground(LinearLayout content) {
         FrameLayout frame = new FrameLayout(this);
         frame.setBackgroundColor(BG);
         ImageView bg = new ImageView(this);
-        bg.setImageResource(R.drawable.home_background);
+        android.graphics.Bitmap themed = PlayerTheme.picture(this, prefs);
+        if (themed != null) bg.setImageBitmap(themed); else bg.setImageResource(R.drawable.home_background);
         bg.setScaleType(ImageView.ScaleType.CENTER_CROP);
         frame.addView(bg, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         View scrim = new View(this);

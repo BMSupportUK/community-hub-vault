@@ -89,6 +89,7 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("formats"), device_token: Token }),
   z.object({ action: z.literal("format_set"), device_token: Token, content_id: z.string().regex(/^[A-Za-z0-9._-]{1,80}$/), fmt: z.enum(["ts", "m3u8"]) }),
   z.object({ action: z.literal("major_announcements"), device_token: Token }),
+  z.object({ action: z.literal("themes"), device_token: Token }),
   z.object({ action: z.literal("ratings"), device_token: Token, items: z.array(RatingTitle).min(1).max(200) }),
   RatingVote.extend({ action: z.literal("vote"), device_token: Token }),
   z.object({ action: z.literal("favourites"), device_token: Token, login: z.string().trim().min(1).max(120) }),
@@ -160,6 +161,7 @@ async function currentAnnouncement(admin: { from: (t: "player_announcements") =>
   announcementCache = { at: Date.now(), value: row ? { id: row.id, message: row.message, sent_at: Date.parse(row.created_at), target_user_id: row.target_user_id, target_device_id: row.target_device_id ?? null } : null };
   return announcementCache.value;
 }
+let themeCache: { at: number; items: { id: string; name: string; grp: string; image_path: string }[] } | null = null;
 let majorCache: { at: number; items: { id: string; title: string; body: string; created_at: string }[] } | null = null;
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: CORS });
 
@@ -321,6 +323,18 @@ export const Route = createFileRoute("/api/public/player")({
             private_dns_used: null,
           }).eq("id", device.id);
           return json({ ok: true, took_over: clash.length, warning });
+        }
+
+        if (body.action === "themes") {
+          // Home-screen themes the owner has left switched on; pictures are served from /player-themes/.
+          const now = Date.now();
+          if (!themeCache || now - themeCache.at > 60_000) {
+            const { data } = await supabaseAdmin.from("player_themes").select("id, name, grp, image_path")
+              .eq("enabled", true).order("sort", { ascending: true });
+            themeCache = { at: now, items: data ?? [] };
+          }
+          const origin = new URL(request.url).origin;
+          return json({ items: themeCache.items.map((t) => ({ id: t.id, name: t.name, group: t.grp, image: `${origin}/player-themes/${t.image_path}` })) });
         }
 
         if (body.action === "major_announcements") {

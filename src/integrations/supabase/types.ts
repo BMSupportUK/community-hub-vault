@@ -6977,6 +6977,36 @@ export type Database = {
         }
         Relationships: []
       }
+      player_themes: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          grp: string
+          id: string
+          image_path: string
+          name: string
+          sort: number
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          grp?: string
+          id: string
+          image_path: string
+          name: string
+          sort?: number
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          grp?: string
+          id?: string
+          image_path?: string
+          name?: string
+          sort?: number
+        }
+        Relationships: []
+      }
       player_totp: {
         Row: {
           enabled: boolean
