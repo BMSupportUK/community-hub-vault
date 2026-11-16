@@ -211,5 +211,5 @@
 ## BM Player themes
 - [x] Theme mock-ups (23) for approval
 - [x] Outside-stadium versions of the 12 football themes for comparison
-- [ ] Build approved themes + Settings picker (Android/Amazon, Windows, Mac) — waits on user's picks
-- [ ] Admin dashboard: owner can switch off/remove any released theme; boxes stop offering it and fall back to default
+- [x] Released themes: box 5.71 (382), Windows 0.4.106, Mac 0.1.107; public downloads byte-identical to builds. Real-device check unavailable.
+- [x] Admin Themes page: owner can switch off/remove themes
