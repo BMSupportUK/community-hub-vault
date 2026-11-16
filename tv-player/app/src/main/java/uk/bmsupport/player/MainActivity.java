@@ -362,7 +362,7 @@ public class MainActivity extends Activity {
                     }
                     JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
                     List<String[]> rows = new ArrayList<>();
-                    for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); String id = o.optString("category_id"); if (!hideAdult(id)) rows.add(new String[]{id, o.optString("category_name")}); }
+                    for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); String id = o.optString("category_id"); if (!hideAdult(o.optString("category_name"))) rows.add(new String[]{id, o.optString("category_name")}); }
                     multiCats = CategoryOrder.liveNavigation(rows);
                     ui.post(() -> { try { wait.dismiss(); } catch (Exception ignored) {} pickMultiChannel(n, label); });
                 } catch (Exception ex) { ui.post(() -> { try { wait.dismiss(); } catch (Exception ignored) {} Toast.makeText(this, "Couldn't load your channels", Toast.LENGTH_LONG).show(); }); }
@@ -373,7 +373,8 @@ public class MainActivity extends Activity {
         resultList("Screen " + (n + 1) + " – pick a category", cats.size(), i -> text(cats.get(i)[1], 18, TEXT, false), i -> {
             String cat = cats.get(i)[0];
             List<Item> chs = new ArrayList<>();
-            for (Item it : liveChannels) if (!hideAdult(it.category) && ("*".equals(cat) || cat.equals(it.category))) chs.add(it);
+            java.util.Set<String> shownIds = new java.util.HashSet<>(); for (String[] c : cats) shownIds.add(c[0]);
+            for (Item it : liveChannels) if (shownIds.contains(it.category) && ("*".equals(cat) || cat.equals(it.category))) chs.add(it);
             if (chs.isEmpty()) { Toast.makeText(this, "No channels in " + cats.get(i)[1], Toast.LENGTH_SHORT).show(); return; }
             resultList(cats.get(i)[1], chs.size(), r -> multiRow(chs.get(r)), r -> {
                 Item it = chs.get(r);
@@ -3049,13 +3050,14 @@ public class MainActivity extends Activity {
                 List<Item> hits = new ArrayList<>();
                 for (Item it : all) if (it.name != null && (kind.equals("live") ? LiveSearch.matches(it.name, want) : it.name.toLowerCase(java.util.Locale.UK).contains(w))) hits.add(it);
                 java.util.Map<String, String> searchCategories = new java.util.HashMap<>();
-                if (kind.equals("live")) {
-                    JSONArray cats = new JSONArray(cachedGet("live", "get_live_categories", ""));
+                {
+                    JSONArray cats = new JSONArray(cachedGet(kind, catActionFor(kind), ""));
                     for (int i = 0; i < cats.length(); i++) {
                         JSONObject cat = cats.optJSONObject(i);
                         if (cat != null) searchCategories.put(cat.optString("category_id"), cat.optString("category_name"));
                     }
                 }
+                hits.removeIf(it -> hideAdult(searchCategoryLabel(it, searchCategories)) || hideAdult(it.category));
                 // Group results by category (categories A–Z), then alphabetically by name inside each category.
                 java.util.Collections.sort(hits, (a, b) -> {
                     int c = SearchOrder.compare(searchCategoryLabel(a, searchCategories), searchCategoryLabel(b, searchCategories));
@@ -4782,7 +4784,8 @@ public class MainActivity extends Activity {
             if (cat[0].equals(appliedCategory[0])) return;
             appliedCategory[0] = cat[0];
             shownCh.clear(); requested.clear(); gen[0]++;
-            for (Item it : liveChannels) if (cat[0].equals("*") || cat[0].equals(it.category)) shownCh.add(it);
+            java.util.Set<String> allowed = new java.util.HashSet<>(); for (String[] c : catRows) allowed.add(c[0]);
+            for (Item it : liveChannels) if (allowed.contains(it.category) && (cat[0].equals("*") || cat[0].equals(it.category))) shownCh.add(it);
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
             if (boxLive && boxCatPill != null) boxCatPill.setText("Category: " + cat[1]);
             selectedCategory.setText("Category: " + cat[1]);
@@ -4949,7 +4952,8 @@ public class MainActivity extends Activity {
                     liveChannels = l;
                 }
                 List<String[]> rows = new ArrayList<>();
-                for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
+                java.util.Set<String> adultIds = new java.util.HashSet<>();
+                for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); if (hideAdult(o.optString("category_name"))) { adultIds.add(o.optString("category_id")); continue; } rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
                 List<String[]> liveRows = CategoryOrder.liveNavigation(rows);
                 ui.post(() -> {
                     if (!"tvguide".equals(screen)) return;
@@ -4958,7 +4962,7 @@ public class MainActivity extends Activity {
                     List<LiveDrawerData.Channel> drawerChannels = new ArrayList<>();
                     java.util.Map<String, String> catNames = new java.util.HashMap<>();
                     for (String[] r : liveRows) catNames.put(r[0], r[1]);
-                    for (Item it : liveChannels) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, catNames.get(it.category), null));
+                    for (Item it : liveChannels) if (!adultIds.contains(it.category)) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, catNames.get(it.category), null));
                     LiveDrawerData.set(liveRows, drawerChannels);
                     String[] start = CategoryOrder.liveDefault(liveRows, startCat);
                     if (start == null) { progTitle.setText("No Live TV categories available"); return; }
