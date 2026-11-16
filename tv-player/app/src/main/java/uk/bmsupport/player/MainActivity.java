@@ -676,7 +676,7 @@ public class MainActivity extends Activity {
         if (back != null) { Runnable r = back; r.run(); return; }
         if ("home".equals(screen)) {
             new AlertDialog.Builder(this).setTitle("Exit BM Player?")
-                    .setPositiveButton("Exit", (d, w) -> finish())
+                    .setPositiveButton("Exit", (d, w) -> { stopPreview(); stopMulti(); PlayerApplication.closeApp(this); })
                     .setNegativeButton("Stay", null).show();
             return;
         }
@@ -5622,7 +5622,16 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onResume() {
-        if (AppForeground.consumeLeft()) adultUnlocked = false; // "until the app closes": leaving BM Player re-hides adult categories
+        // "until the app closes": leaving BM Player re-hides adult categories, even with a list still open.
+        if (AppForeground.consumeLeft() && adultUnlocked) {
+            adultUnlocked = false;
+            LiveDrawerData.set(new ArrayList<>(), new ArrayList<>());
+            for (AlertDialog d : new ArrayList<>(openLists)) { try { d.dismiss(); } catch (Throwable ignored) {} }
+            openLists.clear();
+            if (screen != null && !java.util.Arrays.asList("home", "unlock", "link", "linkcheck", "linkok", "pin", "expired", "maintenance").contains(screen)) {
+                stopPreview(); stopMulti(); showHome();
+            }
+        }
         PreviewHandoff.drop(); // a hand-off nobody claimed must not keep the decoder or provider connection
         takeBackPreview();
         VlcPreview.forward.drop();
@@ -6241,6 +6250,8 @@ public class MainActivity extends Activity {
      * Search/voice results: a real list that moves one row per remote press, draws a border on the
      * highlighted row and opens it with OK (or a tap).
      */
+    /** Lists on screen, so a parental re-lock can close them. */
+    private final java.util.Set<AlertDialog> openLists = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
     private AlertDialog resultList(String title, int count, java.util.function.IntFunction<View> row, java.util.function.IntConsumer pick,
                                    String posLabel, Runnable pos, String negLabel, Runnable neg) {
         return resultList(title, count, row, pick, posLabel, pos, negLabel, neg, i -> true);
@@ -6285,6 +6296,7 @@ public class MainActivity extends Activity {
         if (negLabel != null) b.setNegativeButton(negLabel, (d, w) -> { if (neg != null) neg.run(); });
         AlertDialog dlg = b.create();
         lv.setOnItemClickListener((p, v, i, id) -> { if (enabled.test(i)) { dlg.dismiss(); pick.accept(i); } });
+        openLists.add(dlg); dlg.setOnDismissListener(d -> openLists.remove(dlg));
         dlg.setOnShowListener(d -> { lv.requestFocus(); for (int i = 0; i < count; i++) if (enabled.test(i)) { lv.setSelection(i); break; } });
         dlg.show();
         return dlg;

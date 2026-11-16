@@ -76,7 +76,7 @@ public final class PlayerApplication extends Application implements Application.
             promptedAt = now;
             inactivityExit.arm(InactivityPolicy.RESPONSE_MS,
                     () -> ui.post(this::exitToHome),
-                    () -> android.os.Process.killProcess(android.os.Process.myPid()));
+                    this::hardStop);
         }
         promptOwner = a;
         prompt = new AlertDialog.Builder(a).setTitle("Still watching?")
@@ -311,12 +311,28 @@ public final class PlayerApplication extends Application implements Application.
         }
         return true;
     }
+    /** Exit BM Player, Close app and the Still watching? countdown all close the app the same, complete way. */
+    static void closeApp(Activity activity) { ((PlayerApplication) activity.getApplication()).exitToHome(); }
+    /**
+     * Backup stop, run off the main thread so frozen video can't hold it up. The task is removed before the
+     * process ends: if a still-visible app is simply killed, Android (and Fire OS) relaunches its top screen.
+     */
+    void hardStop() {
+        try {
+            android.app.ActivityManager am = (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+            if (am != null) for (android.app.ActivityManager.AppTask t : am.getAppTasks()) { try { t.finishAndRemoveTask(); } catch (Throwable ignored) {} }
+        } catch (Throwable ignored) {}
+        try { startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
+        catch (Throwable ignored) {}
+        try { Thread.sleep(300); } catch (InterruptedException ignored) {}
+        android.os.Process.killProcess(android.os.Process.myPid());
+    }
     private void exitToHome() {
         if (exiting) return;
         exiting = true;
         // Arm before touching activities: native video cleanup can block the main thread.
         inactivityExit.cancel();
-        inactivityExit.arm(0, () -> {}, () -> android.os.Process.killProcess(android.os.Process.myPid()));
+        inactivityExit.arm(0, () -> {}, this::hardStop);
         pinPassed = false;
         promptedAt = -1;
         dismissPrompt();
