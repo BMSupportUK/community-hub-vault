@@ -34,6 +34,7 @@ public class CloseAppTest {
             PlayerApplication app = (PlayerApplication) c.get().getApplication();
             try {
                 ReflectionHelpers.setField(app, "foreground", null);
+                org.robolectric.shadows.ShadowSystemClock.advanceBy(java.time.Duration.ofMinutes(2));
                 ReflectionHelpers.setField(app, "promptedAt", 1L);
                 ReflectionHelpers.callInstanceMethod(app, "tick");
                 assertTrue(ReflectionHelpers.getField(app, "exiting"));
