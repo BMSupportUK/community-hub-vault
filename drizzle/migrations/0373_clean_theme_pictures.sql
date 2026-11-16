@@ -1,0 +1,1 @@
+update public.player_themes set image_path = regexp_replace(image_path,'\.jpg$','-v2.jpg') where image_path not like '%-v2.jpg';
