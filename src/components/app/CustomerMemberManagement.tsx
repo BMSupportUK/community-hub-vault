@@ -1,3 +1,4 @@
+import { createAppRole } from "@/lib/app-roles.functions";
 import { CustomerNumberBadge, LoginNumberList } from "@/components/app/CustomerNumber";
 import { ClientOnly, Link, Navigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -619,11 +620,8 @@ function RolesManager({ defs, onChange }: { defs: RoleDef[]; onChange: () => voi
     if (!name.trim()) return toast.error("Enter a role key");
     setBusy(true);
     try {
-      const { error } = await supabase.rpc("create_app_role", {
-        _name: name.trim(),
-        _label: label.trim() || name.trim(),
-      });
-      if (error) throw error;
+      const res = await createAppRole({ data: { name: name.trim(), label: label.trim() || name.trim() } });
+      if ("error" in res && res.error) throw new Error(res.error);
       toast.success("Role created");
       setName("");
       setLabel("");

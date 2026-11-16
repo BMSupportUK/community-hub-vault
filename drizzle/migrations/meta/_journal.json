@@ -2633,6 +2633,13 @@
       "when": 1794839860295,
       "tag": "0375_harden_app_role_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 376,
+      "version": "7",
+      "when": 1794855228693,
+      "tag": "0376_create_app_role_server_only",
+      "breakpoints": true
     }
   ]
 }
