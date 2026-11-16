@@ -35,3 +35,4 @@
 - A live picture-size change (advert/kick-off feed switch) never reopens the stream: for 10s a still picture is not a freeze and a stall waits the normal reconnect time plus 10s, matching Android.
 - Speed: the guide is saved to local storage only after a full load and on exit (never on a timer, which froze the window stringifying the whole guide); never use CSS content-visibility on guide rows or posters (made scrolling worse on Windows).
 - Guide rows are memoised GuideRow components with stable handlers, and VideoSurface only reports a changed position from scrolls that move it, so hover/focus and scrolling never redraw the whole guide or flood the main process.
+- Parental control (parental.cjs) hides adult categories at the renderer's setData points with a hashed 4-digit PIN in settings and a session-only unlock, matching Android; Settings boxes are equal-height cards ordered most-used first.
