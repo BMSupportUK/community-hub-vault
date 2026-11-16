@@ -2626,6 +2626,13 @@
       "when": 1794837765746,
       "tag": "0374_theme_accent_sharper_pictures",
       "breakpoints": true
+    },
+    {
+      "idx": 375,
+      "version": "7",
+      "when": 1794839860295,
+      "tag": "0375_harden_app_role_functions",
+      "breakpoints": true
     }
   ]
 }
