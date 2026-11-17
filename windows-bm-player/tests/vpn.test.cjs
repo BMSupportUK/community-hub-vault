@@ -20,3 +20,15 @@ test('renderer cannot supply config, shell commands or arbitrary server IDs',asy
  let calls=0;const vpn=createVpn({site:async()=>{calls++;},native:{}});
  await assert.rejects(vpn.command({command:'exec',config:'secret'}),/Choose/);await assert.rejects(vpn.command({command:'server',server_id:'1; command'}),/Choose/);assert.equal(calls,0);
 });
+test('switch off succeeds when the old tunnel cannot connect',async()=>{
+ let enabled=true,off=0;const vpn=createVpn({site:async r=>{if(r.action==='vpn_command'){enabled=false;return {ok:true};}return {vpn:{enabled,config:'[Interface]'}};},native:{connect:async()=>{throw Error('failed');},disconnect:async()=>{},off:async()=>{off++;}}});
+ assert.equal((await vpn.command({command:'off'})).status,'off');assert.equal(off,1);
+});
+test('server list preserves real traffic readings lowest first with unknown last',async()=>{
+ const vpn=createVpn({site:async()=>({servers:[{id:1,traffic:1280000,traffic_bar:100},{id:2,traffic:451000,traffic_bar:35},{id:3}]})});
+ const rows=await vpn.servers();assert.deepEqual(rows.map(r=>r.id),[2,1,3]);assert.equal(rows[0].traffic,451000);assert.equal(rows[2].traffic,null);
+});
+test('a lost handshake removes green state and blocks direct fallback',async()=>{
+ let connected=true,blocked=0;const vpn=createVpn({site:async r=>r.action==='vpn'?{vpn:{enabled:true,config:'[Interface]'}}:{ok:true},native:{connect:async()=>{},connected:async()=>connected,disconnect:async()=>{blocked++;}}});
+ await vpn.sync();connected=false;assert.equal((await vpn.health()).status,'failed');assert.equal(blocked,1);
+});

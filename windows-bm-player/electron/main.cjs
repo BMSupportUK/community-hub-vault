@@ -26,7 +26,7 @@ function prepareVpn(){if(!vpnReady)vpnReady=nativeVpn.init().then(()=>vpn.sync()
 require('./mac-engine.cjs').setTransport({fetch:(url,options)=>nativeVpn.fetch(url,options),stream:url=>nativeVpn.stream(url)});
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
-function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w);}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
+function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w,{transport:url=>nativeVpn.stream(url)});}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
 /** Main player gave up: hand the screen to the BM backup engine (once), keeping a film's place. */
 function toBackup(session){
  if(session.backup||!engine?.useBackup)return false;
