@@ -12,7 +12,7 @@ The VPN switch, server picker and per-device login come back, this time using yo
 ## Charging for the VPN in the shop
 - Every package in the shop (Single 1/6/12 months, Multi Room, Triple Room) gets an optional **"Add VPN"** tick box at checkout, priced at **£2 a month** of the package (£2 on 1 month, £12 on 6 months, £24 on 12 months; Multi Room and Triple Room the same per month).
 - The VPN price is added to the order total and shown on the order, the invoice, and Profit & costs as its own line.
-- The VPN login is never created before the sale is complete. Each completed order with the VPN creates or extends the VPN logins for that customer's devices until the package's end date, so the VPN and subscription always end on the same day. A renewal charges the VPN again at the same £2 a month and extends it to the new end date. With no VPN on the order, the switch in the player shows "Add VPN to your next order" instead.
+- The VPN login is never created before the sale is complete. Each completed order with the VPN creates or extends the VPN logins for that customer's devices until the package's end date, so the VPN and subscription always end on the same day. At renewal checkout the customer is asked "Keep your VPN?". Yes: the VPN (£2 a month) shows on the renewal order and its end date is extended to match the new subscription once the sale completes. No: the VPN account is switched off. With no VPN on the order, the switch in the player shows "Add VPN to your next order" instead.
 - Staff manual orders get the same tick box.
 
 ## What I need from you
