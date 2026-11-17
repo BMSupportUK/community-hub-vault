@@ -55,12 +55,16 @@ public class ChannelLinkTest {
     }
     @Test public void serverChangeClearsPoorReading() {
         ChannelLink l = new ChannelLink(); l.ping(30); l.reconnected(1000); l.reconnected(1500);
-        assertEquals("Poor", l.rating(2000)); l.serverChanged(); l.ping(30);
+        assertEquals("Poor", l.rating(2000)); l.serverChanged(2_000); l.ping(30);
         assertEquals("Excellent", l.rating(3000));
     }
     @Test public void reconnectRightAfterVpnSwitchIsNotCounted() {
         ChannelLink l = new ChannelLink(); l.serverChanged(10_000); l.ping(40);
         l.reconnected(20_000); assertEquals("Excellent", l.rating(21_000));
         l.reconnected(100_000); assertEquals("Fair", l.rating(101_000));
+    }
+    @Test public void reconnectWhileChannelOpensIsNotCounted() {
+        ChannelLink l = new ChannelLink(); l.channelOpened(5_000); l.ping(26);
+        l.reconnected(25_000); assertEquals("Excellent", l.rating(26_000));
     }
 }

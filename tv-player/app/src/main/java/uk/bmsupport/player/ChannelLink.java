@@ -30,7 +30,8 @@ final class ChannelLink {
         } else if (lastRead < 0) { lastRead = readBytes; lastDemux = demuxBytes; lastAt = now; }
     }
     /** A VPN server change drops and rebuilds the connection on purpose: start the rating again. */
-    void serverChanged() { serverChanged(System.currentTimeMillis()); }
+    /** Opening the channel (incl. a handed-over preview reopening) is not a fault either. */
+    void channelOpened(long now) { if (switchedAt < 0) switchedAt = now; }
     void serverChanged(long now) { switchedAt = now; reset(); ping = -1; stalls.clear(); reconnects.clear(); }
     void reset() { lastRead = -1; ratio = -1; kbps = -1; fairSince = -1; poorSince = -1; }
     long shortMs(long now) { return fairSince < 0 ? 0 : now - fairSince; }

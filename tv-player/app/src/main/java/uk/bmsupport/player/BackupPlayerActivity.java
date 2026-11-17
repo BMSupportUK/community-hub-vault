@@ -111,7 +111,7 @@ public class BackupPlayerActivity extends Activity {
                 } catch (Exception ignored) { } // A failed ping (e.g. mid VPN switch) is not a reading; stalls still count.
             }, "channel-ping").start();
         }
-        if (!java.util.Objects.equals(linkVpnServer, BoxVpn.server)) { if (linkVpnServer != null) link.serverChanged(); linkVpnServer = BoxVpn.server; }
+        if (!java.util.Objects.equals(linkVpnServer, BoxVpn.server)) { if (linkVpnServer != null) link.serverChanged(android.os.SystemClock.elapsedRealtime()); linkVpnServer = BoxVpn.server; }
         String rating = link.rating(now);
         // Publish one atomic snapshot from the same ChannelLink instance driving the on-box pill.
         SharedPreferences savedLink = getSharedPreferences("bmplayer", MODE_PRIVATE);
@@ -450,6 +450,7 @@ public class BackupPlayerActivity extends Activity {
         if (mp == null) return;
         reportStall(stallTracker.finish(android.os.SystemClock.elapsedRealtime()), true);
         // Count the reconnect before clearing started, otherwise no reconnect is ever recorded.
+        link.channelOpened(android.os.SystemClock.elapsedRealtime());
         if (started || retryQueued) link.reconnected(android.os.SystemClock.elapsedRealtime());
         started = false;
         paused = false;
