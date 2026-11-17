@@ -1393,15 +1393,29 @@ public class MainActivity extends Activity {
         top.setGravity(Gravity.CENTER_VERTICAL);
         top.addView(logo());
         top.addView(text("  BM Player", 28, TEXT, true));
-        top.addView(text("   v" + appVersion(), 16, MUTED, false));
+        // Version and VPN sit in one dark pill with white text so every theme picture keeps them readable.
+        LinearLayout verPill = new LinearLayout(this);
+        verPill.setOrientation(LinearLayout.HORIZONTAL); verPill.setGravity(Gravity.CENTER_VERTICAL);
+        float dd = getResources().getDisplayMetrics().density;
+        verPill.setPadding((int) (12 * dd), (int) (4 * dd), (int) (12 * dd), (int) (4 * dd));
+        android.graphics.drawable.GradientDrawable ibg = new android.graphics.drawable.GradientDrawable();
+        ibg.setColor(0xD9000000); ibg.setCornerRadius(16 * dd); ibg.setStroke((int) Math.max(1, dd), 0x66FFFFFF);
+        verPill.setBackground(ibg);
+        TextView vt = text("v" + appVersion(), 16, 0xFFFFFFFF, true);
+        vt.setShadowLayer(3, 0, 1, 0xFF000000);
+        verPill.addView(vt);
         if (BoxVpn.present) {
-            // Small VPN dot: green = on, amber = connecting, red = off.
-            int col = !BoxVpn.enabled ? 0xFFE53935 : BoxVpn.on() ? 0xFF43A047 : 0xFFFFB300;
-            TextView vd = text("  ●", 18, col, true);
-            TextView vl = text(" VPN", 14, MUTED, false);
+            // VPN dot: green = on, amber = connecting, red = off.
+            int col = !BoxVpn.enabled ? 0xFFFF5252 : BoxVpn.on() ? 0xFF69F06E : 0xFFFFC400;
+            TextView vd = text("   ●", 18, col, true);
+            TextView vl = text(" VPN", 16, 0xFFFFFFFF, true);
+            vl.setShadowLayer(3, 0, 1, 0xFF000000);
             vd.setContentDescription(!BoxVpn.enabled ? "VPN off" : BoxVpn.on() ? "VPN on" : "VPN connecting");
-            top.addView(vd); top.addView(vl);
+            verPill.addView(vd); verPill.addView(vl);
         }
+        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(-2, -2);
+        ilp.leftMargin = (int) (14 * dd);
+        top.addView(verPill, ilp);
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (FrameRateMatch.isAndroidTv(this)) {
             final boolean on = FrameRateMatch.chosen50(this);
