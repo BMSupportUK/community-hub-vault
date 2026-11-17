@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] VPN bought only inside BM Player: pro-rata £2/month to subscription end, phone pay page (Pay by bank / Card), remove shop + renewal VPN, VPN profit tab; release box 6.11 + Windows/Mac.
+- [x] VPN bought only inside BM Player (box 6.11, Windows 0.4.113, Mac 0.1.114); shop/renewal VPN removed; Profit › VPN tab at $1.99≈£1.57 cost. A real paid purchase not yet tried on a device.
 
 - [ ] Build secure desktop VPN with an embedded WireGuard userspace tunnel, private streaming proxy, connection verification and server controls; release Windows and universal Mac only after tunnel/build/security checks. User confirmed BM Player-only protection.
 
