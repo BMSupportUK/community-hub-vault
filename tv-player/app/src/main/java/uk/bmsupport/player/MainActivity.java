@@ -5038,6 +5038,7 @@ public class MainActivity extends Activity {
                     java.util.Map<String, String> catNames = new java.util.HashMap<>();
                     for (String[] r : liveRows) catNames.put(r[0], r[1]);
                     for (Item it : liveChannels) if (!adultIds.contains(it.category)) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, catNames.get(it.category), null));
+                    ChannelNumberOrder.sort(drawerChannels, c -> c.name);
                     LiveDrawerData.set(liveRows, drawerChannels);
                     String[] start = CategoryOrder.liveDefault(liveRows, startCat);
                     if (start == null) { progTitle.setText("No Live TV categories available"); return; }
