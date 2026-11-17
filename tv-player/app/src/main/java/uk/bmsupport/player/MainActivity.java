@@ -4858,6 +4858,7 @@ public class MainActivity extends Activity {
             shownCh.clear(); requested.clear(); gen[0]++;
             java.util.Set<String> allowed = new java.util.HashSet<>(); for (String[] c : catRows) allowed.add(c[0]);
             for (Item it : liveChannels) if (allowed.contains(it.category) && (cat[0].equals("*") || cat[0].equals(it.category))) shownCh.add(it);
+            ChannelNumberOrder.sort(shownCh, it -> it.name);
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
             if (boxLive && boxCatPill != null) boxCatPill.setText("Category: " + cat[1]);
             selectedCategory.setText("Category: " + cat[1]);
