@@ -37,13 +37,14 @@ public class ChannelLinkTest {
         ChannelLink l = new ChannelLink(); l.ping(30); l.stalled(0);
         assertEquals("Fair", l.rating(1000));
         assertEquals("Excellent", l.rating(121_000));
-        l.reconnected(200_000); assertEquals("Poor", l.rating(201_000));
+        l.reconnected(200_000); assertEquals("Fair", l.rating(201_000));
+        l.reconnected(210_000); assertEquals("Poor", l.rating(211_000));
     }
     @Test public void snapshotUsesExactlyThePillsTwoMinuteWindow() {
         ChannelLink l = new ChannelLink(); l.ping(38); l.stalled(0); l.reconnected(1000);
         assertEquals(38, l.pingMs());
         assertEquals(1, l.stalls(120_000)); assertEquals(1, l.reconnects(120_000));
-        assertEquals("Poor", l.rating(120_000));
+        assertEquals("Fair", l.rating(120_000));
         assertEquals(0, l.stalls(120_001)); assertEquals(1, l.reconnects(120_001));
         assertEquals(0, l.reconnects(121_001)); assertEquals("Excellent", l.rating(121_001));
     }
@@ -53,8 +54,13 @@ public class ChannelLinkTest {
         assertEquals(0.8, l.deliveryRatio(), 0.00001); assertEquals("Excellent", l.rating(6000));
     }
     @Test public void serverChangeClearsPoorReading() {
-        ChannelLink l = new ChannelLink(); l.ping(30); l.reconnected(1000);
+        ChannelLink l = new ChannelLink(); l.ping(30); l.reconnected(1000); l.reconnected(1500);
         assertEquals("Poor", l.rating(2000)); l.serverChanged(); l.ping(30);
         assertEquals("Excellent", l.rating(3000));
+    }
+    @Test public void reconnectRightAfterVpnSwitchIsNotCounted() {
+        ChannelLink l = new ChannelLink(); l.serverChanged(10_000); l.ping(40);
+        l.reconnected(20_000); assertEquals("Excellent", l.rating(21_000));
+        l.reconnected(100_000); assertEquals("Fair", l.rating(101_000));
     }
 }
