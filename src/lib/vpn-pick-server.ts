@@ -67,8 +67,7 @@ export function serverTrafficList(list: VpnServer[], cc?: string | null) {
 
 /**
  * The box's own country first (then UK); within it the server with the least traffic,
- * then the fewest of our customers. A nearby country's server is used instead when it
- * has half the traffic or less.
+ * then the fewest of our customers. Never moves a box abroad while its country has servers.
  */
 export function pickServer(list: VpnServer[], cc?: string | null, ours: Record<number, number> = {}): VpnServer | null {
   const want = wanted(cc, list);
@@ -76,10 +75,9 @@ export function pickServer(list: VpnServer[], cc?: string | null, ours: Record<n
   for (const c of want) {
     const inC = list.filter((s) => code(s.country_code) === c).sort(sort);
     if (!inC.length) continue;
-    const home = inC[0];
-    const nearC = nearbyOf(c, list);
-    const near = list.filter((s) => nearC.includes(code(s.country_code))).sort(sort)[0];
-    return near && Number.isFinite(load(near)) && load(near) <= load(home) * VPN_NEARBY_SHARE ? near : home;
+    // Customers stay in their own country whenever it has a server; a quieter server abroad
+    // is only offered in the list, never picked automatically.
+    return inC[0];
   }
   return list[0] ?? null;
 }

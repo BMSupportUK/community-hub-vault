@@ -28,8 +28,8 @@ describe("best VPN server", () => {
   });
 });
 describe("busy UK servers", () => {
-  test("raw UK 451e6 vs Brussels 188e6 (under half): uses Brussels", () => {
-    expect(pickServer([s(1, "GB", 451e6), s(2, "BE", 188e6)], "GB")?.id).toBe(2);
+  test("a UK box stays in the UK even when Brussels is much quieter", () => {
+    expect(pickServer([s(1, "GB", 451e6), s(2, "BE", 188e6)], "GB")?.id).toBe(1);
   });
   test("raw UK 451e6 vs Berlin 368e6 (more than half): stays in the UK", () => {
     expect(pickServer([s(1, "GB", 451e6), s(2, "DE", 368e6)], "GB")?.id).toBe(1);
