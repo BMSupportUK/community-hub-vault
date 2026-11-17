@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Add a VPN location icon to both Android/Fire TV playback engines with an in-player server list and best-server choice; no channel navigation or playback release.
+- [ ] Verify VPN location switching on a physical linked player; no physical phone or box is connected. Installer release not requested in this change.
+
 - [x] Theme improvements: lighter middle shading, see-through tiles, scene-at-top 1920x1080 pictures, Light/Medium/Strong shading setting, theme-colour selected outline (Android, Windows, Mac). Tests pass, box app compiles.
 - [x] Released box 5.72, Windows 0.4.107 and Mac 0.1.108 with theme improvements; website publish scheduled.
 

@@ -37,6 +37,18 @@ final class PlayerActionControls {
         subsButton.setVisibility(subtitles != null && !"live".equals(kind(a)) ? View.VISIBLE : View.GONE);
         reportButton.setVisibility(PlayerControls.canReport(kind(a)) ? View.VISIBLE : View.GONE);
         swapButton.setVisibility("live".equals(kind(a)) && !a.getIntent().hasExtra("catchup_prefix") ? View.VISIBLE : View.GONE);
+        if (BoxVpn.present) {
+            Button location = button(a, "🌐");
+            location.setContentDescription("Change VPN location");
+            if (android.os.Build.VERSION.SDK_INT >= 26) location.setTooltipText("Change VPN location");
+            float density = a.getResources().getDisplayMetrics().density;
+            LinearLayout.LayoutParams icon = new LinearLayout.LayoutParams((int)(48 * density), (int)(48 * density));
+            icon.leftMargin = (int)(12 * density);
+            location.setMinimumWidth(0); location.setMinimumHeight(0);
+            location.setPadding(0, 0, 0, 0);
+            location.setOnClickListener(v -> VpnLocationDialog.show(a));
+            row.addView(location, icon);
+        }
         FrameLayout.LayoutParams p = new FrameLayout.LayoutParams(-2, -2, Gravity.BOTTOM | Gravity.START);
         p.bottomMargin = (int)(84 * a.getResources().getDisplayMetrics().density); p.leftMargin = 24;
         root.addView(row, p); return row;
