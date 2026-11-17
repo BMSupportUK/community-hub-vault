@@ -64,6 +64,12 @@ public class GuideGridView extends View {
     private void resetTime() { windowStart = minStart(); selTime = now(); }
 
     public void setListener(Listener l) { listener = l; }
+
+    /** Ask for the first rows' listings even while the grid is hidden (phones open it later with View EPG). */
+    public void warm(int rows) {
+        if (listener == null || names == null) return;
+        for (int r = 0; r < Math.min(names.size(), rows); r++) listener.needEpg(r);
+    }
     public void setChannels(List<String> n, List<Boolean> cu) { setChannels(n, cu, null); }
     public void setChannels(List<String> n, List<Boolean> cu, List<String> logoUrls) {
         names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu);

@@ -4857,6 +4857,8 @@ public class MainActivity extends Activity {
             List<String> names = new ArrayList<>(); List<Boolean> cu = new ArrayList<>(); List<String> logos = new ArrayList<>();
             for (Item it : shownCh) { names.add(it.name); cu.add(it.archiveDays > 0); logos.add(it.poster == null ? "" : it.poster); }
             grid.setChannels(names, cu, logos);
+            // Phones keep the guide hidden until View EPG, so nothing loaded until it opened; fetch now like boxes do.
+            if (phoneLive) grid.post(() -> grid.warm(20));
             if (shownCh.isEmpty()) { progTitle.setText("No channels in " + cat[1]); progTime.setText(""); }
             grid.requestFocus();
         };
