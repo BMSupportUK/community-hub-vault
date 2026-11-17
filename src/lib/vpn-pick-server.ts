@@ -1,9 +1,11 @@
 export type VpnServer = { id: number; name: string; country_code: string; city: string; status: number; visible: number; cpu?: number };
 
-/** A home-country server this busy (provider load figure, 0–100) lets a nearby country take over. */
-export const VPN_BUSY_LOAD = 70;
-/** A nearby server must be at least this much quieter to be worth the extra distance. */
-export const VPN_NEARBY_MARGIN = 20;
+/**
+ * VPNresellers' "cpu" figure is the server's current traffic (bytes), not a percentage.
+ * A nearby country's server is only used when it carries at most this share of the
+ * best home server's traffic, so small differences never pull a box abroad.
+ */
+export const VPN_NEARBY_SHARE = 0.5;
 const NEARBY = ["GB", "UK", "IE", "NL", "BE", "FR", "DE"];
 
 const byLoad = (ours: Record<number, number>) => (a: VpnServer, b: VpnServer) =>
@@ -11,8 +13,8 @@ const byLoad = (ours: Record<number, number>) => (a: VpnServer, b: VpnServer) =>
 
 /**
  * The box's own country first (then UK); within it the server with the least traffic,
- * then the fewest of our customers. When that best home server is busy, a nearby
- * country's server is used instead if it is clearly quieter.
+ * then the fewest of our customers. A nearby country's server is used instead when it
+ * has half the traffic or less.
  */
 export function pickServer(list: VpnServer[], cc?: string | null, ours: Record<number, number> = {}): VpnServer | null {
   const want = [(cc ?? "").toUpperCase(), ...NEARBY].filter(Boolean);
@@ -21,9 +23,8 @@ export function pickServer(list: VpnServer[], cc?: string | null, ours: Record<n
     const inC = list.filter((s) => s.country_code?.toUpperCase() === c).sort(sort);
     if (!inC.length) continue;
     const home = inC[0];
-    if ((home.cpu ?? 0) < VPN_BUSY_LOAD) return home;
     const near = list.filter((s) => want.includes(s.country_code?.toUpperCase()) && s.country_code?.toUpperCase() !== c).sort(sort)[0];
-    return near && (near.cpu ?? 0) <= (home.cpu ?? 0) - VPN_NEARBY_MARGIN ? near : home;
+    return near && (near.cpu ?? 0) <= (home.cpu ?? 0) * VPN_NEARBY_SHARE ? near : home;
   }
   return list[0] ?? null;
 }
