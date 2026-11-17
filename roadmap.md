@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] VPN bought only inside BM Player: pro-rata £2/month to subscription end, phone pay page (Pay by bank / Card), remove shop + renewal VPN, VPN profit tab; release box 6.11 + Windows/Mac.
+
 - [ ] Build secure desktop VPN with an embedded WireGuard userspace tunnel, private streaming proxy, connection verification and server controls; release Windows and universal Mac only after tunnel/build/security checks. User confirmed BM Player-only protection.
 
 - [x] Released permanent-BM-key box 5.90 (401); live APK matches built hash, 398 app tests pass. Added current server traffic under Live connections VPN pills; website publication requested for this release.

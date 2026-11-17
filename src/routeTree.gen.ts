@@ -54,6 +54,7 @@ import { Route as PlayerApproveTokenRouteImport } from './routes/player-approve.
 import { Route as PlayerSigninTokenRouteImport } from './routes/player-signin.$token'
 import { Route as PortalCodeRouteImport } from './routes/portal.$code'
 import { Route as VideoTokenRouteImport } from './routes/video.$token'
+import { Route as VpnPayTokenRouteImport } from './routes/vpn-pay.$token'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAdminAdStatsRouteImport } from './routes/_authenticated/_approved/admin-ad-stats'
@@ -459,6 +460,11 @@ const PortalCodeRoute = PortalCodeRouteImport.update({
 const VideoTokenRoute = VideoTokenRouteImport.update({
   id: '/video/$token',
   path: '/video/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VpnPayTokenRoute = VpnPayTokenRouteImport.update({
+  id: '/vpn-pay/$token',
+  path: '/vpn-pay/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedAccountSecurityRoute =
@@ -1572,6 +1578,7 @@ export interface FileRoutesByFullPath {
   '/player-signin/$token': typeof PlayerSigninTokenRoute
   '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
+  '/vpn-pay/$token': typeof VpnPayTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1797,6 +1804,7 @@ export interface FileRoutesByTo {
   '/player-signin/$token': typeof PlayerSigninTokenRoute
   '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
+  '/vpn-pay/$token': typeof VpnPayTokenRoute
   '/fan-zone': typeof FanZoneIndexRoute
   '/guides': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -2026,6 +2034,7 @@ export interface FileRoutesById {
   '/player-signin/$token': typeof PlayerSigninTokenRoute
   '/portal/$code': typeof PortalCodeRoute
   '/video/$token': typeof VideoTokenRoute
+  '/vpn-pay/$token': typeof VpnPayTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -2255,6 +2264,7 @@ export interface FileRouteTypes {
     | '/player-signin/$token'
     | '/portal/$code'
     | '/video/$token'
+    | '/vpn-pay/$token'
     | '/fan-zone/'
     | '/guides/'
     | '/account-security'
@@ -2480,6 +2490,7 @@ export interface FileRouteTypes {
     | '/player-signin/$token'
     | '/portal/$code'
     | '/video/$token'
+    | '/vpn-pay/$token'
     | '/fan-zone'
     | '/guides'
     | '/account-security'
@@ -2708,6 +2719,7 @@ export interface FileRouteTypes {
     | '/player-signin/$token'
     | '/portal/$code'
     | '/video/$token'
+    | '/vpn-pay/$token'
     | '/fan-zone/'
     | '/guides/'
     | '/_authenticated/_approved/account-security'
@@ -2932,6 +2944,7 @@ export interface RootRouteChildren {
   PlayerSigninTokenRoute: typeof PlayerSigninTokenRoute
   PortalCodeRoute: typeof PortalCodeRoute
   VideoTokenRoute: typeof VideoTokenRoute
+  VpnPayTokenRoute: typeof VpnPayTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublic2faHelpRoute: typeof ApiPublic2faHelpRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
@@ -3324,6 +3337,13 @@ declare module '@tanstack/react-router' {
       path: '/video/$token'
       fullPath: '/video/$token'
       preLoaderRoute: typeof VideoTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vpn-pay/$token': {
+      id: '/vpn-pay/$token'
+      path: '/vpn-pay/$token'
+      fullPath: '/vpn-pay/$token'
+      preLoaderRoute: typeof VpnPayTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/account-security': {
@@ -5043,6 +5063,7 @@ const rootRouteChildren: RootRouteChildren = {
   PlayerSigninTokenRoute: PlayerSigninTokenRoute,
   PortalCodeRoute: PortalCodeRoute,
   VideoTokenRoute: VideoTokenRoute,
+  VpnPayTokenRoute: VpnPayTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublic2faHelpRoute: ApiPublic2faHelpRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,

@@ -1424,7 +1424,13 @@ public class MainActivity extends Activity {
             vpnBtn.setContentDescription(!BoxVpn.enabled ? "VPN off, press to switch on" : "VPN " + state.toLowerCase() + ", press to switch off");
             LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(-2, -2);
             vlp.leftMargin = (int) (10 * dd);
-            top.addView(vpnBtn, vlp);
+            top.addView(vpnBtn, vlp);        } else {
+            // Not bought yet: the VPN is bought only here in BM Player.
+            Button getVpn = headerPill("🔐 Get VPN", v -> buyVpn(this::showHome));
+            getVpn.setContentDescription("Get VPN, 2 pounds a month");
+            LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(-2, -2);
+            vlp.leftMargin = (int) (10 * dd);
+            top.addView(getVpn, vlp);
         }
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (FrameRateMatch.isAndroidTv(this)) {
@@ -3670,10 +3676,17 @@ public class MainActivity extends Activity {
         t.show();
     }
 
+    /** "Get VPN": priced by the day to the subscription end and paid on the customer's phone. */
+    private void buyVpn(Runnable after) {
+        android.app.UiModeManager um = (android.app.UiModeManager) getSystemService(UI_MODE_SERVICE);
+        boolean tv = um != null && um.getCurrentModeType() == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION;
+        VpnBuyDialog.show(this, prefs.getString("token", ""), !tv, after);
+    }
+
     private void vpnSettings() {
         String token = prefs.getString("token", "");
         if (!BoxVpn.present) {
-            new AlertDialog.Builder(this).setTitle("VPN").setMessage("The VPN isn't on your package. Add VPN to your next order on bmsupport.uk (£2 a month) and it switches on here once your sale is complete.").setPositiveButton("OK", null).show();
+            buyVpn(this::showSettings);
             return;
         }
         String[] opts = {BoxVpn.enabled ? "Switch VPN off" : "Switch VPN on", "Use the best server", "Choose a server"};
@@ -3769,7 +3782,7 @@ public class MainActivity extends Activity {
                         })
                         .setMessage(null).setNegativeButton("Cancel", null).show()));
         boxes.add(settingBox("⚡", "Speed test", "Test your internet", v -> speedTest()));
-        boxes.add(settingBox("🔐", "VPN", !BoxVpn.present ? "Not on your package" : BoxVpn.enabled ? (BoxVpn.on() ? "On · " + BoxVpn.server : "Connecting…") : "Off", v -> vpnSettings()));
+        boxes.add(settingBox("🔐", "VPN", !BoxVpn.present ? "Get VPN · £2 a month" : BoxVpn.enabled ? (BoxVpn.on() ? "On · " + BoxVpn.server : "Connecting…") : "Off", v -> vpnSettings()));
         boxes.add(settingBox("ℹ", "Account info", "Status and expiry", v -> accountInfo()));
         advanced.add(settingBox("🧹", "Clear cache", "Reload all lists", v -> {
             clearCache(null);

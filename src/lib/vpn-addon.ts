@@ -21,3 +21,38 @@ export function vpnAddonPence(months: number): number {
 export function vpnAddonLineName(months: number): string {
   return `${VPN_ADDON_PREFIX} (${months} month${months === 1 ? "" : "s"})`;
 }
+
+/** Average month length used for the pro-rata price (365.25 / 12). */
+export const VPN_DAYS_PER_MONTH = 30.4375;
+/** Smallest app purchase the card/bank providers will take. */
+export const VPN_MIN_PENCE = 50;
+const DAY_MS = 864e5;
+
+/**
+ * VPN bought in BM Player: £2 a month, pro rata to the time left on the subscription, charged by the day.
+ * Ends on the subscription's own end date. Null when nothing is left to buy.
+ */
+export function vpnProRata(expiryIso: string | null | undefined, nowMs: number): { days: number; pence: number; until: string } | null {
+  if (!expiryIso) return null;
+  const end = new Date(expiryIso).getTime();
+  if (!Number.isFinite(end) || end <= nowMs) return null;
+  const days = Math.ceil((end - nowMs) / DAY_MS);
+  return { days, pence: Math.round((VPN_ADDON_MONTHLY_PENCE * days) / VPN_DAYS_PER_MONTH), until: new Date(end).toISOString() };
+}
+
+export function vpnAppLineName(days: number): string {
+  return `${VPN_ADDON_PREFIX} (${days} day${days === 1 ? "" : "s"})`;
+}
+
+/** VPNresellers wholesale: $1.99 per active account per month (1–999 accounts) ≈ £1.57. Owners can change it in Profit › VPN. */
+export const VPN_DEFAULT_COST_PENCE_MONTH = 157;
+/** What one VPN sale cost us for the days it covers. */
+export function vpnCostPence(days: number, costPerMonth: number): number {
+  return Math.round((Math.max(0, days) * Math.max(0, costPerMonth)) / VPN_DAYS_PER_MONTH);
+}
+/** Days covered by a VPN order line: "(N days)" for app purchases, "(N months)" for older shop lines. */
+export function vpnLineDays(name: string, qty: number): number {
+  const d = /\((\d+) days?\)/.exec(name); if (d) return Number(d[1]);
+  const m = /\((\d+) months?\)/.exec(name); if (m) return Math.round(Number(m[1]) * VPN_DAYS_PER_MONTH);
+  return Math.round(Math.max(1, qty) * VPN_DAYS_PER_MONTH);
+}

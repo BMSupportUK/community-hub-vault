@@ -2370,13 +2370,8 @@ function Checkout({
   // Manual bank transfer is staff-only (admins create those orders); customers pay by card, Pay by bank or crypto.
   const [existingUsername, setExistingUsername] = useState("");
   const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
-  const [vpnChoice, setVpnChoice] = useState<"yes" | "no" | "">("");
-  const [vpnLogins, setVpnLogins] = useState<string[]>([]);
-  useEffect(() => {
-    if (!user?.id) return;
-    void supabase.from("vpn_subscriptions").select("credential_id, active").eq("user_id", user.id)
-      .then(({ data }) => setVpnLogins((data ?? []).filter((r) => r.active).map((r) => r.credential_id)));
-  }, [user?.id]);
+  // VPN is bought inside BM Player only; new shop orders never carry it.
+  const vpnChoice = "" as "yes" | "no" | "";
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
   const [autoLoading, setAutoLoading] = useState(true);
   const [myCreds, setMyCreds] = useState<
@@ -2544,7 +2539,8 @@ function Checkout({
         : "new";
 
   // Renewing a login that already has the VPN: the customer must say whether to keep it.
-  const askKeepVpn = purchaseKind === "renewal" && vpnLogins.includes(credChoice) && vpnMonths > 0;
+  // The VPN is bought inside BM Player now, so the shop never asks about it.
+  const askKeepVpn = false;
   const canSubmit =
     !!name &&
     !!email &&
@@ -2869,28 +2865,6 @@ function Checkout({
             )}
           </div>
         )}
-          {vpnMonths > 0 && (
-            <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
-              {askKeepVpn ? (<>
-                <div className="text-sm font-medium">Keep your VPN? <span className="text-muted-foreground font-normal">£2 a month ({fmt(vpnAddonPence(vpnMonths))})</span></div>
-                <div className="grid grid-cols-2 gap-2">
-                  {(["yes", "no"] as const).map((v) => (
-                    <button key={v} type="button" onClick={() => setVpnChoice(v)} aria-pressed={vpnChoice === v}
-                      className={`rounded-lg border p-3 text-left text-sm ${vpnChoice === v ? "border-primary bg-primary/10" : "border-border"}`}>
-                      <span className="font-semibold">{v === "yes" ? "Yes, keep it" : "No, stop the VPN"}</span>
-                      <span className="block text-xs text-muted-foreground">{v === "yes" ? "Extended to your new end date once the sale is complete." : "Your VPN switches off."}</span>
-                    </button>
-                  ))}
-                </div>
-              </>) : (
-                <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm cursor-pointer">
-                  <input type="checkbox" className="mt-0.5" checked={vpnChoice === "yes"} onChange={(e) => setVpnChoice(e.target.checked ? "yes" : "")} />
-                  <span><span className="font-semibold">Add VPN</span> — £2 a month ({fmt(vpnAddonPence(vpnMonths))} for this order)
-                    <span className="block text-xs text-muted-foreground">Built into BM Player. Starts when your sale is complete and ends with your subscription.</span></span>
-                </label>
-              )}
-            </div>
-          )}
           <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
             <div className="text-sm font-medium">Payment method</div>
             <div className={`grid gap-2 ${bankOnly ? "grid-cols-2" : "grid-cols-3"}`}>
