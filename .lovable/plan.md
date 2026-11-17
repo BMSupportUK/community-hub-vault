@@ -7,11 +7,12 @@ The VPN switch, server picker and per-device login come back, this time using yo
 - **BM Player (Android/Amazon boxes and phones):** a VPN card in Settings with an On/Off switch, a server picker (country and city, quickest first), and a status line ("Connected to London").
 - **Automatic logins:** only once a sale that includes the VPN is completed, BM Support creates a VPNresellers account for it with a generated username and a strong password. The box fetches these itself, so customers never type them in or see the password.
 - **Shut-off rules:** when a device is unlinked or its subscription runs out, its VPN account is switched off at VPNresellers too. Staff and test accounts stay exempt, as they are now.
+- **Allocate existing VPNs:** an admin box on the VPN page to pick a subscriber and attach a VPN login you already have at VPNresellers to them (username, password, end date), for customers already using the service. It follows the same shut-off and renewal rules.
 
 ## Charging for the VPN in the shop
 - Every package in the shop (Single 1/6/12 months, Multi Room, Triple Room) gets an optional **"Add VPN"** tick box at checkout, priced at **£2 a month** of the package (£2 on 1 month, £12 on 6 months, £24 on 12 months; Multi Room and Triple Room the same per month).
 - The VPN price is added to the order total and shown on the order, the invoice, and Profit & costs as its own line.
-- The VPN login is never created before the sale is complete. Each completed order with the VPN creates or extends the VPN logins for that customer's devices until the package's end date, so the VPN and subscription always end on the same day. Renewals carry it on if it's ticked again. With no VPN on the order, the switch in the player shows "Add VPN to your next order" instead.
+- The VPN login is never created before the sale is complete. Each completed order with the VPN creates or extends the VPN logins for that customer's devices until the package's end date, so the VPN and subscription always end on the same day. A renewal charges the VPN again at the same £2 a month and extends it to the new end date. With no VPN on the order, the switch in the player shows "Add VPN to your next order" instead.
 - Staff manual orders get the same tick box.
 
 ## What I need from you
