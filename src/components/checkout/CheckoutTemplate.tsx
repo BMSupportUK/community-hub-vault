@@ -38,6 +38,7 @@ export type CheckoutView = {
   bank: { account_name: string | null; sort_code: string | null; account_number: string | null; iban: string | null; bic: string | null } | null;
   /** The order owner is approved for bank transfer, so a card order can switch to it. */
   canPayByBank?: boolean;
+  squareLocked?: boolean;
   qdCode?: { label: string; code: string } | null;
   invoiceTemplate?: InvoiceTemplateSettings;
 };
