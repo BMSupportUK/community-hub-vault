@@ -1,3 +1,4 @@
+import { channelLinkRating, readChannelLinkSnapshot } from "@/lib/player-customer-stats";
 import { hasBroadbandTest } from "@/lib/player-network-test";
 import { PlayerAdminGate } from "@/components/app/PlayerAdminGate";
 import { PlayerDeviceMessageDialog } from "@/components/app/PlayerDeviceMessageDialog";
@@ -41,11 +42,11 @@ type Row = {
   vpn_status: string | null; vpn_provider: string | null; vpn_checked_at: string | null;
   linked_at: string | null; created_at: string | null; offsite_customer_id: string | null;
   unlock_failures: number | null; unlock_locked_until: string | null;
-  net_down_kbps: number | null; net_up_kbps: number | null; net_ping_ms: number | null; net_measured_at: string | null;
+  net_down_kbps: number | null; net_up_kbps: number | null; net_ping_ms: number | null; net_measured_at: string | null; channel_link_snapshot?: unknown;
   private_dns_used: string | null;
 };
 
-const DEVICE_SELECT = "id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon, vpn_status, vpn_provider, vpn_checked_at, linked_at, created_at, offsite_customer_id, unlock_failures, unlock_locked_until, net_down_kbps, net_up_kbps, net_ping_ms, net_measured_at, private_dns_used";
+const DEVICE_SELECT = "id, user_id, platform, name, last_seen_at, connected_since, iptv_username, app_version, watching_kind, watching_title, watching_category, watching_player, watching_since, last_ip, geo_city, geo_region, geo_country, geo_lat, geo_lon, vpn_status, vpn_provider, vpn_checked_at, linked_at, created_at, offsite_customer_id, unlock_failures, unlock_locked_until, net_down_kbps, net_up_kbps, net_ping_ms, net_measured_at, private_dns_used, channel_link_snapshot";
 
 const PLATFORM: Record<string, string> = { android: "Android TV", firetv: "Fire TV", phone: "Phone", windows: "Windows", mac: "Mac" };
 
@@ -319,7 +320,7 @@ function AdminPlayerLivePageInner() {
                   <td className="p-3">{r.watching_title
                     ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Movie" : r.watching_kind === "catchup" ? "Catch up" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div>{r.private_dns_used && <PrivateDnsTag used={r.private_dns_used} />}</div></div>
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>
-                  <td className="p-3"><ConnectionBars down={hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null} /><div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">↓ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null)} · ↑ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_up_kbps : null)} · Stream {r.net_ping_ms ? `${r.net_ping_ms} ms` : "—"}</div></td>
+                  <td className="p-3"><ChannelLinkPill value={r.channel_link_snapshot} watching={!!r.watching_title} /><ConnectionBars down={hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null} /><div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">↓ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null)} · ↑ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_up_kbps : null)} · Stream {r.net_ping_ms ? `${r.net_ping_ms} ms` : "—"}</div></td>
                   <td className="p-3 font-mono tabular-nums">{r.watching_since ? formatElapsed(r.watching_since, now) : "—"}</td>
                   <td className="p-3 font-mono tabular-nums max-sm:hidden">{formatElapsed(r.connected_since ?? r.last_seen_at, now)}</td>
                   <td className="p-3"><div className="flex gap-1.5">
@@ -349,4 +350,16 @@ function AdminPlayerLivePageInner() {
 
 function AdminPlayerLivePage() {
   return <PlayerAdminGate><AdminPlayerLivePageInner /></PlayerAdminGate>;
+}
+
+/** The box's own "Channel connection" rating (same rule as the in-player reading), as a coloured pill. */
+function ChannelLinkPill({ value, watching }: { value: unknown; watching: boolean }) {
+  if (!watching) return null;
+  const snap = readChannelLinkSnapshot(value), rating = channelLinkRating(snap);
+  if (!rating) return null;
+  const tone = rating === "Poor" ? "border-destructive/40 bg-destructive/10 text-destructive"
+    : rating === "Fair" ? "border-warning/40 bg-warning/10 text-warning"
+    : rating === "Checking" ? "border-border bg-muted text-muted-foreground"
+    : "border-success/40 bg-success/10 text-success";
+  return <span className={`mb-1 inline-flex whitespace-nowrap items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${tone}`} title="Channel connection reported by the box">● {rating}{snap && snap.ping_ms > 0 ? ` · ${snap.ping_ms} ms` : ""}</span>;
 }

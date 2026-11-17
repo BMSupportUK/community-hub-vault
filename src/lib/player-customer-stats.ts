@@ -73,8 +73,8 @@ export function channelLinkRating(snapshot: ChannelLinkSnapshot | null): string 
  const { ping_ms: ping, stalls, reconnects, delivery_ratio: ratio } = snapshot;
  const shortOk = (snapshot.short_ms ?? 0) >= CHANNEL_LINK_SUSTAIN_MS, poorOk = (snapshot.poor_ms ?? 0) >= CHANNEL_LINK_SUSTAIN_MS;
  if (ping < 0 && ratio < 0 && stalls === 0 && reconnects === 0) return 'Checking';
- if (reconnects > 0 || stalls >= 3 || ping > 400 || poorOk) return 'Poor';
- if (stalls >= 1 || ping > 200 || shortOk) return 'Fair';
+ if (reconnects >= 2 || stalls >= 3 || ping > 400 || poorOk) return 'Poor';
+ if (reconnects === 1 || stalls >= 1 || ping > 200 || shortOk) return 'Fair';
  if (ping > 80) return 'Good';
  return 'Excellent';
 }
