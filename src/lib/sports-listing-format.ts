@@ -107,8 +107,15 @@ export function normalizeSportsListingText(value: string): string {
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
     .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'");
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(MISPLACED_SLOT_TEAM, (_m, head: string, team: string, tail: string, away: string) => `${head} ${tail}\n${team.trim()} @ ${away}`);
 }
+
+/**
+ * A team name pasted into the time ("NHL 02: 7pm Oilers ET | 12am UK" then "@ Panthers"):
+ * move it back in front of the "@" so the slot keeps its clock and the matchup its home side.
+ */
+const MISPLACED_SLOT_TEAM = /^([^\n:]+:\s*\d{1,2}(?::\d{2})?\s*[ap]m)\s+([A-Za-z][A-Za-z .'-]*?)\s+(ET\s*\|[^\n]*)\n[ \t]*@\s*([^\n]+)/gim;
 
 /** Rejoins provider slot dates wrapped mid-year: "17-10-20" / "26 1:35 AM". */
 export function joinWrappedSlotDates(value: string): string {
