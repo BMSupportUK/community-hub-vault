@@ -457,7 +457,6 @@ public class BackupPlayerActivity extends Activity {
         feedStatus.reset(android.os.SystemClock.elapsedRealtime());
         feedNote.setVisibility(TextView.GONE);
         Media m = new Media(vlc, Uri.parse(urls[at]));
-        m.addOption(":network-caching=" + BackupBufferPolicy.networkCacheMs(isLive(), PlayerActivity.prefs(this).getString("buffer", StreamRecovery.DEFAULT_BUFFER), recoveryName()));
         boolean software = VideoDecodePolicy.preferSoftware("catchup".equals(getIntent().getStringExtra("content_kind")),
                 PlayerActivity.prefs(this).getString("decoder", "hardware"), getIntent().getStringExtra("content_name"));
         m.setHWDecoderEnabled(!software, false);
