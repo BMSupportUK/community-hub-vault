@@ -49,4 +49,20 @@ public class InactivityDialogTest {
             assertEquals(Long.valueOf(10_800_000L), ReflectionHelpers.getField(app, "promptedAt"));
         }
     }
+
+    @Test public void unansweredCountdownStartsEvenWhenScreensaverPausedTheApp() {
+        try (var controller = Robolectric.buildActivity(Activity.class).setup()) {
+            Activity activity = controller.get();
+            PlayerApplication app = (PlayerApplication) activity.getApplication();
+            controller.pause();
+            ReflectionHelpers.setField(app, "lastInput", android.os.SystemClock.elapsedRealtime() - InactivityPolicy.IDLE_MS - 1);
+            try {
+                ReflectionHelpers.callInstanceMethod(app, "tick");
+                assertTrue((Long) ReflectionHelpers.getField(app, "promptedAt") >= 0);
+            } finally {
+                InactivityWatchdog watchdog = ReflectionHelpers.getField(app, "inactivityExit");
+                watchdog.cancel();
+            }
+        }
+    }
 }

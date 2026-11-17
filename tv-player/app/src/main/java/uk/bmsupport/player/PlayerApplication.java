@@ -70,14 +70,18 @@ public final class PlayerApplication extends Application implements Application.
                     + Math.max(0, (InactivityPolicy.RESPONSE_MS - (now - promptedAt) + 999) / 1000) + " seconds.");
             return;
         }
+        if (!InactivityPolicy.prompt(lastInput, now)) return;
         Activity a = foreground;
-        if (a == null || a instanceof IntroActivity || a.isFinishing() || a.isDestroyed() || !InactivityPolicy.prompt(lastInput, now)) return;
+        boolean visible = a != null && !(a instanceof IntroActivity) && !a.isFinishing() && !a.isDestroyed();
+        // A screensaver or locked phone pauses every screen, so nobody can answer: count down anyway.
+        if (!visible && (promptedAt >= 0 || activities.isEmpty() || (activities.size() == 1 && activities.get(0) instanceof IntroActivity))) return;
         if (promptedAt < 0) {
             promptedAt = now;
             inactivityExit.arm(InactivityPolicy.RESPONSE_MS,
                     () -> ui.post(this::exitToHome),
                     this::hardStop);
         }
+        if (!visible) return;
         promptOwner = a;
         prompt = new AlertDialog.Builder(a).setTitle("Still watching?")
                 .setMessage("Continue viewing?")
