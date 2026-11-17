@@ -9532,6 +9532,66 @@ export type Database = {
         }
         Relationships: []
       }
+      vpn_accounts: {
+        Row: {
+          created_at: string
+          cred_cipher: string
+          credential_id: string
+          device_id: string | null
+          enabled: boolean
+          expire_at: string | null
+          id: string
+          remote_active: boolean
+          server_id: number | null
+          server_name: string | null
+          source: string
+          status: string | null
+          status_detail: string | null
+          updated_at: string
+          user_id: string
+          username: string
+          vpnr_account_id: number
+        }
+        Insert: {
+          created_at?: string
+          cred_cipher: string
+          credential_id: string
+          device_id?: string | null
+          enabled?: boolean
+          expire_at?: string | null
+          id?: string
+          remote_active?: boolean
+          server_id?: number | null
+          server_name?: string | null
+          source?: string
+          status?: string | null
+          status_detail?: string | null
+          updated_at?: string
+          user_id: string
+          username: string
+          vpnr_account_id: number
+        }
+        Update: {
+          created_at?: string
+          cred_cipher?: string
+          credential_id?: string
+          device_id?: string | null
+          enabled?: boolean
+          expire_at?: string | null
+          id?: string
+          remote_active?: boolean
+          server_id?: number | null
+          server_name?: string | null
+          source?: string
+          status?: string | null
+          status_detail?: string | null
+          updated_at?: string
+          user_id?: string
+          username?: string
+          vpnr_account_id?: number
+        }
+        Relationships: []
+      }
       vpn_providers: {
         Row: {
           auth_kind: string
@@ -9565,6 +9625,33 @@ export type Database = {
           name?: string
           picker?: string
           sort?: number
+        }
+        Relationships: []
+      }
+      vpn_subscriptions: {
+        Row: {
+          active: boolean
+          credential_id: string
+          order_id: string | null
+          source: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          credential_id: string
+          order_id?: string | null
+          source?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          credential_id?: string
+          order_id?: string | null
+          source?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

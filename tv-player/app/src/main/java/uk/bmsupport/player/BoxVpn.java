@@ -38,6 +38,15 @@ final class BoxVpn {
         }).start();
     }
 
+    /** Settings › VPN › Choose a server. */
+    static void server(Activity a, String token, int serverId, Runnable after) {
+        new Thread(() -> {
+            try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", "server").put("server_id", serverId).toString()); } catch (Exception ignored) { }
+            sync(a, token);
+            if (after != null) a.runOnUiThread(after);
+        }).start();
+    }
+
     /** Label for the on/off icon. */
     static String toggleLabel(boolean enabled, boolean running) {
         return enabled ? (running ? "🔒 VPN: On" : "🔒 VPN: Connecting") : "🔓 VPN: Off";

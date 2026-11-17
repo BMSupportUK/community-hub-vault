@@ -60,7 +60,8 @@ const Body = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("vpn"), device_token: Token }),
-  z.object({ action: z.literal("vpn_command"), device_token: Token, command: z.enum(["best", "on", "off"]) }),
+  z.object({ action: z.literal("vpn_command"), device_token: Token, command: z.enum(["best", "on", "off", "server"]), server_id: z.number().int().positive().optional() }),
+  z.object({ action: z.literal("vpn_servers"), device_token: Token }),
   z.object({ action: z.literal("vpn_status"), device_token: Token, status: z.enum(["connecting", "on", "off", "failed"]), server: z.string().trim().max(120).optional(), detail: z.string().trim().max(200).optional(), bad_server: z.boolean().optional() }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
@@ -419,35 +420,41 @@ export const Route = createFileRoute("/api/public/player")({
         }
 
         if (body.action === "vpn") {
-          // Only this box's own row, found by its device token; the details are unlocked just for the box.
-          const { data: cfg } = await supabaseAdmin.from("player_vpn_configs").select("provider_id, cred_cipher, enabled, server, reselect_at, user_id").eq("device_id", device.id).maybeSingle();
-          if (!cfg || cfg.user_id !== device.user_id) return json({ vpn: null });
-          if (!cfg.enabled) return json({ vpn: { enabled: false } });
-          const { data: prov } = await supabaseAdmin.from("vpn_providers").select("id, name, picker, auth_kind").eq("id", cfg.provider_id).single();
-          if (!prov) return json({ vpn: { enabled: true, error: "Provider not available" } });
-          const { unlockVpnCreds, buildBoxVpn } = await import("@/lib/box-vpn.server");
-          const built = await buildBoxVpn(prov, (await unlockVpnCreds(cfg.cred_cipher)).username, { cc: device.geo_country, city: device.geo_city }, cfg.reselect_at ? cfg.server : null);
-          if ("error" in built) {
-            await supabaseAdmin.from("player_vpn_configs").update({ status: "failed", status_detail: built.error, reselect_at: null }).eq("device_id", device.id);
-            return json({ vpn: { enabled: true, error: built.error } });
-          }
-          if (built.server !== cfg.server || cfg.reselect_at) await supabaseAdmin.from("player_vpn_configs").update({ server: built.server, reselect_at: null, status: "connecting", status_detail: null }).eq("device_id", device.id);
-          // "rev" changes whenever the server changes, so the box knows to reconnect.
-          return json({ vpn: { enabled: true, provider: prov.id, provider_name: prov.name, server: built.server, load: built.load, config: built.config } });
+          // VPNresellers VPN: only when this box's login has a paid VPN that hasn't ended.
+          const { boxVpn } = await import("@/lib/vpnresellers.server");
+          try { return json(await boxVpn({ id: device.id, user_id: device.user_id, geo_country: device.geo_country })); }
+          catch (e) { console.error("vpn", e); return json({ vpn: { enabled: true, error: "The VPN service couldn't be reached. Trying again shortly." } }); }
+        }
+
+        if (body.action === "vpn_servers") {
+          const { vpnServers } = await import("@/lib/vpnresellers.server");
+          try {
+            const list = await vpnServers();
+            return json({ servers: list.map((s) => ({ id: s.id, country: s.country_code, city: s.city })).sort((x, y) => x.country.localeCompare(y.country) || x.city.localeCompare(y.city)) });
+          } catch { return json({ servers: [] }); }
         }
 
         if (body.action === "vpn_command") {
-          // The box's own home-screen icons: best server now, or switch the VPN on/off.
+          // The box's own Settings › VPN: on/off, best server, or a picked server.
           const now = new Date().toISOString();
-          const patch = body.command === "off" ? { enabled: false, updated_at: now } : body.command === "on" ? { enabled: true, updated_at: now } : { enabled: true, reselect_at: now, updated_at: now };
-          await supabaseAdmin.from("player_vpn_configs").update(patch).eq("device_id", device.id);
+          let patch: Record<string, unknown> = { updated_at: now };
+          if (body.command === "off") patch.enabled = false;
+          else if (body.command === "on") patch.enabled = true;
+          else if (body.command === "best") patch = { ...patch, enabled: true, server_id: null, server_name: null };
+          else if (body.server_id) {
+            const { vpnServers } = await import("@/lib/vpnresellers.server");
+            const s = (await vpnServers()).find((x) => x.id === body.server_id);
+            if (!s) return json({ ok: false, error: "That server isn't available." });
+            patch = { ...patch, enabled: true, server_id: s.id, server_name: `${s.city} (${s.country_code})` };
+          }
+          await supabaseAdmin.from("vpn_accounts").update(patch as never).eq("device_id", device.id);
           return json({ ok: true });
         }
 
         if (body.action === "vpn_status") {
-          await supabaseAdmin.from("player_vpn_configs").update({
+          await supabaseAdmin.from("vpn_accounts").update({
             status: body.status, status_detail: body.detail ?? null, updated_at: new Date().toISOString(),
-            ...(body.server ? { server: body.server } : {}), ...(body.bad_server ? { reselect_at: new Date().toISOString() } : {}),
+            ...(body.bad_server ? { server_id: null, server_name: null } : {}),
           }).eq("device_id", device.id);
           return json({ ok: true });
         }

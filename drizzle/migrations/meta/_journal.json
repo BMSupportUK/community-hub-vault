@@ -2640,6 +2640,13 @@
       "when": 1794855228693,
       "tag": "0376_create_app_role_server_only",
       "breakpoints": true
+    },
+    {
+      "idx": 377,
+      "version": "7",
+      "when": 1794914071758,
+      "tag": "0377_vpnresellers_vpn",
+      "breakpoints": true
     }
   ]
 }

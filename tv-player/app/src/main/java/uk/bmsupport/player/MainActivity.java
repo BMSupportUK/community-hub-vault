@@ -3618,6 +3618,31 @@ public class MainActivity extends Activity {
         return t;
     }
 
+    /** Settings › VPN: on/off, best server or a chosen server. Paid VPN only (£2 a month on the order). */
+    private void vpnSettings() {
+        String token = prefs.getString("token", "");
+        if (!BoxVpn.present) {
+            new AlertDialog.Builder(this).setTitle("VPN").setMessage("The VPN isn't on your package. Add VPN to your next order on bmsupport.uk (£2 a month) and it switches on here once your sale is complete.").setPositiveButton("OK", null).show();
+            return;
+        }
+        String[] opts = {BoxVpn.enabled ? "Switch VPN off" : "Switch VPN on", "Use the best server", "Choose a server"};
+        new AlertDialog.Builder(this).setTitle("VPN" + (BoxVpn.server.isEmpty() ? "" : " · " + BoxVpn.server)).setItems(opts, (d, w) -> {
+            if (w == 0) BoxVpn.command(this, token, BoxVpn.enabled ? "off" : "on", this::showSettings);
+            else if (w == 1) BoxVpn.command(this, token, "best", this::showSettings);
+            else io.execute(() -> {
+                try {
+                    org.json.JSONArray arr = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_servers").put("device_token", token).toString())).optJSONArray("servers");
+                    List<String[]> rows = new ArrayList<>();
+                    for (int i = 0; arr != null && i < arr.length(); i++) { JSONObject o = arr.getJSONObject(i); rows.add(new String[]{o.optString("id"), o.optString("city") + " (" + o.optString("country") + ")"}); }
+                    ui.post(() -> {
+                        if (rows.isEmpty()) { Toast.makeText(this, "Couldn't load the VPN servers. Try again shortly.", Toast.LENGTH_LONG).show(); return; }
+                        resultList("Choose a VPN server", rows.size(), i -> text(rows.get(i)[1], 18, TEXT, false), i -> BoxVpn.server(this, token, Integer.parseInt(rows.get(i)[0]), this::showSettings), "Close", null, null, null);
+                    });
+                } catch (Exception e) { ui.post(() -> Toast.makeText(this, "Couldn't load the VPN servers. Try again shortly.", Toast.LENGTH_LONG).show()); }
+            });
+        }).setNegativeButton("Close", null).show();
+    }
+
     private void showSettings() {
         screen = "settings"; back = this::showHome; drawnVersion = appVersion();
         LinearLayout root = column();
@@ -3694,6 +3719,7 @@ public class MainActivity extends Activity {
                         })
                         .setMessage(null).setNegativeButton("Cancel", null).show()));
         boxes.add(settingBox("⚡", "Speed test", "Test your internet", v -> speedTest()));
+        boxes.add(settingBox("🔐", "VPN", !BoxVpn.present ? "Not on your package" : BoxVpn.enabled ? (BoxVpn.on() ? "On · " + BoxVpn.server : "Connecting…") : "Off", v -> vpnSettings()));
         boxes.add(settingBox("ℹ", "Account info", "Status and expiry", v -> accountInfo()));
         advanced.add(settingBox("🧹", "Clear cache", "Reload all lists", v -> {
             clearCache(null);

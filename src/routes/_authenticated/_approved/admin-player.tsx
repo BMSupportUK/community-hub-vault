@@ -14,6 +14,7 @@ import { PlayerSportsCategoryMatching } from "@/components/app/PlayerSportsCateg
 import { PlayerAnnouncementsCard } from "@/components/app/PlayerAnnouncementsCard";
 import { PlayerMajorAnnouncementsCard } from "@/components/app/PlayerMajorAnnouncementsCard";
 import { PlayerThemesSection } from "@/components/app/PlayerThemesSection";
+import { PlayerVpnSection } from "@/components/app/PlayerVpnSection";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-player")({
   ] }),
 });
 
-type Section = "dns" | "maintenance" | "channels" | "logins" | "security" | "devices" | "buffering" | "channel-status" | "guide-matching" | "connection-limits" | "announcements" | "major-announcements" | "watch-time" | "installer-codes" | "themes";
+type Section = "dns" | "maintenance" | "channels" | "logins" | "security" | "devices" | "buffering" | "channel-status" | "guide-matching" | "connection-limits" | "announcements" | "major-announcements" | "watch-time" | "installer-codes" | "themes" | "vpn";
 const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe; managementToo?: boolean }[] = [
   { key: "dns", label: "DNS", desc: "Set the one DNS address every BM Player app uses.", icon: Globe },
   { key: "maintenance", label: "Maintenance", desc: "Take every BM Player app offline with a message.", icon: Wrench },
@@ -59,6 +60,7 @@ const SECTIONS: { key: Section; label: string; desc: string; icon: typeof Globe;
   { key: "channel-status", label: "Channel status", desc: "Every channel with an Online / Offline status.", icon: Wifi },
   { key: "buffering", label: "Buffering", desc: "Channels and titles that stalled or froze most.", icon: Activity },
   { key: "announcements", label: "Announcements", desc: "Short message along the bottom of every BM Player.", icon: Megaphone, managementToo: true },
+  { key: "vpn", label: "VPN", desc: "VPN logins for each subscriber and box: on/off, server, and allocate existing VPNs.", icon: KeyRound },
   { key: "themes", label: "Themes", desc: "Switch off or delete the home-screen themes customers can pick.", icon: Palette },
   { key: "major-announcements", label: "Major announcements", desc: "Longer announcements under the top-right icon.", icon: Megaphone, managementToo: true },
 ];
@@ -198,6 +200,7 @@ function AdminPlayerPageInner() {
         <p className="text-xs text-muted-foreground">Open apps switch within about 15 seconds; others when they next open.</p>
       </section>}
       {section === "themes" && <PlayerThemesSection />}
+      {section === "vpn" && <PlayerVpnSection />}
       {section === "channels" && <PlayerSportsCategoryMatching />}
       {section === "channels" && <section className="space-y-3 border-t border-border pt-5">
         <h2 className="font-display font-semibold">Sports guide channel matching</h2>

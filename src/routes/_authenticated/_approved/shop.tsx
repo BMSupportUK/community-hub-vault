@@ -1,3 +1,4 @@
+import { vpnAddonMonths, vpnAddonPence, vpnAddonLineName } from "@/lib/vpn-addon";
 import { CustomerOrderCard } from "@/components/checkout/CustomerOrderCard";
 import { ProviderInvoicePayment } from "@/components/checkout/ProviderInvoicePayment";
 import { RequestOrderPasswordButton } from "@/components/checkout/RequestOrderPasswordButton";
@@ -1385,6 +1386,7 @@ function Storefront() {
     purchase_kind?: "renewal" | "additional" | "new";
     owned_logins?: string[];
     pay_method?: "square" | "stripe" | "wise" | "crypto";
+    vpn?: boolean;
   }) => {
 
     if (!user || cartItems.length === 0) return;
@@ -1436,7 +1438,8 @@ function Storefront() {
       if (code.amount_cents) verifiedDiscountCents = Math.min(total, code.amount_cents);
       if (code.percent) verifiedDiscountCents = Math.round(total * (code.percent / 100));
     }
-    const finalTotal = Math.max(0, total - verifiedDiscountCents);
+    const vpnMonths = info.vpn ? vpnAddonMonths(cartItems.map((p) => ({ name: p.name, qty: cart[p.id] }))) : 0;
+    const finalTotal = Math.max(0, total - verifiedDiscountCents) + vpnAddonPence(vpnMonths);
     const { data: order, error } = await supabase
       .from("orders")
       .insert({
@@ -1466,6 +1469,8 @@ function Storefront() {
       unit_price_cents: p.price_cents,
       quantity: cart[p.id],
     }));
+    // VPN add-on: £2 for each month of package, its own line on the order, invoice and profit.
+    if (vpnMonths > 0) items.push({ order_id: order.id, product_id: null as never, product_name: vpnAddonLineName(vpnMonths), unit_price_cents: vpnAddonPence(1), quantity: vpnMonths });
     const { error: ie } = await supabase.from("order_items").insert(items as never);
     if (ie) {
       toast.error(ie.message);
@@ -2352,6 +2357,7 @@ function Checkout({
     purchase_kind: "renewal" | "additional" | "new";
     owned_logins: string[];
     pay_method: "square" | "stripe" | "wise" | "crypto";
+    vpn: boolean;
   }) => void;
   onRemoveItem: (id: string) => void;
 }) {
@@ -2364,6 +2370,13 @@ function Checkout({
   // Manual bank transfer is staff-only (admins create those orders); customers pay by card, Pay by bank or crypto.
   const [existingUsername, setExistingUsername] = useState("");
   const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
+  const [vpnChoice, setVpnChoice] = useState<"yes" | "no" | "">("");
+  const [vpnLogins, setVpnLogins] = useState<string[]>([]);
+  useEffect(() => {
+    if (!user?.id) return;
+    void supabase.from("vpn_subscriptions").select("credential_id, active").eq("user_id", user.id)
+      .then(({ data }) => setVpnLogins((data ?? []).filter((r) => r.active).map((r) => r.credential_id)));
+  }, [user?.id]);
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
   const [autoLoading, setAutoLoading] = useState(true);
   const [myCreds, setMyCreds] = useState<
@@ -2453,7 +2466,9 @@ function Checkout({
     if (appliedCode.percent) return Math.round(total * (appliedCode.percent / 100));
     return 0;
   }, [appliedCode, total]);
-  const finalTotal = Math.max(0, total - discountCents);
+  const vpnMonths = vpnAddonMonths(items.map((i) => ({ name: i.name, qty: i.qty })));
+  const vpnPence = vpnChoice === "yes" ? vpnAddonPence(vpnMonths) : 0;
+  const finalTotal = Math.max(0, total - discountCents) + vpnPence;
 
   // Auto-pick the best valid discount code for this cart.
   // Rule: if the user has a personal code (user_id = current user) that applies,
@@ -2528,6 +2543,8 @@ function Checkout({
         ? "additional"
         : "new";
 
+  // Renewing a login that already has the VPN: the customer must say whether to keep it.
+  const askKeepVpn = purchaseKind === "renewal" && vpnLogins.includes(credChoice) && vpnMonths > 0;
   const canSubmit =
     !!name &&
     !!email &&
@@ -2537,7 +2554,8 @@ function Checkout({
 
     adultContent !== "" &&
     (!requiresMulti || agreedMulti) &&
-    (!requiresTriple || agreedTriple);
+    (!requiresTriple || agreedTriple) &&
+    (!askKeepVpn || vpnChoice !== "");
 
   return (
      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-2 sm:p-4">
@@ -2573,6 +2591,12 @@ function Checkout({
               <span className="text-muted-foreground">Subtotal</span>
               <span>{fmt(total)}</span>
             </div>
+            {vpnPence > 0 && (
+              <div className="flex justify-between text-sm">
+                <span>{vpnAddonLineName(vpnMonths)}</span>
+                <span>{fmt(vpnPence)}</span>
+              </div>
+            )}
             {discountCents > 0 && (
               <div className="flex justify-between text-sm text-success">
                 <span>Discount {appliedCode?.code ? `(${appliedCode.code})` : ""}</span>
@@ -2845,6 +2869,28 @@ function Checkout({
             )}
           </div>
         )}
+          {vpnMonths > 0 && (
+            <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
+              {askKeepVpn ? (<>
+                <div className="text-sm font-medium">Keep your VPN? <span className="text-muted-foreground font-normal">£2 a month ({fmt(vpnAddonPence(vpnMonths))})</span></div>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["yes", "no"] as const).map((v) => (
+                    <button key={v} type="button" onClick={() => setVpnChoice(v)} aria-pressed={vpnChoice === v}
+                      className={`rounded-lg border p-3 text-left text-sm ${vpnChoice === v ? "border-primary bg-primary/10" : "border-border"}`}>
+                      <span className="font-semibold">{v === "yes" ? "Yes, keep it" : "No, stop the VPN"}</span>
+                      <span className="block text-xs text-muted-foreground">{v === "yes" ? "Extended to your new end date once the sale is complete." : "Your VPN switches off."}</span>
+                    </button>
+                  ))}
+                </div>
+              </>) : (
+                <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm cursor-pointer">
+                  <input type="checkbox" className="mt-0.5" checked={vpnChoice === "yes"} onChange={(e) => setVpnChoice(e.target.checked ? "yes" : "")} />
+                  <span><span className="font-semibold">Add VPN</span> — £2 a month ({fmt(vpnAddonPence(vpnMonths))} for this order)
+                    <span className="block text-xs text-muted-foreground">Built into BM Player. Starts when your sale is complete and ends with your subscription.</span></span>
+                </label>
+              )}
+            </div>
+          )}
           <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
             <div className="text-sm font-medium">Payment method</div>
             <div className={`grid gap-2 ${bankOnly ? "grid-cols-2" : "grid-cols-3"}`}>
@@ -2883,6 +2929,7 @@ function Checkout({
                   .map((c) => c.app_login_name?.trim())
                   .filter(Boolean) as string[],
                 pay_method: payMethod,
+                vpn: vpnChoice === "yes",
               })
             }
             disabled={!canSubmit}
