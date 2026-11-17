@@ -51,7 +51,7 @@ const ManualAccountLoginEmail = ({ displayName, email, password, loginUrl = 'htt
 
 export const template = {
   component: ManualAccountLoginEmail,
-  subject: `🎉 Your ${SITE_NAME} login details`,
+  subject: `Your ${SITE_NAME} login details`,
   displayName: 'Manually added account login (BM Support)',
   previewData: { displayName: 'Jane', email: 'jane@example.com', password: 'Abc7KmPq92Xz', loginUrl: 'https://bmsupport.uk/login' },
 } satisfies TemplateEntry
