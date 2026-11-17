@@ -1,0 +1,1 @@
+CREATE POLICY "Staff read order signals" ON public.order_change_signals FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'staff'::app_role) OR public.has_role(auth.uid(), 'moderator'::app_role));
