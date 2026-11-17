@@ -119,7 +119,9 @@ final class BoxVpn {
             try {
                 android.view.ViewGroup decor = (android.view.ViewGroup) a.getWindow().getDecorView();
                 android.widget.TextView b = decor.findViewWithTag("bm_vpn_badge");
-                if (!present) { if (b != null) b.setVisibility(android.view.View.GONE); return; }
+                // The home screen already shows the VPN light beside the version number at the top.
+                boolean home = a instanceof MainActivity && ((MainActivity) a).onHomeScreen();
+                if (!present || home) { if (b != null) b.setVisibility(android.view.View.GONE); return; }
                 float d = a.getResources().getDisplayMetrics().density;
                 if (b == null) {
                     b = new android.widget.TextView(a);

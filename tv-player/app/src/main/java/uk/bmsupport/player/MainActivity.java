@@ -5692,6 +5692,14 @@ public class MainActivity extends Activity {
         }
     }
 
+    boolean onHomeScreen() { return "home".equals(screen); }
+
+    /** Every screen change re-checks the corner VPN light, so it hides on home (which has its own) and returns elsewhere. */
+    @Override public void setContentView(View v) {
+        super.setContentView(v);
+        getWindow().getDecorView().post(() -> BoxVpn.badge(this));
+    }
+
     @Override protected void onResume() {
         BoxVpn.badge(this);
         // "until the app closes": leaving BM Player re-hides adult categories, even with a list still open.
