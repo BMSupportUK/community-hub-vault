@@ -9,7 +9,7 @@ The VPN switch, server picker and per-device login come back, this time using yo
 - **Shut-off rules:** when a device is unlinked or its subscription runs out, its VPN account is switched off at VPNresellers too. Staff and test accounts stay exempt, as they are now.
 
 ## Charging for the VPN in the shop
-- Every package in the shop (Single 1/6/12 months, Multi Room, Triple Room) gets an optional **"Add VPN"** tick box at checkout, priced per month of the package (price to be confirmed).
+- Every package in the shop (Single 1/6/12 months, Multi Room, Triple Room) gets an optional **"Add VPN"** tick box at checkout, priced at **£2 a month** of the package (£2 on 1 month, £12 on 6 months, £24 on 12 months; Multi Room and Triple Room the same per month).
 - The VPN price is added to the order total and shown on the order, the invoice, and Profit & costs as its own line.
 - Each paid order with the VPN creates or extends the VPN logins for that customer's devices until the package's end date. Renewals carry it on if it's ticked again. With no VPN on the order, the switch in the player shows "Add VPN to your next order" instead.
 - Staff manual orders get the same tick box.
@@ -29,7 +29,7 @@ The VPN switch, server picker and per-device login come back, this time using yo
 4. Add the player endpoints for the device: status, switch on/off, choose a server, fetch the connection file.
 5. Add the dashboard VPN page to the BM Player admin sections, with its own role permission.
 6. Android: a built-in VPN connection with the Settings card, an "always reconnect" option, and a key icon while connected.
-7. Add tests for: a generated login is unique per device; an unlinked or expired device gets switched off; a customer can't control another device's VPN.
+7. Add tests for: VPN adds £2 × package months to the total; a generated login is unique per device; an unlinked or expired device gets switched off; a customer can't control another device's VPN.
 8. Shop: add the VPN option to the checkout, order total, invoices and profit report; switch VPN access on when an order is paid and off when it expires.
 9. Build and release box 5.84 after the tests pass, then check the download from the website.
 
