@@ -3,10 +3,13 @@ import { describe, expect, test } from "bun:test";
 import { pickServer } from "./vpn-pick-server";
 const s = (id, cc, cpu) => ({ id, name: "", country_code: cc, city: "", status: 1, visible: 1, cpu });
 describe("best VPN server", () => {
-  test("picks the UK server with the fewest of our customers", () => {
-    expect(pickServer([s(1, "GB", 1), s(2, "GB", 9)], "GB", { 1: 5, 2: 1 })?.id).toBe(2);
+  test("picks the UK server with the least traffic", () => {
+    expect(pickServer([s(1, "GB", 9), s(2, "GB", 1)], "GB", { 1: 0, 2: 5 })?.id).toBe(2);
   });
-  test("uses the provider's lower load when customer counts match", () => {
-    expect(pickServer([s(1, "GB", 9), s(2, "GB", 1)], "GB", { 1: 2, 2: 2 })?.id).toBe(2);
+  test("stays in the box's own country before a quieter abroad one", () => {
+    expect(pickServer([s(1, "NL", 1), s(2, "GB", 9)], "GB")?.id).toBe(2);
+  });
+  test("equal traffic: fewest of our customers wins", () => {
+    expect(pickServer([s(1, "GB", 3), s(2, "GB", 3)], "GB", { 1: 4, 2: 1 })?.id).toBe(2);
   });
 });
