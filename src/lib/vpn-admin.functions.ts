@@ -81,7 +81,7 @@ export const allocateVpn = createServerFn({ method: "POST" }).middleware([requir
       const l = newVpnLogin(); username = l.username; password = l.password;
       accountId = (await vr<{ data: { id: number } }>("POST", "/accounts", { username, password })).data.id;
     }
-    await supabaseAdmin.from("vpn_subscriptions").upsert({ credential_id: cred.id, user_id: cred.owner_id, active: true, source: "admin", updated_at: new Date().toISOString() });
+    await supabaseAdmin.from("vpn_subscriptions").upsert({ credential_id: cred.id, user_id: cred.owner_id, active: true, source: "admin", paid_until: null, updated_at: new Date().toISOString() });
     const { data: row } = await supabaseAdmin.from("vpn_accounts").insert({ credential_id: cred.id, user_id: cred.owner_id, vpnr_account_id: accountId, username, cred_cipher: await lockVpnCreds(username, password), source: "allocated" })
       .select("id, vpnr_account_id, enabled, remote_active, expire_at, server_id, server_name, credential_id").single();
     if (row) await syncRemote(row as any, (await vpnEntitlement(cred.id))?.until ?? null).catch(() => null);

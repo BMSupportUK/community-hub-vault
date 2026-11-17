@@ -25,8 +25,12 @@ function createVpn({site,native,changed=()=>{}}){
   }
   return snapshot();
  }
+ const PAY=/^https:\/\/bmsupport\.uk\/vpn-pay\/[a-f0-9]{64}#[A-Za-z0-9%-]{1,80}$/;
  return {
   snapshot,
+  // VPN is bought only inside BM Player: £2 a month by the day to the subscription end, paid in the browser.
+  quote:async()=>{const r=await site({action:'vpn_quote'});return r?.ok?{ok:true,pence:Number(r.pence)||0,days:Number(r.days)||0,until:String(r.until||'')}:{ok:false,reason:String(r?.reason||'The VPN can\'t be added right now.').slice(0,240)};},
+  buy:async()=>{const r=await site({action:'vpn_buy'});const url=String(r?.url||'');if(!PAY.test(url))throw new Error(String(r?.error||'Couldn\'t start the VPN payment. Try again shortly.').slice(0,240));return url;},
   sync:()=>serial(sync),
   servers:async()=>{const r=await site({action:'vpn_servers'});return (r.servers||[]).filter(s=>Number.isInteger(s.id)&&s.id>0).map(s=>({id:s.id,city:String(s.city||'').slice(0,80),country:String(s.country||'').slice(0,2),traffic:typeof s.traffic==='number'&&Number.isFinite(s.traffic)&&s.traffic>=0?s.traffic:null,traffic_bar:Math.max(0,Math.min(100,Number(s.traffic_bar)||0))})).sort((a,b)=>(a.traffic??Infinity)-(b.traffic??Infinity));},
   command:value=>serial(async()=>{

@@ -9631,11 +9631,48 @@ export type Database = {
         }
         Relationships: []
       }
+      vpn_purchases: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          credential_id: string
+          days: number
+          device_id: string
+          order_id: string
+          paid_until: string
+          pence: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          credential_id: string
+          days: number
+          device_id: string
+          order_id: string
+          paid_until: string
+          pence: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          credential_id?: string
+          days?: number
+          device_id?: string
+          order_id?: string
+          paid_until?: string
+          pence?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       vpn_subscriptions: {
         Row: {
           active: boolean
           credential_id: string
           order_id: string | null
+          paid_until: string | null
           source: string
           updated_at: string
           user_id: string
@@ -9644,6 +9681,7 @@ export type Database = {
           active?: boolean
           credential_id: string
           order_id?: string | null
+          paid_until?: string | null
           source?: string
           updated_at?: string
           user_id: string
@@ -9652,6 +9690,7 @@ export type Database = {
           active?: boolean
           credential_id?: string
           order_id?: string | null
+          paid_until?: string | null
           source?: string
           updated_at?: string
           user_id?: string

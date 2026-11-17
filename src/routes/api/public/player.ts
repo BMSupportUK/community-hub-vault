@@ -63,6 +63,8 @@ const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("vpn"), device_token: Token }),
   z.object({ action: z.literal("vpn_command"), device_token: Token, command: z.enum(["best", "on", "off", "server"]), server_id: z.number().int().positive().optional(), pings: z.record(z.string().regex(/^\d{1,6}$/), z.number().int().min(1).max(10000)).optional() }),
   z.object({ action: z.literal("vpn_servers"), device_token: Token }),
+  z.object({ action: z.literal("vpn_quote"), device_token: Token }),
+  z.object({ action: z.literal("vpn_buy"), device_token: Token }),
   z.object({ action: z.literal("vpn_status"), device_token: Token, status: z.enum(["connecting", "on", "off", "failed"]), server: z.string().trim().max(120).optional(), detail: z.string().trim().max(200).optional(), bad_server: z.boolean().optional() }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
   z.object({ action: z.literal("unlock_status"), device_token: Token }),
@@ -423,8 +425,26 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "vpn") {
           // VPNresellers VPN: only when this box's login has a paid VPN that hasn't ended.
           const { boxVpn } = await import("@/lib/vpnresellers.server");
-          try { return json(await boxVpn({ id: device.id, user_id: device.user_id, geo_country: (await import("@/lib/vpn-pick-server")).vpnHomeCountry(device) })); }
+          try {
+            // A VPN paid for on the customer's phone completes here, so the box switches over straight away.
+            const { vpnFinishForDevice } = await import("@/lib/vpn-purchase.server");
+            await vpnFinishForDevice(device.id).catch(() => null);
+            return json(await boxVpn({ id: device.id, user_id: device.user_id, geo_country: (await import("@/lib/vpn-pick-server")).vpnHomeCountry(device) }));
+          }
           catch (e) { console.error("vpn", e); return json({ vpn: { enabled: true, error: "The VPN service couldn't be reached. Trying again shortly." } }); }
+        }
+
+        if (body.action === "vpn_quote") {
+          // VPN is bought only inside BM Player: £2 a month, by the day, up to the subscription end.
+          const { vpnQuote } = await import("@/lib/vpn-purchase.server");
+          const q = await vpnQuote({ id: device.id, user_id: device.user_id });
+          return json(q.ok ? { ok: true, days: q.days, pence: q.pence, until: q.until } : { ok: false, reason: q.reason });
+        }
+
+        if (body.action === "vpn_buy") {
+          const { vpnBuy } = await import("@/lib/vpn-purchase.server");
+          try { return json(await vpnBuy({ id: device.id, user_id: device.user_id })); }
+          catch (e) { console.error("vpn_buy", e); return json({ error: "Couldn't start the VPN payment. Try again shortly." }); }
         }
 
         if (body.action === "vpn_servers") {

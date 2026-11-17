@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] VPN bought only inside BM Player (box 6.11, Windows 0.4.113, Mac 0.1.114); shop/renewal VPN removed; Profit › VPN tab at $1.99≈£1.57 cost. A real paid purchase not yet tried on a device.
+
 - [ ] Build secure desktop VPN with an embedded WireGuard userspace tunnel, private streaming proxy, connection verification and server controls; release Windows and universal Mac only after tunnel/build/security checks. User confirmed BM Player-only protection.
 
 - [x] Released permanent-BM-key box 5.90 (401); live APK matches built hash, 398 app tests pass. Added current server traffic under Live connections VPN pills; website publication requested for this release.

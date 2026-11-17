@@ -2682,6 +2682,13 @@
       "when": 1794942817698,
       "tag": "0382_no_duplicate_manual_renewal_card",
       "breakpoints": true
+    },
+    {
+      "idx": 383,
+      "version": "7",
+      "when": 1794952326118,
+      "tag": "0383_vpn_in_app_purchases",
+      "breakpoints": true
     }
   ]
 }

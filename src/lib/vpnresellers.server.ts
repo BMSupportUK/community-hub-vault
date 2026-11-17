@@ -38,13 +38,19 @@ const ymd = (iso: string) => new Date(iso).toISOString().slice(0, 10);
 export async function vpnEntitlement(credentialId: string | null | undefined): Promise<{ until: string } | null> {
   if (!credentialId) return null;
   const [{ data: sub }, { data: cred }] = await Promise.all([
-    supabaseAdmin.from("vpn_subscriptions").select("active, source").eq("credential_id", credentialId).maybeSingle(),
+    supabaseAdmin.from("vpn_subscriptions").select("active, source, paid_until").eq("credential_id", credentialId).maybeSingle(),
     supabaseAdmin.from("app_credentials").select("expiry_at").eq("id", credentialId).maybeSingle(),
   ]);
   if (!sub?.active) return null;
   // Logins with no end date saved (e.g. owner/test lines) keep an admin-allocated VPN on a rolling year.
   if (!cred?.expiry_at) return sub.source === "admin" ? { until: new Date(Date.now() + 365 * 864e5).toISOString() } : null;
   if (new Date(cred.expiry_at).getTime() <= Date.now()) return null;
+  // Bought in BM Player: paid up to the subscription end at the time, never carried past it by a renewal.
+  if (sub.paid_until) {
+    const paid = new Date(sub.paid_until).getTime();
+    if (paid <= Date.now()) return null;
+    return { until: paid < new Date(cred.expiry_at).getTime() ? sub.paid_until : cred.expiry_at };
+  }
   return { until: cred.expiry_at };
 }
 
@@ -75,7 +81,7 @@ export async function boxVpn(device: { id: string; user_id: string | null; geo_c
   let { data: acc } = await supabaseAdmin.from("vpn_accounts").select(SEL).eq("device_id", device.id).maybeSingle();
   if (!ent || !device.user_id || !credentialId) {
     if (acc) await syncRemote(acc as Account, null).catch(() => null);
-    return { vpn: null, offer: "Add VPN to your next order" };
+    return { vpn: null, offer: "buy" };
   }
   if (!acc) {
     // An admin-allocated login for this subscriber not yet on a box is used first.

@@ -365,6 +365,9 @@ else{
   register('vpnState',async()=>{await prepareVpn();return vpn.snapshot();});
   register('vpnServers',()=>vpn.servers());
   register('vpnCommand',value=>vpn.command(value));
+  register('vpnQuote',()=>vpn.quote());
+  register('vpnBuy',async()=>{const url=await vpn.buy();await shell.openExternal(url);return true;});
+  register('vpnRefresh',()=>vpn.sync());
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));
   register('speed',async()=>{
     if(broadbandBusy)throw new Error('A speed test is already running.');

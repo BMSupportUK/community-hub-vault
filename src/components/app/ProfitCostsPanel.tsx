@@ -1,7 +1,8 @@
 import { fetchOrderUserNames, orderCustomerName } from "@/lib/order-customer-name";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, ChartNoAxesCombined, ChartPie, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet, RefreshCw } from "lucide-react";
+import { CalendarDays, ChartNoAxesCombined, ChartPie, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet, RefreshCw, ShieldCheck } from "lucide-react";
 import { ProfitSummaryChart } from "@/components/app/ProfitSummaryChart";
+import { ProfitVpnTab } from "@/components/app/ProfitVpnTab";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -121,7 +122,8 @@ export function ProfitCostsPanel() {
   const methodTabs = useMemo(() => {
     return profitMethodTabs(Object.values(methodOf));
   }, [all, methodOf]);
-  const list = tab === "profit" || tab === "costs" || tab === "packages" ? all : all.filter((o) => paymentGroup(methodOf[o.id]) === tab);
+  // VPN-only orders (bought in BM Player) have their own VPN tab and never count as a package.
+  const list = tab === "profit" || tab === "costs" || tab === "vpn" ? all : tab === "packages" ? all.filter((o) => o.customer_type !== "vpn") : all.filter((o) => paymentGroup(methodOf[o.id]) === tab);
   const years = useMemo(() => [...new Set(list.map((o) => new Date(o.created_at).getFullYear()))].sort((a, b) => b - a), [list]);
   const ay = year && years.includes(year) ? year : years[0] ?? null;
   const yearOrders = list.filter((o) => new Date(o.created_at).getFullYear() === ay);
@@ -171,6 +173,7 @@ export function ProfitCostsPanel() {
         {methodTabs.map((m) => <Button variant="ghost" key={m} className={selection(tab === m)} aria-pressed={tab === m} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</Button>)}
         <Button variant="ghost" className={`${selection(tab === "costs")} sm:ml-auto`} aria-pressed={tab === "costs"} onClick={() => setTab("costs")}><Package className="size-4" />Product costs</Button>
         <Button variant="ghost" className={selection(tab === "packages")} aria-pressed={tab === "packages"} onClick={() => setTab("packages")}><ChartPie className="size-4" />Packages</Button>
+        <Button variant="ghost" className={selection(tab === "vpn")} aria-pressed={tab === "vpn"} onClick={() => setTab("vpn")}><ShieldCheck className="size-4" />VPN</Button>
       </nav>
       <div className="flex justify-end"><Button variant="outline" size="sm" disabled={refreshingFees} onClick={async () => {
         setRefreshingFees(true);
@@ -183,6 +186,7 @@ export function ProfitCostsPanel() {
         finally { setRefreshingFees(false); }
       }}><RefreshCw className={`size-4 ${refreshingFees ? 'animate-spin' : ''}`} />Refresh provider fees</Button></div>
       {products === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
+        : tab === "vpn" ? <ProfitVpnTab orders={all as never} userNames={userNames} />
         : tab === "costs" ? (
           <section className="space-y-4">
             <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><Package className="size-5 text-accent" />Product costs</h2>
