@@ -4858,7 +4858,6 @@ public class MainActivity extends Activity {
             shownCh.clear(); requested.clear(); gen[0]++;
             java.util.Set<String> allowed = new java.util.HashSet<>(); for (String[] c : catRows) allowed.add(c[0]);
             for (Item it : liveChannels) if (allowed.contains(it.category) && (cat[0].equals("*") || cat[0].equals(it.category))) shownCh.add(it);
-            ChannelNumberOrder.sort(shownCh, it -> it.name);
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
             if (boxLive && boxCatPill != null) boxCatPill.setText("Category: " + cat[1]);
             selectedCategory.setText("Category: " + cat[1]);
@@ -5038,7 +5037,6 @@ public class MainActivity extends Activity {
                     java.util.Map<String, String> catNames = new java.util.HashMap<>();
                     for (String[] r : liveRows) catNames.put(r[0], r[1]);
                     for (Item it : liveChannels) if (!adultIds.contains(it.category)) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, catNames.get(it.category), null));
-                    ChannelNumberOrder.sort(drawerChannels, c -> c.name);
                     LiveDrawerData.set(liveRows, drawerChannels);
                     String[] start = CategoryOrder.liveDefault(liveRows, startCat);
                     if (start == null) { progTitle.setText("No Live TV categories available"); return; }
