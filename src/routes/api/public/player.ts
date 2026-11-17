@@ -42,6 +42,7 @@ const Body = z.discriminatedUnion("action", [
     login: z.string().trim().max(120).optional(),
     version: z.string().trim().max(20).optional(),
     sig: z.string().trim().max(128).optional(),
+    vpn_up: z.boolean().optional(),
     speed_kbps: z.number().int().min(0).max(2000000).optional(),
     broadband_test: z.object({ down: z.number().int().positive().max(2000000), up: z.number().int().positive().max(2000000), measured_at: z.number().int().positive(), method: z.literal("cloudflare-adaptive-v1") }).optional(),
     up_kbps: z.number().int().min(0).max(2000000).optional(),
@@ -184,7 +185,7 @@ export const Route = createFileRoute("/api/public/player")({
           return json({ device_id: data.id, device_token: token });
         }
 
-        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, iptv_username, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, watching_kind, watching_title, watching_category, watching_since, watching_preview, platform, linked_at, name, geo_city, geo_country, claim_ip, claim_mobile, claim_away")
+        const { data: device } = await supabaseAdmin.from("player_devices").select("id, user_id, iptv_username, offsite_customer_id, last_seen_at, connected_since, vpn_status, vpn_checked_at, home_country, watching_kind, watching_title, watching_category, watching_since, watching_preview, platform, linked_at, name, geo_city, geo_country, claim_ip, claim_mobile, claim_away")
           .eq("token_hash", await sha256Hex(body.device_token)).maybeSingle();
         if (!device) return json({ error: "Unknown device" }, 401);
         // A linked box unused for 60 days is unlinked and must be linked again.
@@ -951,6 +952,10 @@ export const Route = createFileRoute("/api/public/player")({
         // Same login in another country within 30 minutes: warn admins (once per login every 6 hours).
         const loginNow = body.login || device.iptv_username;
         const here = (fields as { geo_country?: string | null }).geo_country ?? null;
+        // Only a check-in the app says went out with BM VPN off shows where the box really is.
+        if (here && body.vpn_up === false && here.toUpperCase() !== device.home_country) {
+          await supabaseAdmin.from("player_devices").update({ home_country: here.toUpperCase() }).eq("id", device.id);
+        }
         if (loginNow && here && device.user_id) {
           const { data: others } = await supabaseAdmin.from("player_devices").select("geo_country, last_seen_at")
             .eq("iptv_username", loginNow).neq("id", device.id).gte("last_seen_at", new Date(now - 30 * 60_000).toISOString()).limit(20);

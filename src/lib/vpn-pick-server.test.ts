@@ -48,3 +48,21 @@ test("a box seen through the VPN exit country still counts as UK", () => {
   expect(vpnHomeCountry({ geo_country: "SE", vpn_status: "yes" })).toBe("GB");
   expect(vpnHomeCountry({ geo_country: "IE", vpn_status: "no" })).toBe("IE");
 });
+
+test("overseas: a box in Spain is offered Spain, then nearby Portugal/France, before the UK", async () => {
+  const { serverTrafficList } = await import("./vpn-pick-server");
+  const s = (id: number, cc: string, cpu: number) => ({ id, name: cc, country_code: cc, city: cc, status: 1, visible: 1, cpu });
+  const order = serverTrafficList([s(1, "GB", 1), s(2, "ES", 9), s(3, "PT", 5), s(4, "US", 0)], "ES").map(r => r.country);
+  expect(order).toEqual(["ES", "PT", "GB", "US"]);
+});
+
+test("overseas: Australia with no local server uses its nearest countries, not the UK", async () => {
+  const { pickServer } = await import("./vpn-pick-server");
+  const s = (id: number, cc: string, cpu: number) => ({ id, name: cc, country_code: cc, city: cc, status: 1, visible: 1, cpu });
+  expect(pickServer([s(1, "GB", 1), s(2, "SG", 50), s(3, "NZ", 40)], "AU")?.country_code).toBe("NZ");
+});
+
+test("home country saved with the VPN off wins over the VPN exit", async () => {
+  const { vpnHomeCountry } = await import("./vpn-pick-server");
+  expect(vpnHomeCountry({ home_country: "es", geo_country: "GB", vpn_status: "yes" })).toBe("ES");
+});

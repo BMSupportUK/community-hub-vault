@@ -2654,6 +2654,13 @@
       "when": 1794915745024,
       "tag": "0378_vpn_subscriber_lookup",
       "breakpoints": true
+    },
+    {
+      "idx": 379,
+      "version": "7",
+      "when": 1794940722891,
+      "tag": "0379_player_device_home_country",
+      "breakpoints": true
     }
   ]
 }

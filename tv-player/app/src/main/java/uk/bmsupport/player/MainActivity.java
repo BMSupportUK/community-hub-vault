@@ -761,7 +761,9 @@ public class MainActivity extends Activity {
     /** Poll also reports what is on screen so admins see live connections. */
     private JSONObject pollBody() throws Exception {
         JSONObject b = new JSONObject().put("action", "poll").put("device_token", prefs.getString("token", ""))
-                .put("login", SecureLogin.field(prefs, "user")).put("version", appVersion()).put("sig", appSignature());
+                .put("login", SecureLogin.field(prefs, "user")).put("version", appVersion()).put("sig", appSignature())
+                // Tells the website whether this check-in went through BM VPN, so it only learns the real country from a VPN-off one.
+                .put("vpn_up", BoxVpn.on());
         long since = prefs.getLong("np_since", 0);
         if (since > 0) {
             JSONObject w = new JSONObject().put("kind", prefs.getString("np_kind", "live"))

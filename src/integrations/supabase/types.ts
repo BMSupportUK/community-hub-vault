@@ -6326,6 +6326,7 @@ export type Database = {
           geo_lat: number | null
           geo_lon: number | null
           geo_region: string | null
+          home_country: string | null
           id: string
           iptv_username: string | null
           last_ip: string | null
@@ -6377,6 +6378,7 @@ export type Database = {
           geo_lat?: number | null
           geo_lon?: number | null
           geo_region?: string | null
+          home_country?: string | null
           id?: string
           iptv_username?: string | null
           last_ip?: string | null
@@ -6428,6 +6430,7 @@ export type Database = {
           geo_lat?: number | null
           geo_lon?: number | null
           geo_region?: string | null
+          home_country?: string | null
           id?: string
           iptv_username?: string | null
           last_ip?: string | null

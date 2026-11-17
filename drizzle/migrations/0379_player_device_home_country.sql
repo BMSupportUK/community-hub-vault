@@ -1,0 +1,1 @@
+ALTER TABLE public.player_devices ADD COLUMN IF NOT EXISTS home_country text; COMMENT ON COLUMN public.player_devices.home_country IS 'Country from the latest check-in made with BM VPN off; used to choose VPN servers.';
