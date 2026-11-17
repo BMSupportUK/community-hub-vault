@@ -1,6 +1,7 @@
 import React from 'react'
 import { Body, Container, Head, Heading, Html, Preview, Text, Section, Hr, Button } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { CustomerFooter } from './customer-footer'
 
 const SITE_NAME = 'BM Support'
 
@@ -42,6 +43,7 @@ const ManualAccountLoginEmail = ({ displayName, email, password, loginUrl = 'htt
         </Text>
         <Hr style={hr} />
         <Text style={footer}>{SITE_NAME}</Text>
+        <CustomerFooter />
       </Container>
     </Body>
   </Html>

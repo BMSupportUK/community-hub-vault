@@ -1,6 +1,7 @@
 import React from 'react'
 import { Body, Button, Container, Head, Heading, Html, Link, Preview, Text, Section, Hr } from '@react-email/components'
 import type { TemplateEntry } from './registry'
+import { CustomerFooter } from './customer-footer'
 
 const SITE_NAME = 'BM Support'
 
@@ -50,6 +51,7 @@ const PaymentOutstandingEmail = ({ customerName, orderRef, amount, paymentMethod
         ) : null}
         <Hr style={hr} />
         <Text style={footer}>{SITE_NAME}</Text>
+        <CustomerFooter />
       </Container>
     </Body>
   </Html>
