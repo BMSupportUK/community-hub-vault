@@ -38,10 +38,13 @@ const ymd = (iso: string) => new Date(iso).toISOString().slice(0, 10);
 export async function vpnEntitlement(credentialId: string | null | undefined): Promise<{ until: string } | null> {
   if (!credentialId) return null;
   const [{ data: sub }, { data: cred }] = await Promise.all([
-    supabaseAdmin.from("vpn_subscriptions").select("active").eq("credential_id", credentialId).maybeSingle(),
+    supabaseAdmin.from("vpn_subscriptions").select("active, source").eq("credential_id", credentialId).maybeSingle(),
     supabaseAdmin.from("app_credentials").select("expiry_at").eq("id", credentialId).maybeSingle(),
   ]);
-  if (!sub?.active || !cred?.expiry_at || new Date(cred.expiry_at).getTime() <= Date.now()) return null;
+  if (!sub?.active) return null;
+  // Logins with no end date saved (e.g. owner/test lines) keep an admin-allocated VPN on a rolling year.
+  if (!cred?.expiry_at) return sub.source === "admin" ? { until: new Date(Date.now() + 365 * 864e5).toISOString() } : null;
+  if (new Date(cred.expiry_at).getTime() <= Date.now()) return null;
   return { until: cred.expiry_at };
 }
 
