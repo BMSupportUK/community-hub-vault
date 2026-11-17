@@ -49,7 +49,7 @@ final class FrameRateMatch {
     }
 
     static boolean skip() {
-        return Build.VERSION.SDK_INT < 23 || "amazon".equalsIgnoreCase(Build.MANUFACTURER);
+        return Build.VERSION.SDK_INT < 23; // Fire TV included: its 50Hz button works like other boxes
     }
 
     /** Asks for a matching mode; true when the TV is being switched (it goes black for a moment). */
@@ -96,7 +96,7 @@ final class FrameRateMatch {
 
     /**
      * TV boxes start every BM Player screen at 50Hz (same resolution) so UK 50/25fps channels never
-     * need a switch, and its black blank, when they go full screen. Phones and Fire TV are left alone.
+     * need a switch, and its black blank, when they go full screen. Phones are left alone.
      */
     static void prefer50(Activity a) {
         if (!isAndroidTv(a)) return;
