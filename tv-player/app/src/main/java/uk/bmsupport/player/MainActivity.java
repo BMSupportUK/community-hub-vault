@@ -1406,18 +1406,26 @@ public class MainActivity extends Activity {
         TextView vt = text("v" + appVersion(), 16, 0xFFFFFFFF, true);
         vt.setShadowLayer(3, 0, 1, 0xFF000000);
         verPill.addView(vt);
-        if (BoxVpn.present) {
-            // VPN dot: green = on, amber = connecting, red = off.
-            int col = !BoxVpn.enabled ? 0xFFFF5252 : BoxVpn.on() ? 0xFF69F06E : 0xFFFFC400;
-            TextView vd = text("   ●", 18, col, true);
-            TextView vl = text(" VPN", 16, 0xFFFFFFFF, true);
-            vl.setShadowLayer(3, 0, 1, 0xFF000000);
-            vd.setContentDescription(!BoxVpn.enabled ? "VPN off" : BoxVpn.on() ? "VPN on" : "VPN connecting");
-            verPill.addView(vd); verPill.addView(vl);
-        }
         LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(-2, -2);
         ilp.leftMargin = (int) (14 * dd);
         top.addView(verPill, ilp);
+        if (BoxVpn.present) {
+            // VPN switch: the customer turns it on/off here; switching on picks the lowest-ping server in their own country.
+            int col = !BoxVpn.enabled ? 0xFFFF5252 : BoxVpn.on() ? 0xFF69F06E : 0xFFFFC400;
+            String state = !BoxVpn.enabled ? "Off" : BoxVpn.on() ? "On" : "Connecting";
+            android.text.SpannableString sp = new android.text.SpannableString("● VPN: " + state);
+            sp.setSpan(new android.text.style.ForegroundColorSpan(col), 0, 1, 0);
+            Button vpnBtn = headerPill("", v -> {
+                boolean turnOn = !BoxVpn.enabled;
+                Toast.makeText(this, turnOn ? "Turning VPN on… finding the best server near you" : "Turning VPN off…", Toast.LENGTH_SHORT).show();
+                BoxVpn.command(this, prefs.getString("token", ""), turnOn ? "on" : "off", this::showHome);
+            });
+            vpnBtn.setText(sp);
+            vpnBtn.setContentDescription(!BoxVpn.enabled ? "VPN off, press to switch on" : "VPN " + state.toLowerCase() + ", press to switch off");
+            LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(-2, -2);
+            vlp.leftMargin = (int) (10 * dd);
+            top.addView(vpnBtn, vlp);
+        }
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (FrameRateMatch.isAndroidTv(this)) {
             final boolean on = FrameRateMatch.chosen50(this);
