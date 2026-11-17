@@ -14,8 +14,16 @@ const byLoad = (ours: Record<number, number>) => (a: VpnServer, b: VpnServer) =>
   load(a) - load(b) || (ours[a.id] ?? 0) - (ours[b.id] ?? 0);
 
 /** Public picker data: raw readings, lowest first; bars compare this list, not capacity. */
-export function serverTrafficList(list: VpnServer[]) {
-  const sorted = [...list].sort((a, b) => load(a) - load(b) || a.id - b.id);
+export function serverTrafficList(list: VpnServer[], cc?: string | null) {
+  // With the box's country known: home country first, then nearby countries, far-away ones last
+  // (a quiet server abroad still streams worse than a busier one close by); traffic sorts within each.
+  const want = [(cc ?? "").toUpperCase(), ...NEARBY].filter(Boolean);
+  const rank = (s: VpnServer) => {
+    if (!cc) return 0;
+    const c = s.country_code?.toUpperCase() ?? "";
+    return c === want[0] || (want[0] === "GB" && c === "UK") ? 0 : want.includes(c) ? 1 : 2;
+  };
+  const sorted = [...list].sort((a, b) => rank(a) - rank(b) || load(a) - load(b) || a.id - b.id);
   const maximum = Math.max(0, ...sorted.map(s => Number.isFinite(load(s)) ? load(s) : 0));
   return sorted.map(s => ({
     id: s.id, country: s.country_code, city: s.city,
@@ -40,4 +48,9 @@ export function pickServer(list: VpnServer[], cc?: string | null, ours: Record<n
     return near && Number.isFinite(load(near)) && load(near) <= load(home) * VPN_NEARBY_SHARE ? near : home;
   }
   return list[0] ?? null;
+}
+
+/** The box's real country for VPN choices: while on our VPN its check-in country is the VPN exit, so fall back to the UK. */
+export function vpnHomeCountry(device: { geo_country?: string | null; vpn_status?: string | null }): string {
+  return device.vpn_status === "yes" || !device.geo_country ? "GB" : device.geo_country.toUpperCase();
 }

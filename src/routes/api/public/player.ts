@@ -422,16 +422,16 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === "vpn") {
           // VPNresellers VPN: only when this box's login has a paid VPN that hasn't ended.
           const { boxVpn } = await import("@/lib/vpnresellers.server");
-          try { return json(await boxVpn({ id: device.id, user_id: device.user_id, geo_country: device.geo_country })); }
+          try { return json(await boxVpn({ id: device.id, user_id: device.user_id, geo_country: (await import("@/lib/vpn-pick-server")).vpnHomeCountry(device) })); }
           catch (e) { console.error("vpn", e); return json({ vpn: { enabled: true, error: "The VPN service couldn't be reached. Trying again shortly." } }); }
         }
 
         if (body.action === "vpn_servers") {
           const { vpnServers } = await import("@/lib/vpnresellers.server");
-          const { serverTrafficList } = await import("@/lib/vpn-pick-server");
+          const { serverTrafficList, vpnHomeCountry } = await import("@/lib/vpn-pick-server");
           try {
             const list = await vpnServers();
-            return json({ servers: serverTrafficList(list) });
+            return json({ servers: serverTrafficList(list, vpnHomeCountry(device)) });
           } catch { return json({ servers: [] }); }
         }
 
