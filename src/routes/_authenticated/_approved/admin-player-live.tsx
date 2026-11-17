@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { adminRemovePlayerDevice } from "@/lib/player.functions";
 import { usePagePermissions } from "@/lib/page-access";
 import { playerSectionAllowed } from "@/lib/player-sections";
+import { liveVpnTraffic } from "@/lib/vpn-live.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-player-live")({
   component: AdminPlayerLivePage,
@@ -225,6 +226,21 @@ function AdminPlayerLivePageInner() {
   const [names, setNames] = useState<Record<string, string>>({});
   const [now, setNow] = useState(() => Date.now());
   const [detailsId, setDetailsId] = useState<string | null>(null);
+  const readTraffic = useServerFn(liveVpnTraffic);
+  const [traffic, setTraffic] = useState<Record<string, { traffic: number | null; traffic_bar: number | null }>>({});
+  useEffect(() => {
+    if (!isAdmin) { setTraffic({}); return; }
+    let stopped = false;
+    const load = async () => {
+      try {
+        const result = await readTraffic();
+        if (!stopped) setTraffic(Object.fromEntries(result.devices.map(d => [d.device_id, d])));
+      } catch { if (!stopped) setTraffic({}); }
+    };
+    void load();
+    const timer = setInterval(load, 60_000);
+    return () => { stopped = true; clearInterval(timer); };
+  }, [isAdmin, readTraffic]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -296,7 +312,7 @@ function AdminPlayerLivePageInner() {
                     : <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={r.last_ip ?? ""}><MapPin className="size-4" />Unknown</span>}</td>
                   <td className="p-3">{r.vpn_status === "yes"
                     ? <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning" title={`${r.vpn_provider ? `Via ${r.vpn_provider}` : "VPN or proxy"}${r.last_ip ? ` · IP ${r.last_ip}` : ""}`}><ShieldAlert className="size-3.5" />VPN</span>
-                    : null}{r.vpn_status === "yes" && r.vpn_provider && <div className="mt-1 max-w-[11rem] truncate text-xs text-muted-foreground" title={r.vpn_provider}>{r.vpn_provider.replace(/^BM VPN · /, "")}</div>}{r.vpn_status === "yes" ? null
+                    : null}{r.vpn_status === "yes" && r.vpn_provider && <div className="mt-1 max-w-[11rem] truncate text-xs text-muted-foreground" title={r.vpn_provider}>{r.vpn_provider.replace(/^BM VPN · /, "")}</div>}{r.vpn_status === "yes" && r.vpn_provider?.startsWith("BM VPN") && <div className="mt-1 min-w-28 text-xs text-muted-foreground">{traffic[r.id]?.traffic != null ? <><span className="block tabular-nums">Traffic · {traffic[r.id].traffic?.toLocaleString("en-GB", { maximumFractionDigits: 3 })}</span><progress aria-label="VPN server traffic comparison" max={100} value={traffic[r.id].traffic_bar ?? 0} className="mt-1 h-1.5 w-28 accent-warning" /></> : "Traffic unavailable"}</div>}{r.vpn_status === "yes" ? null
                     : r.vpn_status === "no"
                       ? <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={`No VPN or proxy found${r.last_ip ? ` on IP ${r.last_ip}` : ""}`}><ShieldCheck className="size-3.5" />None</span>
                       : <span className="text-xs text-muted-foreground" title="VPN not checked yet">—</span>}</td>

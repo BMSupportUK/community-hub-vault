@@ -1,6 +1,9 @@
 # Roadmap
 
-- [x] Add live traffic numbers/comparison bars and lowest-first server selection in Settings and both playback engines; app tests and nine server-selection checks pass. Not yet released; physical-player verification unavailable.
+- [x] Released permanent-BM-key box 5.90 (401); live APK matches built hash, 398 app tests pass. Added current server traffic under Live connections VPN pills; website publication requested for this release.
+- [x] Build all current shared desktop changes; Windows and Mac staging succeeds and 189 desktop tests pass. Native VPN release remains blocked below; no pretend controls shipped.
+
+- [x] Live traffic numbers/comparison bars and lowest-first server selection in Settings and both playback engines ship in 5.90; app tests and nine server-selection checks pass. Physical-player verification unavailable.
 
 - [x] Retrieve live VPNresellers raw server figures, remove unverified byte/percentage labels and treat missing readings as unknown; eight selection tests pass.
 - [x] User accepted the live VPNresellers API readings; no separate status-page comparison needed.
@@ -8,13 +11,13 @@
 - [ ] Complete and release Windows/Mac native VPN: shared secure coordinator and gated IPC prepared, but privileged Windows service and Mac native tunnel/signing setup are not available or verified here; existing desktop downloads remain unchanged.
 
 - [x] Add a VPN location icon to both Android/Fire TV playback engines with an in-player server list and best-server choice; no channel navigation or playback release.
-- [ ] Verify VPN location switching on a physical linked player; no physical phone or box is connected. Box 5.89 is released.
+- [ ] Verify VPN location switching on a physical linked player; no physical phone or box is connected. Box 5.90 is released.
 
 - [x] Theme improvements: lighter middle shading, see-through tiles, scene-at-top 1920x1080 pictures, Light/Medium/Strong shading setting, theme-colour selected outline (Android, Windows, Mac). Tests pass, box app compiles.
 - [x] Released box 5.72, Windows 0.4.107 and Mac 0.1.108 with theme improvements; website publish scheduled.
 
 - [x] Home-screen themes: 12 outside-stadium football, Kids cartoon, Fairy tale magic and 6 seasonal; website Themes section (switch off/delete), Android Settings › Theme, Windows/Mac Settings › Theme; 178 desktop checks pass.
-- [ ] Build and release Android, Windows and Mac with themes (Android build tools need reinstalling; awaiting go-ahead to release).
+- [x] Theme build/release task was already superseded by box 5.72, Windows 0.4.107 and Mac 0.1.108; current downloads are newer.
 
 - [x] Desktop Movies opens Cinema and Series opens Recommended, fetching community ratings only for displayed posters; 182 desktop checks pass and both releases include the changes. Full startup playlist refresh is retained.
 

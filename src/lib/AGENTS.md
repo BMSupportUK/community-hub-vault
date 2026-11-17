@@ -1,4 +1,5 @@
 # src/lib rules
+- Live VPN traffic reads require the Live connections section permission and join verified device assignments to current provider server IDs; return only server labels/readings, never VPN credentials or tunnel configuration.
 - Restored sign-ins revalidate MFA before protected route loaders; global function middleware rejects pending MFA except self recovery, so reloads and direct function calls cannot skip verification.
 - Player device, buffering, voting, connection-count and cron-hook rules live in `src/routes/api/public/AGENTS.md`.
 - Customer viewing stats, connection strength, broadband capacity, Link Device, box VPN and ticket setup display rules live in `src/components/app/AGENTS.md`.
