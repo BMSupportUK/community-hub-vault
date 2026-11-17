@@ -41,9 +41,9 @@ import { MacPlayerDownload } from "@/components/app/MacPlayerDownload";
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
   head: () => ({
     meta: [
-      { title: "Install Guides & BM App Store | BM Support" },
+      { title: "Download App & Install guides | BM Support" },
       { name: "description", content: "Browse BM Support install guides and download the BM Support apps." },
-      { property: "og:title", content: "Install Guides & BM App Store | BM Support" },
+      { property: "og:title", content: "Download App & Install guides | BM Support" },
       { property: "og:description", content: "Browse BM Support install guides and download the BM Support apps." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -758,7 +758,7 @@ function InstallGuidesPage() {
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
               <div className="relative p-5 sm:p-10 md:p-14 max-w-2xl">
                 <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-4xl font-bold text-foreground leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
-                  Welcome to Install Guides
+                  Welcome to Download App & Install guides
                 </h2>
                 <p className="mt-4 text-base sm:text-lg text-foreground/90 drop-shadow">
                   Everything you need to get up and running — written walkthroughs and PDF references, viewable securely in-app.
