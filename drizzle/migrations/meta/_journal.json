@@ -2675,6 +2675,13 @@
       "when": 1794942071538,
       "tag": "0381_order_signals_staff_read",
       "breakpoints": true
+    },
+    {
+      "idx": 382,
+      "version": "7",
+      "when": 1794942817698,
+      "tag": "0382_no_duplicate_manual_renewal_card",
+      "breakpoints": true
     }
   ]
 }
