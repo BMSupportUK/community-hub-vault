@@ -3083,7 +3083,7 @@ function OrdersView({
   useEffect(() => {
     const ch = supabase
       .channel("orders-list")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_change_signals" }, load)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages" }, load)
       .subscribe();
     const onLocal = () => load();

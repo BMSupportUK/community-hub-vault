@@ -54,7 +54,7 @@ export function StaffOrdersButton({ className, tile }: { className?: string; til
     void load();
     const channel = supabase
       .channel(`staff-orders-button-${crypto.randomUUID()}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_change_signals" }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "order_invoices" }, () => void load())
       .subscribe();
     return () => { void supabase.removeChannel(channel); };

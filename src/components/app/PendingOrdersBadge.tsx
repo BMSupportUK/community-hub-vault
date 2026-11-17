@@ -64,7 +64,7 @@ export function PendingOrdersBadge() {
       .channel(`pending-orders-badge-${crypto.randomUUID()}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
+        { event: "*", schema: "public", table: "order_change_signals" },
         () => load(),
       )
       .on(
@@ -75,7 +75,7 @@ export function PendingOrdersBadge() {
       .subscribe();
     // Realtime postgres_changes above handles fresh updates;
     // this interval is only a reconciliation safety net.
-    const interval = setInterval(load, 120_000);
+    const interval = setInterval(load, 30_000);
     return () => {
       active = false;
       clearInterval(interval);
