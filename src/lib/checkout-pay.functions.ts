@@ -230,7 +230,7 @@ export const checkoutStripeSession = createServerFn({ method: "POST" })
 
 /** Called by getCheckout: detect a completed inline Stripe session. */
 export async function syncStripeSession(supabaseAdmin: any, orderId: string) {
-  const { data: p } = await supabaseAdmin.from("order_payments").select("provider,provider_payment_id,status").eq("order_id", orderId).maybeSingle();
+  const { data: p } = await supabaseAdmin.from("order_payments").select("provider,provider_payment_id,status,provider_fee_cents,amount_cents").eq("order_id", orderId).maybeSingle();
   if (!p || p.provider !== "stripe" || !p.provider_payment_id || String(p.provider_payment_id).startsWith("in_")) return;
   const { createStripeClient } = await import("@/lib/stripe.server");
   const primary = (process.env.STRIPE_ENVIRONMENT as "sandbox" | "live") ?? "sandbox";
@@ -242,6 +242,14 @@ export async function syncStripeSession(supabaseAdmin: any, orderId: string) {
         if (order && !order.paid_at && Number(s.amount_total) === Number(order.total_cents)) {
           await supabaseAdmin.from("order_payments").update({ status: "COMPLETED" }).eq("order_id", orderId);
           await markPaid(supabaseAdmin, order, "Stripe", String(s.payment_intent ?? s.id));
+        }
+        // Record Stripe's fee for profit as soon as the payment is confirmed.
+        if (p.provider_fee_cents == null) {
+          try {
+            const { fetchProviderFee } = await import("@/lib/provider-fees.server");
+            const fee = await fetchProviderFee("stripe", String(p.provider_payment_id), env, Number(s.amount_total ?? p.amount_cents));
+            if (fee != null) await supabaseAdmin.from("order_payments").update({ provider_fee_cents: fee }).eq("order_id", orderId).is("provider_fee_cents", null);
+          } catch { /* fee can be refreshed later from Profit & costs */ }
         }
       }
       return;
