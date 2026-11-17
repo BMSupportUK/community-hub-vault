@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-/** Same traffic-ranked picker in Settings and both playback engines. */
+/** Same website-ordered picker in Settings and both playback engines. */
 final class VpnServerList {
     static List<JSONObject> sorted(JSONArray array) {
         List<JSONObject> rows = new ArrayList<>();
@@ -23,7 +23,7 @@ final class VpnServerList {
             JSONObject row=array.optJSONObject(i);
             if(row!=null && row.optInt("id",-1)>0) rows.add(row);
         }
-        rows.sort((a,b)->Double.compare(traffic(a),traffic(b)));
+        // Keep the website order: UK first, then nearby, far-away last; traffic is sorted within each group there.
         return rows;
     }
     static double traffic(JSONObject row) {
