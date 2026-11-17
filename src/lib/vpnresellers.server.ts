@@ -16,7 +16,7 @@ export async function vr<T = any>(method: string, path: string, body?: unknown):
   return (text ? JSON.parse(text) : {}) as T;
 }
 
-import { pickServer, type VpnServer } from "./vpn-pick-server";
+import { pickServer, vpnHomeCountry, type VpnServer } from "./vpn-pick-server";
 export { pickServer, type VpnServer };
 let serverCache: { at: number; list: VpnServer[] } | null = null;
 export async function vpnServers(): Promise<VpnServer[]> {
@@ -102,7 +102,7 @@ export async function boxVpn(device: { id: string; user_id: string | null; geo_c
     const { data: used } = await supabaseAdmin.from("vpn_accounts").select("server_id").eq("enabled", true).not("server_id", "is", null);
     const ours: Record<number, number> = {};
     for (const u of used ?? []) ours[u.server_id as number] = (ours[u.server_id as number] ?? 0) + 1;
-    const s = pickServer(await vpnServers(), device.geo_country, ours);
+    const s = pickServer(await vpnServers(), vpnHomeCountry(device as never), ours);
     if (!s) return { vpn: { enabled: true, error: "No VPN servers available" } };
     serverId = s.id; serverName = `${s.city} (${s.country_code})`;
     await supabaseAdmin.from("vpn_accounts").update({ server_id: serverId, server_name: serverName }).eq("id", a.id);

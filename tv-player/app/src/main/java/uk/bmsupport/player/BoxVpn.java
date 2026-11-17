@@ -34,7 +34,7 @@ final class BoxVpn {
         new Thread(() -> {
             try {
                 JSONObject b = new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", what);
-                if ("best".equals(what)) b.put("pings", bestPings(a, token));
+                if ("best".equals(what) || "on".equals(what)) b.put("pings", bestPings(a, token));
                 Net.postJson(Net.SITE + "/api/public/player", b.toString());
             } catch (Exception ignored) { }
             sync(a, token);

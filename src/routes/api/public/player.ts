@@ -441,8 +441,8 @@ export const Route = createFileRoute("/api/public/player")({
           const now = new Date().toISOString();
           let patch: Record<string, unknown> = { updated_at: now };
           if (body.command === "off") patch.enabled = false;
-          else if (body.command === "on") patch.enabled = true;
-          else if (body.command === "best") {
+          else if (body.command === "on" || body.command === "best") {
+            // Switching the VPN back on picks afresh too, so an old manual pick (e.g. Brussels) is never resumed.
             patch = { ...patch, enabled: true, server_id: null, server_name: null };
             // The box measured its own pings: lowest ping in its real country and nearby countries.
             if (body.pings && Object.keys(body.pings).length) {
