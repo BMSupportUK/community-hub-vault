@@ -97,7 +97,8 @@ final class BoxVpn {
             com.wireguard.config.Config cfg = com.wireguard.config.Config.parse(new java.io.ByteArrayInputStream(config.getBytes("UTF-8")));
             backend.setState(TUNNEL, com.wireguard.android.backend.Tunnel.State.UP, cfg);
             applied = config;
-            report(token, "on", server, null, false);
+            // The first request after the tunnel comes up can fail while it settles; keep trying so the website hears "on".
+            new Thread(() -> { for (int i = 0; i < 6 && !reportOk(token, "on", server); i++) { try { Thread.sleep(3000); } catch (InterruptedException ignored) { return; } } }, "vpn-on-report").start();
         } catch (Exception e) {
             applied = null;
             // A server that won't connect is swapped for the next best one on the following check-in.
@@ -146,13 +147,15 @@ final class BoxVpn {
         });
     }
 
-    private static void report(String token, String status, String server, String detail, boolean badServer) {
+    private static void report(String token, String status, String server, String detail, boolean badServer) { reportOk(token, status, server, detail, badServer); }
+    private static boolean reportOk(String token, String status, String server) { return reportOk(token, status, server, null, false); }
+    private static boolean reportOk(String token, String status, String server, String detail, boolean badServer) {
         try {
             JSONObject b = new JSONObject().put("action", "vpn_status").put("device_token", token).put("status", status);
             if (server != null && !server.isEmpty()) b.put("server", server);
             if (detail != null) b.put("detail", detail);
             if (badServer) b.put("bad_server", true);
-            Net.postJson(Net.SITE + "/api/public/player", b.toString());
-        } catch (Exception ignored) { }
+            return new JSONObject(Net.postJson(Net.SITE + "/api/public/player", b.toString())).optBoolean("ok");
+        } catch (Exception ignored) { return false; }
     }
 }

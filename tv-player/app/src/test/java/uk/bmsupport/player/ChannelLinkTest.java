@@ -52,4 +52,9 @@ public class ChannelLinkTest {
         l.bytes(0, 0, 0); l.bytes(800_000, 1_000_000, 6000);
         assertEquals(0.8, l.deliveryRatio(), 0.00001); assertEquals("Excellent", l.rating(6000));
     }
+    @Test public void serverChangeClearsPoorReading() {
+        ChannelLink l = new ChannelLink(); l.ping(30); l.reconnected(1000);
+        assertEquals("Poor", l.rating(2000)); l.serverChanged(); l.ping(30);
+        assertEquals("Excellent", l.rating(3000));
+    }
 }

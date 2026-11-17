@@ -52,6 +52,7 @@ public class BackupPlayerActivity extends Activity {
     private long resume;
     private final BackupFeedStatus feedStatus = new BackupFeedStatus();
     private final ChannelLink link = new ChannelLink();
+    private String linkVpnServer;
     private TextView linkNote;
     private boolean wasStalled;
     private long lastLinkPing;
@@ -107,9 +108,10 @@ public class BackupPlayerActivity extends Activity {
                         int ms = (int) (android.os.SystemClock.elapsedRealtime() - t0);
                         ui.post(() -> link.ping(Math.max(1, ms)));
                     }
-                } catch (Exception e) { ui.post(() -> link.ping(5000)); }
+                } catch (Exception ignored) { } // A failed ping (e.g. mid VPN switch) is not a reading; stalls still count.
             }, "channel-ping").start();
         }
+        if (!java.util.Objects.equals(linkVpnServer, BoxVpn.server)) { if (linkVpnServer != null) link.serverChanged(); linkVpnServer = BoxVpn.server; }
         String rating = link.rating(now);
         // Publish one atomic snapshot from the same ChannelLink instance driving the on-box pill.
         SharedPreferences savedLink = getSharedPreferences("bmplayer", MODE_PRIVATE);
