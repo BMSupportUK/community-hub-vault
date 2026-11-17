@@ -19,6 +19,8 @@ const broadband=require('../network-test.cjs');
 const categoryOrder=require('../category-order.cjs');
 const catchupStart=require('../catchup-start.cjs');
 const watchreq=require('../watch-request.cjs');
+// Native tunnel adapters must be verified before enabling desktop VPN commands.
+const vpn=require('../vpn.cjs').createVpn({site,native:null});
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
 function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w);}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
@@ -63,7 +65,7 @@ async function site(body){
 }
 // Unlinked on the website: stop every screen, forget the login and show a fresh link code.
 let unlinking=false;
-async function unlinked(){if(unlinking)return;unlinking=true;try{await stopAll().catch(()=>{});pinPassed=false;store.account=null;cache.clear();linkCode=null;save();send({type:'unlinked'});send({type:'state',state:publicState()});await getCode().catch(()=>{});pollBusy=false;poll().catch(()=>{});}finally{unlinking=false;}}
+async function unlinked(){if(unlinking)return;unlinking=true;try{await vpn.close();await stopAll().catch(()=>{});pinPassed=false;store.account=null;cache.clear();linkCode=null;save();send({type:'unlinked'});send({type:'state',state:publicState()});await getCode().catch(()=>{});pollBusy=false;poll().catch(()=>{});}finally{unlinking=false;}}
 async function getCode(){if(!store.token){const r=await site({action:'register',platform:PLATFORM.id,name:'BM Player '+PLATFORM.name});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
 let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||'')}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
@@ -356,6 +358,9 @@ else{
   register('reminder',value=>{store.reminders=store.reminders||[];if(value.remove)store.reminders=store.reminders.filter(r=>r.id!==value.id);else{if(value.start<=Date.now())throw new Error('Reminders are only for programmes that have not started.');store.reminders.push({...value,id:String(value.item.id)+':'+value.start,notified:false});}save();return publicState();});
   register('continue',()=>{lastInput=Date.now();promptedAt=0;send({type:'inactive',seconds:0});return true;});register('exit',async()=>{await stopAll();app.quit();});
   register('themes',async()=>{if(!store.token||!gate.unlocked)return null;const r=await site({action:'themes'});if(!r||!Array.isArray(r.items))return null;return require('../theme.cjs').clean(r.items);});
+  register('vpnState',()=>vpn.snapshot());
+  register('vpnServers',()=>vpn.servers());
+  register('vpnCommand',value=>vpn.command(value));
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));
   register('speed',async()=>{
     if(broadbandBusy)throw new Error('A speed test is already running.');

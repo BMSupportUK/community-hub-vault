@@ -20,7 +20,7 @@ import { pickServer, type VpnServer } from "./vpn-pick-server";
 export { pickServer, type VpnServer };
 let serverCache: { at: number; list: VpnServer[] } | null = null;
 export async function vpnServers(): Promise<VpnServer[]> {
-  if (serverCache && Date.now() - serverCache.at < 10 * 60_000) return serverCache.list;
+  if (serverCache && Date.now() - serverCache.at < 60_000) return serverCache.list;
   const r = await vr<{ data: VpnServer[] }>("GET", "/servers");
   const list = (r.data ?? []).filter((s) => s.status === 1 && s.visible === 1);
   serverCache = { at: Date.now(), list };

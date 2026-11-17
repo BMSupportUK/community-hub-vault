@@ -1,7 +1,12 @@
 # Roadmap
 
+- [x] Retrieve live VPNresellers raw server figures, remove unverified byte/percentage labels and treat missing readings as unknown; eight selection tests pass.
+- [ ] Compare API readings with the user's live server status page; waiting for its address to confirm the unit/source.
+- [x] Build, permanent-BM-key sign and release box 5.89 (400) with the in-player VPN location control; 396 app tests pass.
+- [ ] Complete and release Windows/Mac native VPN: shared secure coordinator and gated IPC prepared, but privileged Windows service and Mac native tunnel/signing setup are not available or verified here; existing desktop downloads remain unchanged.
+
 - [x] Add a VPN location icon to both Android/Fire TV playback engines with an in-player server list and best-server choice; no channel navigation or playback release.
-- [ ] Verify VPN location switching on a physical linked player; no physical phone or box is connected. Installer release not requested in this change.
+- [ ] Verify VPN location switching on a physical linked player; no physical phone or box is connected. Box 5.89 is released.
 
 - [x] Theme improvements: lighter middle shading, see-through tiles, scene-at-top 1920x1080 pictures, Light/Medium/Strong shading setting, theme-colour selected outline (Android, Windows, Mac). Tests pass, box app compiles.
 - [x] Released box 5.72, Windows 0.4.107 and Mac 0.1.108 with theme improvements; website publish scheduled.

@@ -1,4 +1,5 @@
 # Windows BM Player main-process rules
+- Desktop VPN uses shared vpn.cjs and gated IPC; private tunnel configuration stays in main, missing native adapters reject commands, and connected requires verified handshake/routes rather than process startup.
 - This standalone Electron shell uses an isolated React renderer and a narrow, sender-verified IPC bridge; credentials and device tokens stay encrypted in the main process, never in renderer storage.
 - Website calls use only the existing device-token `/api/public/player` endpoint; provider requests are built from stored DNS/login, never arbitrary renderer URLs.
 - Live connections ping times a fresh TCP connection to the playing stream's own server (streamPing in main.cjs), never the website check-in round-trip; shared with Mac.
