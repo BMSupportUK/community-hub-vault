@@ -1,12 +1,12 @@
-# Release box version 5.95
+# Release with the VPN fix, without the Stan Sport order change
 
-Puts the waiting channel-order fix on boxes and phones: numbered channels such as Stan Sport list 1, 2, 3 … 30 in the Live TV guide and in the full-screen Left channel list.
+## What changes
+- **Stan Sport order change removed:** numbered channels go back to the order your provider gives them, in the Live TV guide and the full-screen Left channel list.
+- **VPN fix goes live:** the server list shows UK servers first, then nearby countries (Ireland, Netherlands, Belgium, France, Germany), then far-away ones. **Use the best server** keeps boxes on UK servers even while they're connected abroad.
 
 ## Steps
-1. Bump BM Player to 5.95 (versionCode 406).
-2. Run all Android app tests.
-3. Build the release app and sign it with the permanent BM key.
-4. Upload it, register 5.95 as the current download, and check that the live file matches the build.
-5. Publish the website, so the latest VPN server-list change is live too.
+1. Take the numbered-channel ordering out of the Live TV guide and the full-screen channel list, and delete its helper and test.
+2. Publish the website and check the VPN server list puts UK first. Boxes get this without an app update.
+3. Release box 5.95 (versionCode 406) so the Stan Sport change can't go out by accident. Run all app tests, sign with the BM key, upload, register 5.95 as current, and check the live file matches.
 
 Windows and Mac are not changed.
