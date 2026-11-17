@@ -51,7 +51,7 @@ final class VpnServerList {
                 TextView name=new TextView(a);name.setTextSize(17);name.setText(row.optString("city")+" ("+row.optString("country")+")");box.addView(name);
                 TextView number=new TextView(a);number.setTextSize(13);
                 double value=traffic(row);
-                int ping=row.optInt("ping",-1);number.setText((ping>0?"Ping "+ping+" ms · ":"")+(Double.isFinite(value)?"Traffic · "+java.text.NumberFormat.getNumberInstance(java.util.Locale.UK).format(value):"Traffic unavailable"));box.addView(number);
+                int ping=row.optInt("ping",-1);number.setText((ping>0?"VPN ping "+ping+" ms · ":"")+(Double.isFinite(value)?"Traffic · "+java.text.NumberFormat.getNumberInstance(java.util.Locale.UK).format(value):"Traffic unavailable"));box.addView(number);
                 ProgressBar bar=new ProgressBar(a,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(100);bar.setProgress(row.optInt("traffic_bar",0));bar.setVisibility(Double.isFinite(value)?View.VISIBLE:View.INVISIBLE);
                 box.addView(bar,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,pad));
                 return box;

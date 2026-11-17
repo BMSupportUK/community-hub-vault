@@ -53,7 +53,7 @@ final class ChannelLink {
     }
     String label(long now) {
         String r = rating(now);
-        return "Channel connection: " + r + (ping > 0 ? " · Ping " + ping + " ms" : "")
+        return "Channel connection: " + r + (ping > 0 ? " · Channel ping " + ping + " ms" : "")
                 + (kbps > 0 ? String.format(java.util.Locale.UK, " · %.1f Mbps", kbps / 1000.0) : "");
     }
     int pingMs() { return ping; }

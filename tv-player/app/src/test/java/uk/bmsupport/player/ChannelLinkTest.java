@@ -73,4 +73,8 @@ public class ChannelLinkTest {
         l.stalled(5_000); l.reconnected(6_000); l.bytes(0, 0, 7_000); l.bytes(10, 1000, 13_000);
         assertEquals("Excellent", l.rating(14_000));
     }
+    @Test public void labelNamesThePingAsTheChannelsOwn() {
+        ChannelLink l = new ChannelLink(); l.ping(67);
+        assertEquals("Channel connection: Excellent · Channel ping 67 ms", l.label(1_000));
+    }
 }

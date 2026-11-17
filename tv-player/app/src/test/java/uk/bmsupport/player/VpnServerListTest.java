@@ -31,6 +31,15 @@ public class VpnServerListTest {
   list.performItemClick(list.getAdapter().getView(0,null,list),0,2);
   assertEquals(1,selected[0]);assertFalse(dialog.isShowing());assertFalse(a.isFinishing());
  }
+ @Test public void rowNamesThePingAsTheVpnServersOwn() throws Exception {
+  android.app.Activity a=org.robolectric.Robolectric.buildActivity(android.app.Activity.class).setup().get();
+  JSONArray rows=new JSONArray().put(new JSONObject().put("id",1).put("city","London").put("country","GB").put("traffic",180000000).put("traffic_bar",20).put("ping",25));
+  VpnServerList.show(a,rows,id->{},"Keep watching");
+  android.app.AlertDialog dialog=org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog();
+  android.widget.ListView list=findList(dialog.getWindow().getDecorView());
+  android.widget.LinearLayout row=(android.widget.LinearLayout)list.getAdapter().getView(0,null,list);
+  assertEquals("VPN ping 25 ms · Traffic · 180,000,000",((android.widget.TextView)row.getChildAt(1)).getText().toString());
+ }
  @Test public void groupThenLowestPingFirst() throws Exception {
   JSONArray rows=new JSONArray()
    .put(new JSONObject().put("id",1).put("group",0).put("ping",80))
