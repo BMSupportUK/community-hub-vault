@@ -325,6 +325,8 @@ public final class PlayerApplication extends Application implements Application.
         try { startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
         catch (Throwable ignored) {}
         try { Thread.sleep(300); } catch (InterruptedException ignored) {}
+        // Our own full close ends in a kill signal; note it so the next start doesn't report it as a crash.
+        getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putLong("self_close_at", System.currentTimeMillis()).commit();
         android.os.Process.killProcess(android.os.Process.myPid());
     }
     private void exitToHome() {

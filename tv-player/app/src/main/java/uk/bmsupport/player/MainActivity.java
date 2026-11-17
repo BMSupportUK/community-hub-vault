@@ -4024,6 +4024,10 @@ public class MainActivity extends Activity {
                     || r == android.app.ApplicationExitInfo.REASON_LOW_MEMORY || r == android.app.ApplicationExitInfo.REASON_ANR
                     || r == android.app.ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE || r == android.app.ApplicationExitInfo.REASON_SIGNALED;
             if (!bad || e.getTimestamp() <= prefs.getLong("exit_reported", 0)) return "";
+            // BM Player's own Exit / Close app / Still watching? close kills itself: not a crash.
+            if (r == android.app.ApplicationExitInfo.REASON_SIGNALED && e.getStatus() == 9
+                    && Math.abs(e.getTimestamp() - prefs.getLong("self_close_at", 0)) < 10000) {
+                prefs.edit().putLong("exit_reported", e.getTimestamp()).apply(); return ""; }
             prefs.edit().putLong("exit_reported", e.getTimestamp()).apply();
             String trace = "";
             try (java.io.InputStream in = e.getTraceInputStream()) {
