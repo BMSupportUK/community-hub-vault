@@ -320,7 +320,7 @@ function AdminPlayerLivePageInner() {
                   <td className="p-3">{r.watching_title
                     ? <div className="flex gap-1.5"><Icon className="mt-0.5 size-4 shrink-0 text-primary" /><div><div className="font-medium">{r.watching_title}</div><div className="text-xs text-muted-foreground">{[r.watching_kind === "live" ? "Live TV" : r.watching_kind === "film" ? "Movie" : r.watching_kind === "catchup" ? "Catch up" : "Series", r.watching_category, r.watching_player].filter(Boolean).join(" · ")}</div>{r.private_dns_used && <PrivateDnsTag used={r.private_dns_used} />}</div></div>
                     : <span className="text-xs text-muted-foreground">Menus – not playing</span>}</td>
-                  <td className="p-3"><ChannelLinkPill value={r.channel_link_snapshot} watching={!!r.watching_title} /><ConnectionBars down={hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null} /><div className="mt-1 whitespace-nowrap text-xs text-muted-foreground">↓ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_down_kbps : null)} · ↑ {mbps(hasBroadbandTest(r.platform, r.app_version) ? r.net_up_kbps : null)} · Stream {r.net_ping_ms ? `${r.net_ping_ms} ms` : "—"}</div></td>
+                  <td className="p-3"><ChannelLinkPill value={r.channel_link_snapshot} watching={!!r.watching_title} /></td>
                   <td className="p-3 font-mono tabular-nums">{r.watching_since ? formatElapsed(r.watching_since, now) : "—"}</td>
                   <td className="p-3 font-mono tabular-nums max-sm:hidden">{formatElapsed(r.connected_since ?? r.last_seen_at, now)}</td>
                   <td className="p-3"><div className="flex gap-1.5">
