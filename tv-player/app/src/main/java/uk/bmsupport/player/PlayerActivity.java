@@ -629,6 +629,11 @@ public class PlayerActivity extends Activity {
     static boolean backupFirst(String kind, boolean catchup, boolean primaryFallback) {
         return ("live".equals(kind) || "catchup".equals(kind) || catchup) && !primaryFallback;
     }
+    /** UHD/4K live channels play in the box's own engine first (as other IPTV apps do); the backup engine stays their fallback. */
+    static boolean backupFirst(String kind, boolean catchup, boolean primaryFallback, String name) {
+        if ("live".equals(kind) && !catchup && UhdChannel.is(name)) return false;
+        return backupFirst(kind, catchup, primaryFallback);
+    }
 
     private void startWithRecovery(String[] urls) {
         liveUrls = urls;
@@ -636,7 +641,7 @@ public class PlayerActivity extends Activity {
         // A channel that has jammed this box's video chip opens straight in the built-in backup engine.
         // Live TV plays in the built-in backup engine first (tolerant like other IPTV apps); this player
         // is its fallback, reopened with "primary_fallback" when the backup engine gives up.
-        if (backupFirst(kind(), getIntent().hasExtra("catchup_prefix"), getIntent().getBooleanExtra("primary_fallback", false))) {
+        if (backupFirst(kind(), getIntent().hasExtra("catchup_prefix"), getIntent().getBooleanExtra("primary_fallback", false), getIntent().getStringExtra("content_name"))) {
             ui.post(this::handToBackup); return;
         }
         listenA(new androidx.media3.exoplayer.analytics.AnalyticsListener() {

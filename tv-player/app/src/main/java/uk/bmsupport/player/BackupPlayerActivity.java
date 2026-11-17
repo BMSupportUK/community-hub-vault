@@ -486,13 +486,14 @@ public class BackupPlayerActivity extends Activity {
             org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
             media.release();
             if (st != null) { link.bytes(st.readBytes, st.demuxReadBytes, now); BufferBlame.pingMs = link.pingMs(); BufferBlame.channelKbps = link.kbps(); }
+            reconnect.patient(UhdChannel.is(getIntent().getStringExtra("content_name")));
             boolean noData = st != null && isLive() && started && reconnect.noData(st.readBytes, now);
             boolean mute = st != null && isLive() && started && !noData && reconnect.soundLost(st.displayedPictures, st.decodedAudio, now);
             if (st != null && isLive() && (reconnect.stalled(st.displayedPictures, st.decodedAudio, now) | noData | mute)) {
                 // A drop is always reported, even when VLC never raised a Buffering event.
                 link.stalled(now);
                 BufferReporter.record(this, "live", getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"),
-                        (noData || mute) ? LiveReconnect.NO_DATA_MS : LiveReconnect.STALL_MS, true, false, mute ? "audio_drop" : "network_drop", "direct", activeDecoder,
+                        (noData || mute) ? reconnect.noDataMs() : reconnect.stallMs(), true, false, mute ? "audio_drop" : "network_drop", "direct", activeDecoder,
                         StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
                 next();
             } else if (started && st != null && isLive() && reconnect.blocky(st.lostPictures, now)) {

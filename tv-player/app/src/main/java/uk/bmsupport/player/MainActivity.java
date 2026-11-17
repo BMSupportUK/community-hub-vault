@@ -2801,7 +2801,9 @@ public class MainActivity extends Activity {
         // UHD channels need the device's only 4K decoder, and a still-held preview makes full screen fail.
         // The playing preview of this same channel goes full screen as it is: no reconnect, no second load.
         // A still of the preview covers the moment the box's decoder moves to the full-screen picture.
-        if (!vlc && vlcPreview != null && PreviewHandoff.canCarry(it.kind,
+        boolean uhd = "live".equals(it.kind) && UhdChannel.is(it.name);
+        // UHD goes full screen in the box's own engine (like other apps), so the libVLC preview is never carried.
+        if (!vlc && !uhd && vlcPreview != null && PreviewHandoff.canCarry(it.kind,
                 previewItem == null ? null : previewItem.id, it.id, vlcPreview.isPlaying())) {
             VlcPreview.Session session = vlcPreview.takeSession();
             if (session != null) {
@@ -2834,7 +2836,7 @@ public class MainActivity extends Activity {
             return;
         }
         if (carryPreview(it)) { intent.putExtra("carried", true); stopPreview(); stopMulti(); startActivity(intent); return; }
-        boolean hadPreview = preview != null;
+        boolean hadPreview = preview != null || (uhd && vlcPreview != null);
         stopPreview(); stopMulti();
         if (hadPreview) ui.postDelayed(() -> startActivity(intent), 600); else startActivity(intent);
     }
