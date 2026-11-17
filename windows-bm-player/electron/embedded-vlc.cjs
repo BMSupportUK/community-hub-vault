@@ -5,7 +5,8 @@ const {decodeOptions}=require('../video-decode-policy.cjs');
 
 /** Native surfaces belong to BM Player, never a separately launched VLC process. */
 class EmbeddedVlc {
- constructor(win,{koffi,root}={}) {
+ constructor(win,{koffi,root,transport=url=>url}={}) {
+  this.transport=transport;
   if(!koffi&&process.platform!=='win32')throw new Error('Embedded playback requires Windows.');
   this.win=win;this.k=koffi||require('../vendor/koffi');this.surfaces=new Map();
   root=root||path.join(__dirname,'../tools/vlc-3.0.21');
@@ -45,7 +46,7 @@ class EmbeddedVlc {
  play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,fill=false,kind,name}={}){
   const s=this.surface(index);s.fill=!!fill;this.api.media_player_stop(s.player);
   if(kind!==undefined)s.decodeContext={kind,name};
-  const media=this.api.media_new_location(this.instance,url);
+  const media=this.api.media_new_location(this.instance,this.transport(url));
   if(!media)throw new Error('This stream could not be opened.');
   try{
    this.api.media_add_option(media,':network-caching='+Math.max(500,Math.min(Number(buffer)===30000?30000:15000,Number(buffer)||3000)));

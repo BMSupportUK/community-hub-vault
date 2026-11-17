@@ -8,6 +8,8 @@ fs.rmSync(stage, { recursive: true, force: true });
 fs.mkdirSync(path.join(stage, 'dist'), { recursive: true });
 fs.mkdirSync(path.join(stage, 'electron'), { recursive: true });
 fs.copyFileSync(path.join(shared,'vpn.cjs'),path.join(stage,'vpn.cjs'));
+fs.copyFileSync(path.join(shared,'vpn-native.cjs'),path.join(stage,'vpn-native.cjs'));
+for(const arch of ['amd64','arm64']){const dir=path.join(stage,'tools/vpn',arch);fs.mkdirSync(dir,{recursive:true});execFileSync(process.env.BM_GO||'go',['build','-trimpath','-ldflags=-s -w','-o',path.join(dir,'bm-vpn'),'.'],{cwd:path.join(shared,'vpn-tunnel'),env:{...process.env,CGO_ENABLED:'0',GOOS:'darwin',GOARCH:arch},stdio:'inherit'});}
 execFileSync('bun', ['build', path.join(shared,'sports-context.cjs'), '--target=node','--format=cjs','--outfile='+path.join(stage,'sports-context.cjs')], {stdio:'inherit'});
 execFileSync('lovable-assets', ['get', '--overwrite', '--file', path.join(root, '../src/assets/player-family-intro.mp4.asset.json'), '-o', path.join(stage, 'dist/player-intro.mp4')], { stdio: 'inherit' });
 execFileSync('bun', ['build', path.join(root, 'renderer/entry.jsx'), '--target=browser', '--minify', '--outfile=' + path.join(stage, 'dist/app.js')], { stdio: 'inherit' });

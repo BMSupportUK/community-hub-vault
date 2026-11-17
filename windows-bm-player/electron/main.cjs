@@ -19,8 +19,11 @@ const broadband=require('../network-test.cjs');
 const categoryOrder=require('../category-order.cjs');
 const catchupStart=require('../catchup-start.cjs');
 const watchreq=require('../watch-request.cjs');
-// Native tunnel adapters must be verified before enabling desktop VPN commands.
-const vpn=require('../vpn.cjs').createVpn({site,native:null});
+const nativeVpn=require('../vpn-native.cjs').createNative();
+const vpn=require('../vpn.cjs').createVpn({site,native:nativeVpn,changed:state=>send({type:'vpn',state})});
+let vpnReady=null;
+function prepareVpn(){if(!vpnReady)vpnReady=nativeVpn.init().then(()=>vpn.sync()).catch(()=>{send({type:'notice',message:'VPN could not connect. Switch it off or choose another server.'});});return vpnReady;}
+require('./mac-engine.cjs').setTransport({fetch:(url,options)=>nativeVpn.fetch(url,options),stream:url=>nativeVpn.stream(url)});
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
 function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w);}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
@@ -102,7 +105,7 @@ async function provider(action='',extra={}){
  const url=new URL('/player_api.php',store.dns);url.searchParams.set('username',store.user);url.searchParams.set('password',store.pass);
  if(action)url.searchParams.set('action',action);
  for(const [k,v]of Object.entries(extra))url.searchParams.set(k,String(v));
- const response=await fetch(url,{headers:{'User-Agent':store.settings?.userAgent||'VLC/3.0.21 LibVLC/3.0.21'},signal:AbortSignal.timeout(45000)});
+ const response=await nativeVpn.fetch(url,{headers:{'User-Agent':store.settings?.userAgent||'VLC/3.0.21 LibVLC/3.0.21'},signal:AbortSignal.timeout(45000)});
  if(!response.ok)throw new Error('The service provider could not load this section. Try Refresh.');
  return response.json();
 }
@@ -125,6 +128,7 @@ async function refresh(startup=false){
  refreshPromise=refreshInner(startup);try{return await refreshPromise;}finally{refreshPromise=null;}
 }
 async function refreshInner(startup){
+ await prepareVpn();
  const kinds=['live','film','series'];let step=0;const span=60;
  for(const kind of kinds){send({type:'progress',locked:true,message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*span)});cache.delete(kind);await catalogue(kind);step++;}
  send({type:'catalogues',guide:true});return true;
@@ -344,7 +348,7 @@ else{
    send({type:'state',state:publicState()});return true;
   });
   register('settings',async value=>{
-   if(value?.logout){await stopAll();await site({action:'unlink'});gate.lock();store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
+   if(value?.logout){await stopAll();await vpn.close();vpnReady=null;await site({action:'unlink'});gate.lock();store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
    else if(value?.clear){store.recent=[];store.progress={};save();}
    else if(value?.categoryOrder){const {kind,ids}=value.categoryOrder;if(!['live','film','series'].includes(kind)||!Array.isArray(ids))throw new Error('Choose a category list.');store.settings={...store.settings,['category_order_'+kind]:categoryOrder.cleanIds(ids)};save();}
    else if(value){store.settings={...store.settings,...value};save();if('boost' in value)applyAudio();}
@@ -358,7 +362,7 @@ else{
   register('reminder',value=>{store.reminders=store.reminders||[];if(value.remove)store.reminders=store.reminders.filter(r=>r.id!==value.id);else{if(value.start<=Date.now())throw new Error('Reminders are only for programmes that have not started.');store.reminders.push({...value,id:String(value.item.id)+':'+value.start,notified:false});}save();return publicState();});
   register('continue',()=>{lastInput=Date.now();promptedAt=0;send({type:'inactive',seconds:0});return true;});register('exit',async()=>{await stopAll();app.quit();});
   register('themes',async()=>{if(!store.token||!gate.unlocked)return null;const r=await site({action:'themes'});if(!r||!Array.isArray(r.items))return null;return require('../theme.cjs').clean(r.items);});
-  register('vpnState',()=>vpn.snapshot());
+  register('vpnState',async()=>{await prepareVpn();return vpn.snapshot();});
   register('vpnServers',()=>vpn.servers());
   register('vpnCommand',value=>vpn.command(value));
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));
@@ -369,10 +373,12 @@ else{
     broadbandBusy=true;try{broadbandResult=await broadband.run();poll().catch(()=>{});return{ping:broadbandResult.ping,download:broadbandResult.down/1000,upload:broadbandResult.up/1000};}finally{broadbandBusy=false;}
   });
   await win.loadFile(page);
+  setInterval(()=>{if(store.user&&gate.unlocked&&pinPassed)vpn.health().catch(()=>{});},15000);
+  checkin.every(()=>{if(store.user&&gate.unlocked&&pinPassed)return vpn.sync().catch(()=>{});},()=>60000,30000);
   if(!store.user)getCode().catch(e=>send({type:'notice',message:require('../safe-error.cjs').forScreen(e.message,'Something went wrong. Try again.')}));else{poll();}
   checkin.every(poll,()=>store.user?60000:5000,store.user?60000*Math.random():5000);checkin.every(fetchAnnouncement,()=>15000,15000*Math.random());checkin.every(fetchMajor,()=>60000,15000*Math.random());setInterval(connectionCheck,30000);setInterval(updatePlayback,5000);setInterval(()=>{const i=engine?.p?.clickedPane?.();if(i!=null&&!(win&&!win.isDestroyed()&&win.isFocused()&&!win.isMinimized()))return;if(i!=null&&sessions.some(x=>x.index===i)){audible=i;applyAudio();send({type:'audible',index:i});}},60);setInterval(timers,1000);setInterval(systemInput,15000);connectionCheck();
  });
  app.on('activate',foreground);
  app.on('window-all-closed',async()=>{await stopAll();app.quit();});
- app.on('before-quit',()=>{for(const session of sessions){const status=engine?.status(session.index);if(status)Object.assign(session,status);persistProgress(session);}engine?.close();engine=null;});
+ app.on('before-quit',()=>{nativeVpn.close();for(const session of sessions){const status=engine?.status(session.index);if(status)Object.assign(session,status);persistProgress(session);}engine?.close();engine=null;});
 }

@@ -13,7 +13,7 @@ test('unrelated channels retain their existing decoder',()=>{
 });
 test('native FHD playback and reconnect retain hardware choice',()=>{
  const options=[],surface={player:1};
- const engine=Object.create(EmbeddedVlc.prototype);engine.surface=()=>surface;engine.volume=()=>{};
+ const engine=Object.create(EmbeddedVlc.prototype);engine.transport=url=>url;engine.surface=()=>surface;engine.volume=()=>{};
  engine.api={media_player_stop:()=>{},media_new_location:()=>2,media_add_option:(_,value)=>options.push(value),media_player_set_media:()=>{},media_release:()=>{},media_player_play:()=>0};
  engine.play(0,'test',{kind:'live',name:'TNT Sports FHD'});
  engine.play(0,'test',{buffer:30000});

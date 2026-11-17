@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Build secure desktop VPN with an embedded WireGuard userspace tunnel, private streaming proxy, connection verification and server controls; release Windows and universal Mac only after tunnel/build/security checks. User confirmed BM Player-only protection.
+
 - [x] Released permanent-BM-key box 5.90 (401); live APK matches built hash, 398 app tests pass. Added current server traffic under Live connections VPN pills; website publication requested for this release.
 - [x] Build all current shared desktop changes; Windows and Mac staging succeeds and 189 desktop tests pass. Native VPN release remains blocked below; no pretend controls shipped.
 

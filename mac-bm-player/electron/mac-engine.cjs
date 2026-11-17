@@ -16,6 +16,8 @@ const TOKEN_TTL_MS = 12 * 60 * 60_000;
 const origins = new Map(); // token -> { origin, expires }
 const byOrigin = new Map(); // origin -> token
 let userAgent = () => '';
+let transport = {fetch:(url,options)=>fetch(url,options),stream:url=>url};
+function setTransport(value){transport=value;}
 
 /*
  * BM backup engine: when the main player can't cope with a stream, the bundled
@@ -49,7 +51,7 @@ function parseTracks(text) {
 function killBackup(entry) { if (entry?.proc) { try { entry.proc.kill('SIGKILL'); } catch {} entry.proc = null; } }
 function serveBackup(entry, request) {
   killBackup(entry);
-  const proc = spawn(ffmpegPath(), backupArgs(entry.url, { ss: entry.ss, ua: userAgent(), audioId: entry.audioId }), { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
+  const proc = spawn(ffmpegPath(), backupArgs(transport.stream(entry.url), { ss: entry.ss, ua: userAgent(), audioId: entry.audioId }), { stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true });
   entry.proc = proc;
   let log = '';
   proc.stderr.on('data', d => { if (!entry.duration) { log = (log + d).slice(-8000); entry.duration = parseDuration(log); entry.tracks = parseTracks(log); } });
@@ -107,7 +109,7 @@ function registerScheme(protocol) {
 
 function serveSubtitles(entry, request, id) {
   if(!entry.tracks?.subtitles.some(t=>t.id===id))return new Response('Track unavailable',{status:404});
-  const proc=spawn(ffmpegPath(), ['-hide_banner','-nostdin','-loglevel','error','-user_agent',userAgent()||'VLC/3.0.21',...(entry.ss>0?['-ss',String(entry.ss)]:[]),'-i',entry.url,'-map',`0:s:${id}`,'-f','webvtt','pipe:1'],{stdio:['ignore','pipe','ignore'],windowsHide:true});
+  const proc=spawn(ffmpegPath(), ['-hide_banner','-nostdin','-loglevel','error','-user_agent',userAgent()||'VLC/3.0.21',...(entry.ss>0?['-ss',String(entry.ss)]:[]),'-i',transport.stream(entry.url),'-map',`0:s:${id}`,'-f','webvtt','pipe:1'],{stdio:['ignore','pipe','ignore'],windowsHide:true});
   proc.on('error',()=>{});request.signal?.addEventListener('abort',()=>proc.kill('SIGKILL'));
   return new Response(Readable.toWeb(proc.stdout),{headers:{'Content-Type':'text/vtt','Access-Control-Allow-Origin':'*','Cache-Control':'no-store'}});
 }
@@ -126,12 +128,12 @@ function handleProtocol(protocol) {
     const range = request.headers.get('range');
     if (range && /^bytes=\d*-\d*$/.test(range)) headers.Range = range;
     let upstream;
-    try { upstream = await fetch(target, { headers, redirect: 'follow' }); }
+    try { upstream = await transport.fetch(target, { headers, redirect: 'follow' }); }
     catch { return new Response('Stream unavailable', { status: 502 }); }
     const out = new Headers({ 'Access-Control-Allow-Origin': '*', 'Cache-Control': 'no-store' });
     for (const k of ['content-type', 'content-length', 'content-range', 'accept-ranges']) { const v = upstream.headers.get(k); if (v) out.set(k, v); }
     const type = (upstream.headers.get('content-type') || '').toLowerCase();
-    const finalUrl = upstream.url || target;
+    const finalUrl = upstream.headers.get('x-bm-final') || upstream.url || target;
     if (type.includes('mpegurl') || new URL(finalUrl).pathname.toLowerCase().endsWith('.m3u8')) {
       const body = rewritePlaylist(await upstream.text(), finalUrl);
       out.delete('content-length');
@@ -213,4 +215,4 @@ class MacEngine {
   close() { for (const index of [...this.sessions.keys()]) this.stop(index); }
 }
 
-module.exports = { MacEngine, backupArgs, parseDuration, parseTracks, registerScheme, handleProtocol, rewritePlaylist, toProxy, fromProxy, streamKind };
+module.exports = { MacEngine, backupArgs, parseDuration, parseTracks, registerScheme, handleProtocol, rewritePlaylist, toProxy, fromProxy, streamKind, setTransport };
