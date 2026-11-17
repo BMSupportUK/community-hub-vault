@@ -13,3 +13,17 @@ describe("best VPN server", () => {
     expect(pickServer([s(1, "GB", 3), s(2, "GB", 3)], "GB", { 1: 4, 2: 1 })?.id).toBe(2);
   });
 });
+describe("busy UK servers", () => {
+  test("UK busy (80) and Netherlands quiet (30): uses the Netherlands", () => {
+    expect(pickServer([s(1, "GB", 80), s(2, "NL", 30)], "GB")?.id).toBe(2);
+  });
+  test("UK busy (80) but nearby only slightly quieter (70): stays in the UK", () => {
+    expect(pickServer([s(1, "GB", 80), s(2, "NL", 70)], "GB")?.id).toBe(1);
+  });
+  test("UK not busy (50): stays in the UK even if abroad is quieter", () => {
+    expect(pickServer([s(1, "GB", 50), s(2, "NL", 5)], "GB")?.id).toBe(1);
+  });
+  test("never jumps to a far-away country", () => {
+    expect(pickServer([s(1, "GB", 95), s(2, "US", 1)], "GB")?.id).toBe(1);
+  });
+});

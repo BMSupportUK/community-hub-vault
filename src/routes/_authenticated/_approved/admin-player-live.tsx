@@ -296,6 +296,7 @@ function AdminPlayerLivePageInner() {
                     : <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={r.last_ip ?? ""}><MapPin className="size-4" />Unknown</span>}</td>
                   <td className="p-3">{r.vpn_status === "yes"
                     ? <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning" title={`${r.vpn_provider ? `Via ${r.vpn_provider}` : "VPN or proxy"}${r.last_ip ? ` · IP ${r.last_ip}` : ""}`}><ShieldAlert className="size-3.5" />VPN</span>
+                    : null}{r.vpn_status === "yes" && r.vpn_provider && <div className="mt-1 max-w-[11rem] truncate text-xs text-muted-foreground" title={r.vpn_provider}>{r.vpn_provider.replace(/^BM VPN · /, "")}</div>}{r.vpn_status === "yes" ? null
                     : r.vpn_status === "no"
                       ? <span className="inline-flex items-center gap-1 text-xs text-muted-foreground" title={`No VPN or proxy found${r.last_ip ? ` on IP ${r.last_ip}` : ""}`}><ShieldCheck className="size-3.5" />None</span>
                       : <span className="text-xs text-muted-foreground" title="VPN not checked yet">—</span>}</td>
