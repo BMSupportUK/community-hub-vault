@@ -32,10 +32,22 @@ final class BoxVpn {
     /** Home-screen VPN icons: "best" = move to the best server now, "on"/"off" = switch the VPN. */
     static void command(Activity a, String token, String what, Runnable after) {
         new Thread(() -> {
-            try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", what).toString()); } catch (Exception ignored) { }
+            try {
+                JSONObject b = new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", what);
+                if ("best".equals(what)) b.put("pings", bestPings(a, token));
+                Net.postJson(Net.SITE + "/api/public/player", b.toString());
+            } catch (Exception ignored) { }
             sync(a, token);
             if (after != null) a.runOnUiThread(after);
         }).start();
+    }
+
+    /** This box's own pings to every server, so "best" means lowest ping near where the box really is. */
+    static JSONObject bestPings(Context c, String token) {
+        try {
+            org.json.JSONArray arr = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_servers").put("device_token", token).toString())).optJSONArray("servers");
+            return VpnPing.measure(c, arr);
+        } catch (Exception e) { return new JSONObject(); }
     }
 
     /** Settings › VPN › Choose a server. */

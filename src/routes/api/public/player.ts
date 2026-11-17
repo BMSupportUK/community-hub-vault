@@ -61,7 +61,7 @@ const Body = z.discriminatedUnion("action", [
   }),
   z.object({ action: z.literal("unlink"), device_token: Token }),
   z.object({ action: z.literal("vpn"), device_token: Token }),
-  z.object({ action: z.literal("vpn_command"), device_token: Token, command: z.enum(["best", "on", "off", "server"]), server_id: z.number().int().positive().optional() }),
+  z.object({ action: z.literal("vpn_command"), device_token: Token, command: z.enum(["best", "on", "off", "server"]), server_id: z.number().int().positive().optional(), pings: z.record(z.string().regex(/^\d{1,6}$/), z.number().int().min(1).max(10000)).optional() }),
   z.object({ action: z.literal("vpn_servers"), device_token: Token }),
   z.object({ action: z.literal("vpn_status"), device_token: Token, status: z.enum(["connecting", "on", "off", "failed"]), server: z.string().trim().max(120).optional(), detail: z.string().trim().max(200).optional(), bad_server: z.boolean().optional() }),
   z.object({ action: z.literal("unlock"), device_token: Token, account_number: z.string().trim().regex(/^\d{6}$/) }),
@@ -442,7 +442,16 @@ export const Route = createFileRoute("/api/public/player")({
           let patch: Record<string, unknown> = { updated_at: now };
           if (body.command === "off") patch.enabled = false;
           else if (body.command === "on") patch.enabled = true;
-          else if (body.command === "best") patch = { ...patch, enabled: true, server_id: null, server_name: null };
+          else if (body.command === "best") {
+            patch = { ...patch, enabled: true, server_id: null, server_name: null };
+            // The box measured its own pings: lowest ping in its real country and nearby countries.
+            if (body.pings && Object.keys(body.pings).length) {
+              const { vpnServers } = await import("@/lib/vpnresellers.server");
+              const { pickByPing, vpnHomeCountry } = await import("@/lib/vpn-pick-server");
+              const s = pickByPing(await vpnServers(), vpnHomeCountry(device), body.pings);
+              if (s) patch = { ...patch, server_id: s.id, server_name: `${s.city} (${s.country_code})` };
+            }
+          }
           else if (body.server_id) {
             const { vpnServers } = await import("@/lib/vpnresellers.server");
             const s = (await vpnServers()).find((x) => x.id === body.server_id);

@@ -27,6 +27,7 @@ final class VpnLocationDialog {
                 JSONArray servers = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
                         new JSONObject().put("action", "vpn_servers").put("device_token", token).toString())).optJSONArray("servers");
                 if (servers == null || servers.length() == 0) throw new IllegalStateException("No servers");
+                VpnPing.measure(a, servers);
                 a.runOnUiThread(() -> {
                     if (a.isFinishing() || a.isDestroyed() || !dialog.isShowing()) return;
                     dialog.dismiss();
@@ -48,6 +49,7 @@ final class VpnLocationDialog {
                 JSONObject request = new JSONObject().put("action", "vpn_command").put("device_token", token)
                         .put("command", serverId == null ? "best" : "server");
                 if (serverId != null) request.put("server_id", serverId);
+                else request.put("pings", BoxVpn.bestPings(a, token));
                 Net.postJson(Net.SITE + "/api/public/player", request.toString());
                 BoxVpn.sync(a, token);
                 a.runOnUiThread(() -> {

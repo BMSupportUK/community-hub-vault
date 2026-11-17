@@ -31,6 +31,15 @@ public class VpnServerListTest {
   list.performItemClick(list.getAdapter().getView(0,null,list),0,2);
   assertEquals(1,selected[0]);assertFalse(dialog.isShowing());assertFalse(a.isFinishing());
  }
+ @Test public void groupThenLowestPingFirst() throws Exception {
+  JSONArray rows=new JSONArray()
+   .put(new JSONObject().put("id",1).put("group",0).put("ping",80))
+   .put(new JSONObject().put("id",2).put("group",0).put("ping",20))
+   .put(new JSONObject().put("id",3).put("group",1).put("ping",5))
+   .put(new JSONObject().put("id",4).put("group",0));
+  java.util.List<JSONObject> s=VpnServerList.sorted(rows);
+  assertEquals(2,s.get(0).getInt("id"));assertEquals(1,s.get(1).getInt("id"));assertEquals(4,s.get(2).getInt("id"));assertEquals(3,s.get(3).getInt("id"));
+ }
  private android.widget.ListView findList(android.view.View v){
   if(v instanceof android.widget.ListView)return (android.widget.ListView)v;
   if(v instanceof android.view.ViewGroup){android.view.ViewGroup g=(android.view.ViewGroup)v;for(int i=0;i<g.getChildCount();i++){android.widget.ListView found=findList(g.getChildAt(i));if(found!=null)return found;}}

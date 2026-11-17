@@ -1,4 +1,4 @@
-export type VpnServer = { id: number; name: string; country_code: string; city: string; status: number; visible: number; cpu?: number };
+export type VpnServer = { id: number; name: string; country_code: string; city: string; status: number; visible: number; cpu?: number; ip?: string };
 
 /**
  * Compare VPNresellers' raw live "cpu" traffic figures, never a guessed 0–100 scale.
@@ -59,7 +59,7 @@ export function serverTrafficList(list: VpnServer[], cc?: string | null) {
   const sorted = [...list].sort((a, b) => rank(a) - rank(b) || load(a) - load(b) || a.id - b.id);
   const maximum = Math.max(0, ...sorted.map(s => Number.isFinite(load(s)) ? load(s) : 0));
   return sorted.map(s => ({
-    id: s.id, country: s.country_code, city: s.city,
+    id: s.id, country: s.country_code, city: s.city, ip: s.ip ?? null, group: rank(s),
     traffic: Number.isFinite(load(s)) ? load(s) : null,
     traffic_bar: Number.isFinite(load(s)) ? (maximum > 0 ? Math.round(load(s) / maximum * 100) : 0) : null,
   }));
@@ -91,4 +91,21 @@ export function pickServer(list: VpnServer[], cc?: string | null, ours: Record<n
 export function vpnHomeCountry(device: { geo_country?: string | null; vpn_status?: string | null; home_country?: string | null }): string {
   if (device.home_country) return code(device.home_country);
   return device.vpn_status === "yes" || !device.geo_country ? "GB" : code(device.geo_country);
+}
+
+/** Pings within this many ms of the fastest count as equally fast; traffic then decides. */
+export const VPN_PING_TIE_MS = 15;
+/**
+ * "Use the best server" with the box's own ping readings: the lowest ping among servers in the
+ * country the box is really in and its nearby countries (so an overseas box uses its nearest
+ * countries, not the UK). Near-equal pings go to the quieter server. Null when nothing was measured.
+ */
+export function pickByPing(list: VpnServer[], cc: string | null | undefined, pings: Record<string, number>): VpnServer | null {
+  const home = code(cc) || "GB";
+  const allowed = new Set([home, ...nearbyOf(home, list, !list.some(s => code(s.country_code) === home))]);
+  const ms = (s: VpnServer) => { const v = Number(pings[String(s.id)]); return Number.isFinite(v) && v > 0 ? v : Infinity; };
+  const cand = list.filter(s => allowed.has(code(s.country_code)) && Number.isFinite(ms(s)));
+  if (!cand.length) return null;
+  const fastest = Math.min(...cand.map(ms));
+  return cand.filter(s => ms(s) <= fastest + VPN_PING_TIE_MS).sort((a, b) => load(a) - load(b) || ms(a) - ms(b))[0];
 }

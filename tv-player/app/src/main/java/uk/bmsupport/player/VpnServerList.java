@@ -23,7 +23,14 @@ final class VpnServerList {
             JSONObject row=array.optJSONObject(i);
             if(row!=null && row.optInt("id",-1)>0) rows.add(row);
         }
-        // Keep the website order: UK first, then nearby, far-away last; traffic is sorted within each group there.
+        // Website groups: the box's country, then nearby, far-away last. Within a group lowest ping first
+        // (10 ms steps so tiny differences keep the website's traffic order); unmeasured rows keep their place after.
+        java.util.Map<JSONObject,Integer> at=new java.util.IdentityHashMap<>();for(int i=0;i<rows.size();i++)at.put(rows.get(i),i);
+        rows.sort((a,b)->{int g=Integer.compare(a.optInt("group",0),b.optInt("group",0));if(g!=0)return g;
+            int pa=a.optInt("ping",-1),pb=b.optInt("ping",-1);
+            if(pa>0&&pb>0&&pa/10!=pb/10)return Integer.compare(pa,pb);
+            if((pa>0)!=(pb>0))return pa>0?-1:1;
+            return Integer.compare(at.get(a),at.get(b));});
         return rows;
     }
     static double traffic(JSONObject row) {
@@ -44,7 +51,7 @@ final class VpnServerList {
                 TextView name=new TextView(a);name.setTextSize(17);name.setText(row.optString("city")+" ("+row.optString("country")+")");box.addView(name);
                 TextView number=new TextView(a);number.setTextSize(13);
                 double value=traffic(row);
-                number.setText(Double.isFinite(value)?"Traffic · "+java.text.NumberFormat.getNumberInstance(java.util.Locale.UK).format(value):"Traffic unavailable");box.addView(number);
+                int ping=row.optInt("ping",-1);number.setText((ping>0?"Ping "+ping+" ms · ":"")+(Double.isFinite(value)?"Traffic · "+java.text.NumberFormat.getNumberInstance(java.util.Locale.UK).format(value):"Traffic unavailable"));box.addView(number);
                 ProgressBar bar=new ProgressBar(a,null,android.R.attr.progressBarStyleHorizontal);bar.setMax(100);bar.setProgress(row.optInt("traffic_bar",0));bar.setVisibility(Double.isFinite(value)?View.VISIBLE:View.INVISIBLE);
                 box.addView(bar,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,pad));
                 return box;

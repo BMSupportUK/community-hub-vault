@@ -1,6 +1,6 @@
 // @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { describe, expect, test } from "bun:test";
-import { pickServer, serverTrafficList, vpnHomeCountry } from "./vpn-pick-server";
+import { pickByPing, pickServer, serverTrafficList, vpnHomeCountry } from "./vpn-pick-server";
 const s = (id, cc, cpu) => ({ id, name: "", country_code: cc, city: "", status: 1, visible: 1, cpu });
 test("server list puts lowest raw traffic first and keeps unknown readings last", () => {
   const rows = serverTrafficList([s(1,"GB",900000000),s(2,"BE",180000000),s(3,"NL",undefined)]);
@@ -65,4 +65,21 @@ test("overseas: Australia with no local server uses its nearest countries, not t
 test("home country saved with the VPN off wins over the VPN exit", async () => {
   const { vpnHomeCountry } = await import("./vpn-pick-server");
   expect(vpnHomeCountry({ home_country: "es", geo_country: "GB", vpn_status: "yes" })).toBe("ES");
+});
+
+describe("best server by the box's ping", () => {
+  const sv = (id: number, cc: string, cpu: number) => ({ id, name: "", country_code: cc, city: cc + id, status: 1, visible: 1, cpu });
+  const list = [sv(1, "GB", 900), sv(2, "GB", 100), sv(3, "BE", 10), sv(4, "IL", 1), sv(5, "ES", 5)];
+  test("UK box takes the lowest-ping server, not the quietest far one", () => {
+    expect(pickByPing(list, "GB", { 1: 20, 2: 60, 3: 90, 4: 10 })?.id).toBe(1);
+  });
+  test("pings within 15 ms go to the quieter server", () => {
+    expect(pickByPing(list, "GB", { 1: 20, 2: 30 })?.id).toBe(2);
+  });
+  test("a box in Spain uses its nearest country, never the UK", () => {
+    expect(pickByPing(list, "ES", { 1: 15, 5: 25 })?.id).toBe(5);
+  });
+  test("no readings falls back", () => {
+    expect(pickByPing(list, "GB", {})).toBeNull();
+  });
 });
