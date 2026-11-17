@@ -2661,6 +2661,13 @@
       "when": 1794940722891,
       "tag": "0379_player_device_home_country",
       "breakpoints": true
+    },
+    {
+      "idx": 380,
+      "version": "7",
+      "when": 1794941456193,
+      "tag": "0380_manual_renewal_saved_login_expiry",
+      "breakpoints": true
     }
   ]
 }
