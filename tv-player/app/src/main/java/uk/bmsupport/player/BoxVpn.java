@@ -112,6 +112,38 @@ final class BoxVpn {
 
     static boolean on() { return applied != null; }
 
+    /** Small "● VPN" pill in the bottom-left corner of every BM Player screen: green on, amber connecting, red off. */
+    static void badge(Activity a) {
+        if (a == null) return;
+        a.runOnUiThread(() -> {
+            try {
+                android.view.ViewGroup decor = (android.view.ViewGroup) a.getWindow().getDecorView();
+                android.widget.TextView b = decor.findViewWithTag("bm_vpn_badge");
+                if (!present) { if (b != null) b.setVisibility(android.view.View.GONE); return; }
+                float d = a.getResources().getDisplayMetrics().density;
+                if (b == null) {
+                    b = new android.widget.TextView(a);
+                    b.setTag("bm_vpn_badge");
+                    b.setTextSize(12); b.setTextColor(0xFFFFFFFF);
+                    b.setPadding((int) (8 * d), (int) (3 * d), (int) (10 * d), (int) (3 * d));
+                    android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+                    bg.setColor(0xB3000000); bg.setCornerRadius(12 * d); b.setBackground(bg);
+                    b.setFocusable(false); b.setClickable(false); b.setElevation(20 * d);
+                    android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(-2, -2, android.view.Gravity.BOTTOM | android.view.Gravity.START);
+                    lp.leftMargin = (int) (12 * d); lp.bottomMargin = (int) (40 * d);
+                    decor.addView(b, lp);
+                }
+                int col = !enabled ? 0xFFE53935 : on() ? 0xFF43A047 : 0xFFFFB300;
+                android.text.SpannableString t = new android.text.SpannableString("● VPN" + (enabled && on() ? " on" : enabled ? " connecting" : " off"));
+                t.setSpan(new android.text.style.ForegroundColorSpan(col), 0, 1, 0);
+                b.setText(t);
+                b.setContentDescription(t.toString());
+                b.setVisibility(android.view.View.VISIBLE);
+                b.bringToFront();
+            } catch (Exception ignored) { }
+        });
+    }
+
     private static void report(String token, String status, String server, String detail, boolean badServer) {
         try {
             JSONObject b = new JSONObject().put("action", "vpn_status").put("device_token", token).put("status", status);

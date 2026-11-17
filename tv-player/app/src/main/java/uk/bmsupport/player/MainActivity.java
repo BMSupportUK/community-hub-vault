@@ -889,6 +889,7 @@ public class MainActivity extends Activity {
                 }
                 boolean dotChanged = vpnShown == null || vpnShown != runNow;
                 vpnShown = runNow;
+                BoxVpn.badge(this);
                 if ((dotChanged || hadVpn != BoxVpn.present || wasOn != BoxVpn.enabled) && "home".equals(screen)) ui.post(this::showHome);
             }
             Checkin.setSlow(r.optInt("slow", 1));
@@ -4567,7 +4568,7 @@ public class MainActivity extends Activity {
     }
 
     // ---------- full TV guide (Sky-style grid) ----------
-    private final java.util.concurrent.ExecutorService guideIo = java.util.concurrent.Executors.newFixedThreadPool(3);
+    private final java.util.concurrent.ExecutorService guideIo = java.util.concurrent.Executors.newFixedThreadPool(6);
     private final java.util.Map<String, List<GuideGridView.Prog>> guideCache = new java.util.LinkedHashMap<String, List<GuideGridView.Prog>>(64, 0.75f, true) {
         @Override protected boolean removeEldestEntry(java.util.Map.Entry<String, List<GuideGridView.Prog>> e) { return size() > 400; }
     };
@@ -5676,6 +5677,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onResume() {
+        BoxVpn.badge(this);
         // "until the app closes": leaving BM Player re-hides adult categories, even with a list still open.
         if (AppForeground.consumeLeft() && adultUnlocked) {
             adultUnlocked = false;

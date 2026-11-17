@@ -456,6 +456,14 @@ export const Route = createFileRoute("/api/public/player")({
             status: body.status, status_detail: body.detail ?? null, updated_at: new Date().toISOString(),
             ...(body.bad_server ? { server_id: null, server_name: null } : {}),
           }).eq("device_id", device.id);
+          // Our own VPN is known for certain: show it on Live connections now instead of
+          // waiting hours for the next IP lookup. Switching off forces a fresh lookup.
+          const nowIso = new Date().toISOString();
+          if (body.status !== "connecting") await supabaseAdmin.from("player_devices").update(
+            body.status === "on"
+              ? { vpn_status: "yes", vpn_provider: `BM VPN${body.server ? ` · ${body.server}` : ""}`.slice(0, 80), vpn_checked_at: nowIso }
+              : { vpn_checked_at: null },
+          ).eq("id", device.id);
           return json({ ok: true });
         }
 

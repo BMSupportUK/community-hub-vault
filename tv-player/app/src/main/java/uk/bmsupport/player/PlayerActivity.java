@@ -380,6 +380,7 @@ public class PlayerActivity extends Activity {
 
     /** Re-opened straight into playback after being away: close it so the main screen asks the PIN first. */
     @Override protected void onStart() {
+        BoxVpn.badge(this);
         super.onStart();
         if (!PlayerApplication.pinPassed) {
             startActivity(new android.content.Intent(this, MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP));
