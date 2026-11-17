@@ -26,6 +26,9 @@ final class BoxVpn {
     /** Last website answer, so the home screen knows whether to show the VPN icons. */
     static volatile boolean present, enabled;
     static volatile String server = "";
+    /** Every app start begins with the VPN off: the customer switches it on themselves. */
+    private static volatile boolean freshStart = true;
+    static boolean startsOff(boolean firstCheck, boolean enabledOnWebsite) { return firstCheck && enabledOnWebsite; }
 
     private BoxVpn() { }
 
@@ -78,6 +81,12 @@ final class BoxVpn {
             JSONObject v = r.optJSONObject("vpn");
             String config = v == null ? null : v.optString("config", "");
             present = v != null; enabled = v != null && v.optBoolean("enabled"); server = v == null ? "" : v.optString("server", "");
+            boolean first = freshStart; freshStart = false;
+            if (startsOff(first, enabled)) {
+                enabled = false;
+                Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", "off").toString());
+                return;
+            }
             Step s = decide(v != null, v != null && v.optBoolean("enabled"), config, applied);
             if (s == Step.DOWN) { down(a); report(token, "off", null, "Turned off from the website", false); return; }
             if (s != Step.UP) return;
@@ -133,7 +142,8 @@ final class BoxVpn {
                 android.view.ViewGroup decor = (android.view.ViewGroup) a.getWindow().getDecorView();
                 android.widget.TextView b = decor.findViewWithTag("bm_vpn_badge");
                 // The home screen already shows the VPN light beside the version number at the top.
-                boolean home = a instanceof MainActivity && ((MainActivity) a).onHomeScreen();
+                // Only the full-screen player shows the corner light; home has its own switch and the guide/link screens show none.
+                boolean home = a instanceof MainActivity;
                 if (!present || home) { if (b != null) b.setVisibility(android.view.View.GONE); return; }
                 float d = a.getResources().getDisplayMetrics().density;
                 if (b == null) {
