@@ -35,17 +35,20 @@ async function loadOrder(supabaseAdmin: any, orderId: string) {
  * methods (a late Stripe/crypto payment may have landed), and refuse to start a
  * new one while another payment is already underway for the same order.
  */
-/** Manual orders where staff chose Square must be paid through Square only. */
-export function squareLockedOrder(order: { customer_type?: unknown; manual_pay_method?: unknown }) {
-  return String(order.customer_type ?? "") === "manual" && String(order.manual_pay_method ?? "").toLowerCase() === "square";
+/** Manual orders are paid only by the method staff picked when creating them. */
+export function manualLockedMethod(order: { customer_type?: unknown; manual_pay_method?: unknown }): string | null {
+  const m = String(order.manual_pay_method ?? "").toLowerCase();
+  return String(order.customer_type ?? "") === "manual" && m ? m : null;
 }
+const GUARD_TO_METHOD: Record<string, string> = { square: "square", stripe: "stripe", nowpayments: "crypto" };
 
 async function guardAgainstDoublePayment(supabaseAdmin: any, orderId: string, method: "square" | "stripe" | "nowpayments") {
   try { await syncStripeSession(supabaseAdmin, orderId); } catch { /* ignore */ }
   try { await syncCryptoPayment(supabaseAdmin, orderId); } catch { /* ignore */ }
   const order = await loadOrder(supabaseAdmin, orderId);
-  if (squareLockedOrder(order) && method !== "square") {
-    throw new Error("This order is set to be paid by card through Square. Please use the card form on this page.");
+  const locked = manualLockedMethod(order);
+  if (locked && GUARD_TO_METHOD[method] !== locked) {
+    throw new Error("This order can only be paid using the payment option shown on this page.");
   }
   const { data: link } = await supabaseAdmin.from("order_checkout_links").select("payment_sent_at").eq("order_id", orderId).maybeSingle();
   if (link?.payment_sent_at) {
@@ -159,7 +162,7 @@ export const switchCheckoutPayMethod = createServerFn({ method: "POST" })
     const { supabaseAdmin, link } = u;
     const order = await loadOrder(supabaseAdmin, link.order_id);
     if (String(order.manual_pay_method ?? "").toLowerCase() === data.method) return { ok: true as const };
-    if (squareLockedOrder(order)) throw new Error("This order is set to be paid by card through Square.");
+    if (manualLockedMethod(order)) throw new Error("This order can only be paid using the payment option shown on this page.");
     const { data: linkRow } = await supabaseAdmin
       .from("order_checkout_links")
       .select("payment_sent_at")
