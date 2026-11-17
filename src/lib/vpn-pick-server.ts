@@ -13,6 +13,17 @@ const load = (s: VpnServer) => typeof s.cpu === "number" && Number.isFinite(s.cp
 const byLoad = (ours: Record<number, number>) => (a: VpnServer, b: VpnServer) =>
   load(a) - load(b) || (ours[a.id] ?? 0) - (ours[b.id] ?? 0);
 
+/** Public picker data: raw readings, lowest first; bars compare this list, not capacity. */
+export function serverTrafficList(list: VpnServer[]) {
+  const sorted = [...list].sort((a, b) => load(a) - load(b) || a.id - b.id);
+  const maximum = Math.max(0, ...sorted.map(s => Number.isFinite(load(s)) ? load(s) : 0));
+  return sorted.map(s => ({
+    id: s.id, country: s.country_code, city: s.city,
+    traffic: Number.isFinite(load(s)) ? load(s) : null,
+    traffic_bar: Number.isFinite(load(s)) ? (maximum > 0 ? Math.round(load(s) / maximum * 100) : 0) : null,
+  }));
+}
+
 /**
  * The box's own country first (then UK); within it the server with the least traffic,
  * then the fewest of our customers. A nearby country's server is used instead when it

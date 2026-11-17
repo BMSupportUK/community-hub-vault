@@ -27,22 +27,10 @@ final class VpnLocationDialog {
                 JSONArray servers = new JSONObject(Net.postJson(Net.SITE + "/api/public/player",
                         new JSONObject().put("action", "vpn_servers").put("device_token", token).toString())).optJSONArray("servers");
                 if (servers == null || servers.length() == 0) throw new IllegalStateException("No servers");
-                java.util.List<Integer> ids = new java.util.ArrayList<>();
-                java.util.List<String> labels = new java.util.ArrayList<>();
-                labels.add("Use the best server");
-                for (int i = 0; i < servers.length(); i++) {
-                    JSONObject server = servers.getJSONObject(i);
-                    int id = server.optInt("id", -1);
-                    if (id < 0) continue;
-                    ids.add(id);
-                    labels.add(server.optString("city") + " (" + server.optString("country") + ")");
-                }
                 a.runOnUiThread(() -> {
                     if (a.isFinishing() || a.isDestroyed() || !dialog.isShowing()) return;
                     dialog.dismiss();
-                    new AlertDialog.Builder(a).setTitle("Change VPN location")
-                            .setItems(labels.toArray(new String[0]), (d, which) -> change(a, token, which == 0 ? null : ids.get(which - 1)))
-                            .setNegativeButton("Keep watching", null).show();
+                    VpnServerList.show(a, servers, id -> change(a, token, id), "Keep watching");
                 });
             } catch (Exception e) {
                 a.runOnUiThread(() -> {

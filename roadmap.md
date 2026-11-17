@@ -1,7 +1,9 @@
 # Roadmap
 
+- [x] Add live traffic numbers/comparison bars and lowest-first server selection in Settings and both playback engines; app tests and nine server-selection checks pass. Not yet released; physical-player verification unavailable.
+
 - [x] Retrieve live VPNresellers raw server figures, remove unverified byte/percentage labels and treat missing readings as unknown; eight selection tests pass.
-- [ ] Compare API readings with the user's live server status page; waiting for its address to confirm the unit/source.
+- [x] User accepted the live VPNresellers API readings; no separate status-page comparison needed.
 - [x] Build, permanent-BM-key sign and release box 5.89 (400) with the in-player VPN location control; 396 app tests pass.
 - [ ] Complete and release Windows/Mac native VPN: shared secure coordinator and gated IPC prepared, but privileged Windows service and Mac native tunnel/signing setup are not available or verified here; existing desktop downloads remain unchanged.
 

@@ -428,9 +428,10 @@ export const Route = createFileRoute("/api/public/player")({
 
         if (body.action === "vpn_servers") {
           const { vpnServers } = await import("@/lib/vpnresellers.server");
+          const { serverTrafficList } = await import("@/lib/vpn-pick-server");
           try {
             const list = await vpnServers();
-            return json({ servers: list.map((s) => ({ id: s.id, country: s.country_code, city: s.city })).sort((x, y) => x.country.localeCompare(y.country) || x.city.localeCompare(y.city)) });
+            return json({ servers: serverTrafficList(list) });
           } catch { return json({ servers: [] }); }
         }
 

@@ -3657,11 +3657,9 @@ public class MainActivity extends Activity {
             else io.execute(() -> {
                 try {
                     org.json.JSONArray arr = new JSONObject(Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_servers").put("device_token", token).toString())).optJSONArray("servers");
-                    List<String[]> rows = new ArrayList<>();
-                    for (int i = 0; arr != null && i < arr.length(); i++) { JSONObject o = arr.getJSONObject(i); rows.add(new String[]{o.optString("id"), o.optString("city") + " (" + o.optString("country") + ")"}); }
                     ui.post(() -> {
-                        if (rows.isEmpty()) { Toast.makeText(this, "Couldn't load the VPN servers. Try again shortly.", Toast.LENGTH_LONG).show(); return; }
-                        resultList("Choose a VPN server", rows.size(), i -> text(rows.get(i)[1], 18, TEXT, false), i -> BoxVpn.server(this, token, Integer.parseInt(rows.get(i)[0]), this::showSettings), "Close", null, null, null);
+                        if (VpnServerList.sorted(arr).isEmpty()) { Toast.makeText(this, "Couldn't load the VPN servers. Try again shortly.", Toast.LENGTH_LONG).show(); return; }
+                        VpnServerList.show(this, arr, id -> BoxVpn.server(this, token, id, this::showSettings), "Close");
                     });
                 } catch (Exception e) { ui.post(() -> Toast.makeText(this, "Couldn't load the VPN servers. Try again shortly.", Toast.LENGTH_LONG).show()); }
             });

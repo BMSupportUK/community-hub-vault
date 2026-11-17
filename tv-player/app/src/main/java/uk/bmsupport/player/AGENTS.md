@@ -1,4 +1,5 @@
 # tv-player activity rules
+- VPN Settings and playback use VpnServerList for lowest-raw-traffic-first rows with numeric readings and relative bars; bars compare listed servers, never imply an undocumented capacity percentage.
 - Upcoming programme selections and their reminder icons confirm reminder changes before preview routing; current programmes/channel labels retain normal playback behaviour.
 - Live channel play menus include Catch up only when archiveDays > 0 and open the existing channel archive; preserve Cast/external option indices and return to the selected Live TV category, because Left now opens categories on boxes.
 - Channel/preview EPG shares FixtureGuide: non-official sports/club feeds first read saved website fixtures, authoritative responses bypass provider expansion, ordinary/unmatched channels use provider short/full-day tables. Category entry never calls country-refresh endpoints.

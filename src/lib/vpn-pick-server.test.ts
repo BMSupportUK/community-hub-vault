@@ -1,7 +1,15 @@
 // @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { describe, expect, test } from "bun:test";
-import { pickServer } from "./vpn-pick-server";
+import { pickServer, serverTrafficList } from "./vpn-pick-server";
 const s = (id, cc, cpu) => ({ id, name: "", country_code: cc, city: "", status: 1, visible: 1, cpu });
+test("server list puts lowest raw traffic first and keeps unknown readings last", () => {
+  const rows = serverTrafficList([s(1,"GB",900000000),s(2,"BE",180000000),s(3,"NL",undefined)]);
+  expect(rows.map(r=>r.id)).toEqual([2,1,3]);
+  expect(rows[0].traffic).toBe(180000000);
+  expect(rows[0].traffic_bar).toBe(20);
+  expect(rows[1].traffic_bar).toBe(100);
+  expect(rows[2].traffic).toBeNull();
+});
 describe("best VPN server", () => {
   test("picks the UK server with the least traffic", () => {
     expect(pickServer([s(1, "GB", 1546468705.0268512), s(2, "GB", 187040866.22304505)], "GB", { 1: 0, 2: 5 })?.id).toBe(2);
