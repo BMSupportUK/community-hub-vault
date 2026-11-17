@@ -13,13 +13,15 @@ final class ChannelLink {
     private long fairSince = -1, poorSince = -1;
 
     void ping(int ms) { if (ms > 0) ping = ping < 0 ? ms : (ping * 2 + ms) / 3; }
-    void stalled(long now) { stalls.add(now); }
+    void stalled(long now) { if (!inGrace(now)) stalls.add(now); }
+    private boolean inGrace(long now) { return switchedAt >= 0 && now - switchedAt <= SWITCH_GRACE_MS; }
     /** Reconnects within this long of a VPN server change are the switch itself, not a fault. */
     static final long SWITCH_GRACE_MS = 45_000;
     private long switchedAt = -1;
-    void reconnected(long now) { if (switchedAt < 0 || now - switchedAt > SWITCH_GRACE_MS) reconnects.add(now); }
+    void reconnected(long now) { if (!inGrace(now)) reconnects.add(now); }
     /** readBytes = arrived from the server, demuxBytes = consumed by playback; ratio below 1 means the server link is falling behind. */
     void bytes(long readBytes, long demuxBytes, long now) {
+        if (inGrace(now)) { lastRead = readBytes; lastDemux = demuxBytes; lastAt = now; return; }
         if (lastRead >= 0 && now - lastAt >= 5000) {
             long in = readBytes - lastRead, need = demuxBytes - lastDemux;
             if (in >= 0) { int k = (int) (in * 8 / (now - lastAt)); kbps = kbps < 0 ? k : (kbps + k) / 2; }
@@ -32,7 +34,8 @@ final class ChannelLink {
     /** A VPN server change drops and rebuilds the connection on purpose: start the rating again. */
     /** Opening the channel (incl. a handed-over preview reopening) is not a fault either. */
     void channelOpened(long now) { if (switchedAt < 0) switchedAt = now; }
-    void serverChanged(long now) { switchedAt = now; reset(); ping = -1; stalls.clear(); reconnects.clear(); }
+    /** Keeps the last ping and delivery reading so the rating stays steady through the switch; only old faults are dropped. */
+    void serverChanged(long now) { switchedAt = now; fairSince = -1; poorSince = -1; stalls.clear(); reconnects.clear(); }
     void reset() { lastRead = -1; ratio = -1; kbps = -1; fairSince = -1; poorSince = -1; }
     long shortMs(long now) { return fairSince < 0 ? 0 : now - fairSince; }
     long poorMs(long now) { return poorSince < 0 ? 0 : now - poorSince; }

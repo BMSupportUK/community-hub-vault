@@ -67,4 +67,10 @@ public class ChannelLinkTest {
         ChannelLink l = new ChannelLink(); l.channelOpened(5_000); l.ping(26);
         l.reconnected(25_000); assertEquals("Excellent", l.rating(26_000));
     }
+    @Test public void ratingStaysSteadyThroughVpnSwitch() {
+        ChannelLink l = new ChannelLink(); l.ping(40); assertEquals("Excellent", l.rating(1_000));
+        l.serverChanged(2_000);
+        l.stalled(5_000); l.reconnected(6_000); l.bytes(0, 0, 7_000); l.bytes(10, 1000, 13_000);
+        assertEquals("Excellent", l.rating(14_000));
+    }
 }
