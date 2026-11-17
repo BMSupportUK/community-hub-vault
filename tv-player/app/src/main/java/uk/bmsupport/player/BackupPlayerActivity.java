@@ -232,7 +232,8 @@ public class BackupPlayerActivity extends Activity {
                 default: break;
             }
         });
-        if (carried == null) open(); else applyBoost();
+        // The carried guide preview only holds 1.5s of picture; 4K/UHD needs the full live buffer or the picture freezes while sound carries on.
+        if (carried == null || (isLive() && StreamRecovery.isHeavyName(recoveryName()))) open(); else applyBoost();
         if (catchup()) showSkipToListed(root);
         ui.post(feedTick);
         ui.postDelayed(reportTick, 60000);
@@ -456,6 +457,7 @@ public class BackupPlayerActivity extends Activity {
         feedStatus.reset(android.os.SystemClock.elapsedRealtime());
         feedNote.setVisibility(TextView.GONE);
         Media m = new Media(vlc, Uri.parse(urls[at]));
+        m.addOption(":network-caching=" + BackupBufferPolicy.networkCacheMs(isLive(), PlayerActivity.prefs(this).getString("buffer", StreamRecovery.DEFAULT_BUFFER), recoveryName()));
         boolean software = VideoDecodePolicy.preferSoftware("catchup".equals(getIntent().getStringExtra("content_kind")),
                 PlayerActivity.prefs(this).getString("decoder", "hardware"), getIntent().getStringExtra("content_name"));
         m.setHWDecoderEnabled(!software, false);
