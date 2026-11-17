@@ -16,7 +16,8 @@ export async function vr<T = any>(method: string, path: string, body?: unknown):
   return (text ? JSON.parse(text) : {}) as T;
 }
 
-export type VpnServer = { id: number; name: string; country_code: string; city: string; status: number; visible: number; cpu?: number };
+import { pickServer, type VpnServer } from "./vpn-pick-server";
+export { pickServer, type VpnServer };
 let serverCache: { at: number; list: VpnServer[] } | null = null;
 export async function vpnServers(): Promise<VpnServer[]> {
   if (serverCache && Date.now() - serverCache.at < 10 * 60_000) return serverCache.list;
@@ -24,16 +25,6 @@ export async function vpnServers(): Promise<VpnServer[]> {
   const list = (r.data ?? []).filter((s) => s.status === 1 && s.visible === 1);
   serverCache = { at: Date.now(), list };
   return list;
-}
-
-/** Nearest country first (the box's own, then UK), least busy within it. */
-export function pickServer(list: VpnServer[], cc?: string | null): VpnServer | null {
-  const want = [(cc ?? "").toUpperCase(), "GB", "UK", "NL", "BE", "FR"].filter(Boolean);
-  for (const c of want) {
-    const inC = list.filter((s) => s.country_code?.toUpperCase() === c).sort((a, b) => (a.cpu ?? 0) - (b.cpu ?? 0));
-    if (inC.length) return inC[0];
-  }
-  return list[0] ?? null;
 }
 
 const rand = (n: number, set: string) => Array.from(crypto.getRandomValues(new Uint8Array(n)), (b) => set[b % set.length]).join("");
@@ -105,7 +96,10 @@ export async function boxVpn(device: { id: string; user_id: string | null; geo_c
   if (!a.enabled) return { vpn: { enabled: false, until: ent.until } };
   let serverId = a.server_id, serverName = a.server_name;
   if (!serverId) {
-    const s = pickServer(await vpnServers(), device.geo_country);
+    const { data: used } = await supabaseAdmin.from("vpn_accounts").select("server_id").eq("enabled", true).not("server_id", "is", null);
+    const ours: Record<number, number> = {};
+    for (const u of used ?? []) ours[u.server_id as number] = (ours[u.server_id as number] ?? 0) + 1;
+    const s = pickServer(await vpnServers(), device.geo_country, ours);
     if (!s) return { vpn: { enabled: true, error: "No VPN servers available" } };
     serverId = s.id; serverName = `${s.city} (${s.country_code})`;
     await supabaseAdmin.from("vpn_accounts").update({ server_id: serverId, server_name: serverName }).eq("id", a.id);

@@ -882,7 +882,14 @@ public class MainActivity extends Activity {
             if (hasLogin()) {
                 boolean hadVpn = BoxVpn.present, wasOn = BoxVpn.enabled;
                 BoxVpn.sync(this, prefs.getString("token", ""));
-                if ((hadVpn != BoxVpn.present || wasOn != BoxVpn.enabled) && "home".equals(screen)) ui.post(this::showHome);
+                boolean runNow = BoxVpn.present && BoxVpn.on();
+                if (vpnShown != null && vpnShown != runNow) {
+                    final String note = runNow ? "🔐 VPN on" + (BoxVpn.server.isEmpty() ? "" : " · " + BoxVpn.server) : "🔓 VPN off";
+                    ui.post(() -> vpnNote(note));
+                }
+                boolean dotChanged = vpnShown == null || vpnShown != runNow;
+                vpnShown = runNow;
+                if ((dotChanged || hadVpn != BoxVpn.present || wasOn != BoxVpn.enabled) && "home".equals(screen)) ui.post(this::showHome);
             }
             Checkin.setSlow(r.optInt("slow", 1));
             JSONObject mt = r.optJSONObject("maintenance");
@@ -1386,6 +1393,14 @@ public class MainActivity extends Activity {
         top.addView(logo());
         top.addView(text("  BM Player", 28, TEXT, true));
         top.addView(text("   v" + appVersion(), 16, MUTED, false));
+        if (BoxVpn.present) {
+            // Small VPN dot: green = on, amber = connecting, red = off.
+            int col = !BoxVpn.enabled ? 0xFFE53935 : BoxVpn.on() ? 0xFF43A047 : 0xFFFFB300;
+            TextView vd = text("  ●", 18, col, true);
+            TextView vl = text(" VPN", 14, MUTED, false);
+            vd.setContentDescription(!BoxVpn.enabled ? "VPN off" : BoxVpn.on() ? "VPN on" : "VPN connecting");
+            top.addView(vd); top.addView(vl);
+        }
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (FrameRateMatch.isAndroidTv(this)) {
             final boolean on = FrameRateMatch.chosen50(this);
@@ -3619,6 +3634,15 @@ public class MainActivity extends Activity {
     }
 
     /** Settings › VPN: on/off, best server or a chosen server. Paid VPN only (£2 a month on the order). */
+    private static Boolean vpnShown; // last VPN state shown on screen (null = not yet known)
+
+    /** Very small VPN notice near the bottom; never blocks the picture or takes focus. */
+    private void vpnNote(String msg) {
+        Toast t = Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT);
+        t.setGravity(Gravity.BOTTOM | Gravity.END, dp(24), dp(24));
+        t.show();
+    }
+
     private void vpnSettings() {
         String token = prefs.getString("token", "");
         if (!BoxVpn.present) {
