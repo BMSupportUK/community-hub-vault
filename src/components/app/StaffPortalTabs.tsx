@@ -45,9 +45,9 @@ export function StaffPortalTabs() {
       {isPageAllowed("install-guides", roles, perms) && (
         <Tooltip><TooltipTrigger asChild>
           <Button asChild variant={p === "/install-guides" ? "default" : "ghost"} size="icon">
-            <Link to="/install-guides" aria-label="Install Guides"><Wrench className="size-4" /></Link>
+            <Link to="/install-guides" aria-label="Download App & Install guides"><Wrench className="size-4" /></Link>
           </Button>
-        </TooltipTrigger><TooltipContent>Install Guides</TooltipContent></Tooltip>
+        </TooltipTrigger><TooltipContent>Download App & Install guides</TooltipContent></Tooltip>
       )}
       {canOpenAdminPanel(roles) && (
         <Tooltip><TooltipTrigger asChild>

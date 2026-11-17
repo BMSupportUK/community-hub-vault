@@ -643,7 +643,7 @@ function InstallGuidesPage() {
                     <Link to="/pay/$token" params={{ token: checkoutToken }}><ArrowLeft className="size-4" /> Back to my order</Link>
                   </Button>
                 )}
-                <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">Install Guides</h1>
+                <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">Download App & Install guides</h1>
                 <p className="mt-1 text-sm text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
               <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-fit lg:max-w-full lg:rounded-full">

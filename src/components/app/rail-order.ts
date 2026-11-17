@@ -37,7 +37,7 @@ export const RAIL_EDITOR_ITEMS = {
     { id: "portal:/home/$channel", label: "Talk" },
     { id: "portal:/portal/logins", label: "Service Credentials" },
     { id: "portal:/send-to-app", label: "Link Device" },
-    { id: "portal:/install-guides", label: "Install Guides" },
+    { id: "portal:/install-guides", label: "Download App & Install guides" },
     { id: "portal:/knowledge-base", label: "Knowledge Base" },
     { id: "portal:/leaderboard", label: "Referrals" },
     { id: "/sports-guides", label: "Sports guides" },
