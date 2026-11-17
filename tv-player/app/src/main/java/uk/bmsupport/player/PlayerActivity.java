@@ -66,6 +66,52 @@ public class PlayerActivity extends Activity {
      * no known length never counts as "playing", so it never hides the controls). This checks once
      * a second and takes the controls away shortly after the last press, whatever the player thinks.
      */
+    // Same "Channel connection" pill as the backup engine: ping to the channel's own server, pauses and reconnects.
+    private final ChannelLink link = new ChannelLink();
+    private TextView linkNote;
+    private long lastLinkPing;
+    private String linkVpnServer;
+    private final Runnable linkTick = new Runnable() {
+        @Override public void run() {
+            if (isFinishing() || linkNote == null) return;
+            long now = android.os.SystemClock.elapsedRealtime();
+            if (!"live".equals(kind()) && !"catchup".equals(kind())) { linkNote.setVisibility(android.view.View.GONE); return; }
+            if (now - lastLinkPing >= 15000 && liveUrls != null && urlAt < liveUrls.length) {
+                lastLinkPing = now;
+                final String url = liveUrls[urlAt];
+                new Thread(() -> {
+                    try {
+                        java.net.URI u = java.net.URI.create(url);
+                        int port = u.getPort() > 0 ? u.getPort() : ("https".equalsIgnoreCase(u.getScheme()) ? 443 : 80);
+                        long t0 = android.os.SystemClock.elapsedRealtime();
+                        try (java.net.Socket sk = new java.net.Socket()) {
+                            sk.connect(new java.net.InetSocketAddress(u.getHost(), port), 5000);
+                            int ms = (int) (android.os.SystemClock.elapsedRealtime() - t0);
+                            ui.post(() -> link.ping(Math.max(1, ms)));
+                        }
+                    } catch (Exception ignored) { }
+                }, "channel-ping").start();
+            }
+            if (!java.util.Objects.equals(linkVpnServer, BoxVpn.server)) { if (linkVpnServer != null) link.serverChanged(now); linkVpnServer = BoxVpn.server; }
+            String rating = link.rating(now);
+            android.content.SharedPreferences saved = getSharedPreferences("bmplayer", MODE_PRIVATE);
+            long since = saved.getLong("np_since", 0);
+            if (since > 0 && !saved.getBoolean("np_preview", false)) {
+                try {
+                    String enc = new org.json.JSONObject().put("since", since).put("ping_ms", link.pingMs()).put("stalls", link.stalls(now))
+                            .put("reconnects", link.reconnects(now)).put("delivery_ratio", link.deliveryRatio())
+                            .put("short_ms", link.shortMs(now)).put("poor_ms", link.poorMs(now)).toString();
+                    if (!enc.equals(saved.getString("channel_link_snapshot", null))) saved.edit().putString("channel_link_snapshot", enc).apply();
+                } catch (org.json.JSONException ignored) { }
+            }
+            linkNote.setText(link.label(now));
+            linkNote.setBackgroundColor("Poor".equals(rating) ? 0xE0B91C1C : "Fair".equals(rating) ? 0xE0B45309
+                    : "Checking".equals(rating) ? 0xB30B1220 : 0xE0166534);
+            boolean controls = controlsRow != null && controlsRow.getVisibility() == android.view.View.VISIBLE;
+            linkNote.setVisibility(controls || ("Poor".equals(rating) && stallStartedAt > 0) ? android.view.View.VISIBLE : android.view.View.GONE);
+            ui.postDelayed(this, 1000);
+        }
+    };
     private final Runnable hideControls = new Runnable() {
         @Override public void run() {
             if (view != null && InactivityPolicy.hideControls(lastPressAt, android.os.SystemClock.elapsedRealtime())) {
@@ -424,6 +470,13 @@ public class PlayerActivity extends Activity {
         root.addView(banner, lp);
         controlsRow = PlayerActionControls.add(this, root, () -> {}, this::showReport, () -> offerSwap(false), this::chooseSubtitles);
         final android.widget.LinearLayout ctrlRow = controlsRow;
+        linkNote = new TextView(this);
+        linkNote.setTextColor(android.graphics.Color.WHITE); linkNote.setTextSize(15); linkNote.setPadding(24, 10, 24, 10);
+        linkNote.setVisibility(android.view.View.GONE);
+        FrameLayout.LayoutParams linkLp = new FrameLayout.LayoutParams(-2, -2, android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL);
+        linkLp.topMargin = 16;
+        root.addView(linkNote, linkLp);
+        ui.post(linkTick);
         // Films and series always fill the screen (Zoom); live TV and catch up keep their own shape.
         if (PlayerControls.canSkip(kind())) { view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM); ui.postDelayed(barWatch, 3000); }
         view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> {
@@ -656,6 +709,7 @@ public class PlayerActivity extends Activity {
                 long now = android.os.SystemClock.elapsedRealtime();
                 if (s == Player.STATE_BUFFERING && everReady && stallStartedAt == 0) {
                     stallStartedAt = now;
+                    link.stalled(now);
                     showFeed(FeedStatus.label(blackSent, true));
                     ui.removeCallbacks(cleanPlay);
                     bufferWatch.reset();
@@ -903,6 +957,9 @@ public class PlayerActivity extends Activity {
 
     private void open(long at) {
         bufferWatch.reset();
+        long linkNow = android.os.SystemClock.elapsedRealtime();
+        link.channelOpened(linkNow);
+        if (everReady) link.reconnected(linkNow);
         MediaItem mi = item(liveUrls[urlAt]);
         // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
         if ("live".equals(kind()) && StreamRecovery.overrideLiveOffset(liveUrls[urlAt])) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
