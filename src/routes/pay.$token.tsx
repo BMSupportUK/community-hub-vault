@@ -95,7 +95,7 @@ function PayPage() {
   const load = useCallback(async (pw: string) => {
     const r = await fetchCheckout({ data: { token, password: pw } });
     if (!r.ok) return false;
-    setView({ order: r.order, items: r.items, invoice: r.invoice, bank: r.bank, canPayByBank: Boolean((r as { canPayByBank?: boolean }).canPayByBank), qdCode: (r as { qdCode?: { label: string; code: string } | null }).qdCode ?? null });
+    setView({ order: r.order, items: r.items, invoice: r.invoice, bank: r.bank, canPayByBank: Boolean((r as { canPayByBank?: boolean }).canPayByBank), squareLocked: Boolean((r as { squareLocked?: boolean }).squareLocked), qdCode: (r as { qdCode?: { label: string; code: string } | null }).qdCode ?? null });
     return true;
   }, [fetchCheckout, token]);
 
@@ -239,7 +239,7 @@ function PayPage() {
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
-        payByBank={["square", "stripe", "wise"].includes(view.order.method) && !view.order.paidAt && !view.order.cancelled ? (
+        payByBank={!(view as { squareLocked?: boolean }).squareLocked && ["square", "stripe", "wise"].includes(view.order.method) && !view.order.paidAt && !view.order.cancelled ? (
           <PayByBankSection token={token} password={pw} hideCardNote={view.order.method === "wise"} />
         ) : undefined}
         appLogin={view.order.accountSetupAt && !view.order.cancelled ? <OrderAppLogin token={token} password={pw} /> : undefined}

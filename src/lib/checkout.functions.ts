@@ -56,7 +56,8 @@ export const getCheckout = createServerFn({ method: "POST" })
     // Card orders owned by a bank-approved customer can still switch to bank
     // transfer on this page — the method is never a one-way door.
     let canPayByBank = false;
-    if (!order.paid_at && ["square", "stripe", "crypto", ""].includes(method) && (order as any).user_id) {
+    const squareLocked = (order as any).customer_type === "manual" && method === "square";
+    if (!squareLocked && !order.paid_at && ["square", "stripe", "crypto", ""].includes(method) && (order as any).user_id) {
       const { data: allowed } = await supabaseAdmin.rpc("can_pay_by_bank_transfer", { _user_id: String((order as any).user_id) });
       canPayByBank = Boolean(allowed);
     }
@@ -102,6 +103,7 @@ export const getCheckout = createServerFn({ method: "POST" })
       invoice,
       bank,
       canPayByBank,
+      squareLocked,
       qdCode,
       invoiceTemplate: (invoiceSetting?.value as Record<string, string> | null) ?? undefined,
     };

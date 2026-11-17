@@ -20,7 +20,7 @@ const sqBase = () =>
 async function loadOrder(supabaseAdmin: any, orderId: string) {
   const { data: order } = await supabaseAdmin
     .from("orders")
-    .select("id,user_id,order_ref,total_cents,paid_at,status,manual_pay_method")
+    .select("id,user_id,order_ref,total_cents,paid_at,status,manual_pay_method,customer_type")
     .eq("id", orderId)
     .maybeSingle();
   if (!order) throw new Error("Order not found");
@@ -35,10 +35,18 @@ async function loadOrder(supabaseAdmin: any, orderId: string) {
  * methods (a late Stripe/crypto payment may have landed), and refuse to start a
  * new one while another payment is already underway for the same order.
  */
+/** Manual orders where staff chose Square must be paid through Square only. */
+export function squareLockedOrder(order: { customer_type?: unknown; manual_pay_method?: unknown }) {
+  return String(order.customer_type ?? "") === "manual" && String(order.manual_pay_method ?? "").toLowerCase() === "square";
+}
+
 async function guardAgainstDoublePayment(supabaseAdmin: any, orderId: string, method: "square" | "stripe" | "nowpayments") {
   try { await syncStripeSession(supabaseAdmin, orderId); } catch { /* ignore */ }
   try { await syncCryptoPayment(supabaseAdmin, orderId); } catch { /* ignore */ }
   const order = await loadOrder(supabaseAdmin, orderId);
+  if (squareLockedOrder(order) && method !== "square") {
+    throw new Error("This order is set to be paid by card through Square. Please use the card form on this page.");
+  }
   const { data: link } = await supabaseAdmin.from("order_checkout_links").select("payment_sent_at").eq("order_id", orderId).maybeSingle();
   if (link?.payment_sent_at) {
     throw new Error("You've already told us a bank transfer was sent for this order. Please wait for us to confirm it, or message us in the chat before paying another way.");
@@ -151,6 +159,7 @@ export const switchCheckoutPayMethod = createServerFn({ method: "POST" })
     const { supabaseAdmin, link } = u;
     const order = await loadOrder(supabaseAdmin, link.order_id);
     if (String(order.manual_pay_method ?? "").toLowerCase() === data.method) return { ok: true as const };
+    if (squareLockedOrder(order)) throw new Error("This order is set to be paid by card through Square.");
     const { data: linkRow } = await supabaseAdmin
       .from("order_checkout_links")
       .select("payment_sent_at")
