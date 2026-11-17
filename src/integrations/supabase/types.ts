@@ -10440,6 +10440,16 @@ export type Database = {
           session_count: number
         }[]
       }
+      admin_vpn_subscriber_lookup: {
+        Args: { p_credential_id?: string; p_query?: string }
+        Returns: {
+          app_login_name: string
+          expiry_at: string
+          id: string
+          owner_id: string
+          subscriber_username: string
+        }[]
+      }
       answer_tv_request: {
         Args: { _id: string; _link_id?: string; _link_kind?: string }
         Returns: {

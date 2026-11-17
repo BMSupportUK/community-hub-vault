@@ -21,7 +21,11 @@ export const vpnOverview = createServerFn({ method: "GET" }).middleware([require
   const credIds = [...new Set([...(subs ?? []).map((s) => s.credential_id), ...(accs ?? []).map((a) => a.credential_id)])];
   const devIds = (accs ?? []).map((a) => a.device_id).filter(Boolean) as string[];
   const [{ data: creds }, { data: devs }] = await Promise.all([
-    credIds.length ? supabaseAdmin.from("app_credentials").select("id, app_login_name, expiry_at").in("id", credIds) : Promise.resolve({ data: [] as any[] }),
+    Promise.all(credIds.map(async (id) => {
+      const { data, error } = await context.supabase.rpc("admin_vpn_subscriber_lookup", { p_credential_id: id });
+      if (error) throw new Error(error.message);
+      return data?.[0];
+    })).then((rows) => ({ data: rows.filter(Boolean) })),
     devIds.length ? supabaseAdmin.from("player_devices").select("id, name, platform").in("id", devIds) : Promise.resolve({ data: [] as any[] }),
   ]);
   const credMap = new Map((creds ?? []).map((c: any) => [c.id, c]));
@@ -42,8 +46,8 @@ export const findSubscribers = createServerFn({ method: "POST" }).middleware([re
   .inputValidator((d: { q: string }) => z.object({ q: z.string().trim().min(2).max(60) }).parse(d))
   .handler(async ({ data, context }) => {
     await staffOnly(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows } = await supabaseAdmin.from("app_credentials").select("id, owner_id, app_login_name, expiry_at").ilike("app_login_name", `%${data.q.replace(/[%_]/g, "")}%`).limit(15);
+    const { data: rows, error } = await context.supabase.rpc("admin_vpn_subscriber_lookup", { p_query: data.q });
+    if (error) throw new Error(error.message);
     return rows ?? [];
   });
 
@@ -55,7 +59,9 @@ export const allocateVpn = createServerFn({ method: "POST" }).middleware([requir
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { vr, newVpnLogin, vpnEntitlement, syncRemote } = await import("./vpnresellers.server");
     const { lockVpnCreds } = await import("./box-vpn.server");
-    const { data: cred } = await supabaseAdmin.from("app_credentials").select("id, owner_id, expiry_at").eq("id", data.credentialId).maybeSingle();
+    const { data: credentials, error: credentialError } = await context.supabase.rpc("admin_vpn_subscriber_lookup", { p_credential_id: data.credentialId });
+    if (credentialError) throw new Error(credentialError.message);
+    const cred = credentials?.[0];
     if (!cred?.owner_id) return { ok: false, error: "That subscriber login wasn't found." };
     let accountId: number, username: string, password: string;
     if (data.username) {
@@ -75,10 +81,10 @@ export const allocateVpn = createServerFn({ method: "POST" }).middleware([requir
       const l = newVpnLogin(); username = l.username; password = l.password;
       accountId = (await vr<{ data: { id: number } }>("POST", "/accounts", { username, password })).data.id;
     }
-    await supabaseAdmin.from("vpn_subscriptions").upsert({ credential_id: cred.id!, user_id: cred.owner_id, active: true, source: "admin", updated_at: new Date().toISOString() });
-    const { data: row } = await supabaseAdmin.from("vpn_accounts").insert({ credential_id: cred.id!, user_id: cred.owner_id, vpnr_account_id: accountId, username, cred_cipher: await lockVpnCreds(username, password), source: "allocated" })
+    await supabaseAdmin.from("vpn_subscriptions").upsert({ credential_id: cred.id, user_id: cred.owner_id, active: true, source: "admin", updated_at: new Date().toISOString() });
+    const { data: row } = await supabaseAdmin.from("vpn_accounts").insert({ credential_id: cred.id, user_id: cred.owner_id, vpnr_account_id: accountId, username, cred_cipher: await lockVpnCreds(username, password), source: "allocated" })
       .select("id, vpnr_account_id, enabled, remote_active, expire_at, server_id, server_name, credential_id").single();
-    if (row) await syncRemote(row as any, (await vpnEntitlement(cred.id!))?.until ?? null).catch(() => null);
+    if (row) await syncRemote(row as any, (await vpnEntitlement(cred.id))?.until ?? null).catch(() => null);
     return { ok: true };
   });
 

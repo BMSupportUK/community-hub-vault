@@ -2647,6 +2647,13 @@
       "when": 1794914071758,
       "tag": "0377_vpnresellers_vpn",
       "breakpoints": true
+    },
+    {
+      "idx": 378,
+      "version": "7",
+      "when": 1794915745024,
+      "tag": "0378_vpn_subscriber_lookup",
+      "breakpoints": true
     }
   ]
 }

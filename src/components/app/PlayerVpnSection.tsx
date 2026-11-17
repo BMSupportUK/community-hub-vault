@@ -51,10 +51,23 @@ export function PlayerVpnSection() {
 
 function AllocateBox({ onDone }: { onDone: () => void }) {
   const find = useServerFn(findSubscribers), allocate = useServerFn(allocateVpn);
-  const [q, setQ] = useState(""), [hits, setHits] = useState<{ id: string; app_login_name: string; expiry_at: string | null }[]>([]);
-  const [pick, setPick] = useState<{ id: string; app_login_name: string } | null>(null);
+  type Hit = Awaited<ReturnType<typeof findSubscribers>>[number];
+  const [q, setQ] = useState(""), [hits, setHits] = useState<Hit[]>([]);
+  const [pick, setPick] = useState<Hit | null>(null);
+  const [searching, setSearching] = useState(false), [searchError, setSearchError] = useState("");
   const [username, setUsername] = useState(""), [password, setPassword] = useState(""), [busy, setBusy] = useState(false);
-  useEffect(() => { if (q.trim().length < 2) { setHits([]); return; } const t = setTimeout(() => find({ data: { q } }).then((r) => setHits(r.filter((x) => x.id).map((x) => ({ id: x.id!, app_login_name: x.app_login_name ?? "?", expiry_at: x.expiry_at })))).catch(() => setHits([])), 300); return () => clearTimeout(t); }, [q]);
+  useEffect(() => {
+    let current = true;
+    setHits([]); setSearchError("");
+    if (q.trim().length < 2 || pick) { setSearching(false); return; }
+    setSearching(true);
+    const t = setTimeout(() => {
+      find({ data: { q } }).then((r) => { if (current) setHits(r); })
+        .catch((e) => { if (current) setSearchError((e as Error).message || "Couldn't search subscribers. Please try again."); })
+        .finally(() => { if (current) setSearching(false); });
+    }, 300);
+    return () => { current = false; clearTimeout(t); };
+  }, [q, pick]);
 
   const save = async () => {
     if (!pick) return;
@@ -69,10 +82,13 @@ function AllocateBox({ onDone }: { onDone: () => void }) {
   return <div className="space-y-3 rounded-xl border border-border bg-surface p-4">
     <h3 className="font-semibold">Allocate a VPN to a subscriber</h3>
     <p className="text-xs text-muted-foreground">For customers already using the VPN. Enter the VPNresellers login they already have, or leave it blank to make a new one. It ends on the same day as their subscription.</p>
-    {pick ? <p className="text-sm">Subscriber: <b>{pick.app_login_name}</b> <button className="ml-2 text-xs underline" onClick={() => setPick(null)}>Change</button></p> : <>
-      <Input placeholder="Search subscriber login" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search subscriber login" />
+    {pick ? <p className="text-sm">Subscriber: <b>{pick.subscriber_username ? `${pick.subscriber_username} · ` : ""}{pick.app_login_name}</b> <Button variant="link" size="sm" onClick={() => setPick(null)}>Change</Button></p> : <>
+      <Input placeholder="Search website username or app login" maxLength={60} value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search subscriber login" />
+      {searching && <p role="status" className="text-xs text-muted-foreground">Searching…</p>}
+      {searchError && <p role="alert" className="text-xs text-destructive">{searchError}</p>}
+      {!searching && !searchError && q.trim().length >= 2 && hits.length === 0 && <p role="status" className="text-xs text-muted-foreground">No subscriber logins found.</p>}
       {hits.length > 0 && <div className="max-h-48 overflow-y-auto rounded-md border border-border">{hits.map((h) =>
-        <button key={h.id} className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2" onClick={() => setPick(h)}>{h.app_login_name} <span className="text-xs text-muted-foreground">ends {day(h.expiry_at)}</span></button>)}</div>}
+        <Button key={h.id} variant="ghost" className="h-auto w-full justify-start whitespace-normal px-3 py-2 text-left text-sm" onClick={() => setPick(h)}><span>{h.subscriber_username ? `${h.subscriber_username} · ` : ""}{h.app_login_name} <span className="text-xs text-muted-foreground">ends {day(h.expiry_at)}</span></span></Button>)}</div>}
     </>}
     <div className="grid gap-2 sm:grid-cols-2">
       <Input placeholder="Existing VPN username (optional)" value={username} onChange={(e) => setUsername(e.target.value)} aria-label="Existing VPN username" />
