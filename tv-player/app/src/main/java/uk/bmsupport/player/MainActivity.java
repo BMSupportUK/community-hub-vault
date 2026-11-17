@@ -3718,7 +3718,7 @@ public class MainActivity extends Activity {
             new AlertDialog.Builder(this).setTitle("Catch-up starts")
                     .setSingleChoiceItems(cuL, sel, (d, w) -> { prefs.edit().putInt(CatchupStart.PREF, CatchupStart.CHOICES[w]).apply(); d.dismiss(); showSettings(); })
                     .setMessage(null).setNegativeButton("Cancel", null).show();
-            Toast.makeText(this, "Guide times are slot times and recordings often begin early. Catch up opens this many minutes after the listed start. If the show before is still on, press Skip ahead 2 min; BM Player remembers where that channel really starts next time.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Guide times are slot times and recordings often begin early. Catch up opens this many minutes after the listed start. If the show before is still on, press Fast forward (each press +1 min, presses add up); BM Player remembers where that channel really starts next time.", Toast.LENGTH_LONG).show();
         }));
         boolean pdns = prefs.getBoolean(PrivateDns.PREF, true);
         boxes.add(settingBox("🕶", "Private DNS: " + (pdns ? "On" : "Off"), "Hides lookups from your broadband provider", v ->

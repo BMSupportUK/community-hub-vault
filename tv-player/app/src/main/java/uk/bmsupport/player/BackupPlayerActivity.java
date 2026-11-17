@@ -288,28 +288,19 @@ public class BackupPlayerActivity extends Activity {
      * playback has got to, stays up while it is being used, and the point reached is remembered per channel so
      * the next catch up on that channel opens there.
      */
-    private android.widget.Button skipBtn;
+    private android.view.View skipBtn;
+    private CatchupSeek seek;
     private FrameLayout skipRoot;
     private final Runnable hideSkip = () -> { if (skipBtn != null && skipBtn.getParent() != null) skipRoot.removeView(skipBtn); };
     private void showSkipToListed(FrameLayout root) {
         final long listed = getIntent().getLongExtra("catchup_listed", 0);
         if (listed <= 0) return;
-        final android.widget.Button b = new android.widget.Button(this);
-        skipBtn = b; skipRoot = root;
-        b.setText("⏭ Old show still on? Skip ahead 2 min");
-        b.setAllCaps(false);
-        b.setOnClickListener(v -> {
-            cuRetries = 0;
-            long to = CatchupStart.skipAhead(cuReached(), listed, cuEnd);
-            catchupOpenAt(to);
-            learnCatchupStart(to);
-            ui.removeCallbacks(hideSkip); ui.postDelayed(hideSkip, 20000);
-            b.requestFocus();
-        });
+        seek = new CatchupSeek(this, this::catchupJump, () -> { ui.removeCallbacks(hideSkip); ui.postDelayed(hideSkip, 20000); });
+        skipBtn = seek.row; skipRoot = root;
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
         lp.topMargin = 90; lp.rightMargin = 40;
-        root.addView(b, lp);
-        b.requestFocus();
+        root.addView(seek.row, lp);
+        seek.forward.requestFocus();
         ui.postDelayed(hideSkip, 20000);
     }
     /** Remember where this channel's programmes really start, so its next catch up opens there. */
@@ -579,7 +570,7 @@ public class BackupPlayerActivity extends Activity {
         // OK on the Skip ahead button must press it, not just reveal the controls.
         if (e.getAction() == KeyEvent.ACTION_DOWN && skipBtn != null && skipBtn.getParent() != null
                 && (e.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || e.getKeyCode() == KeyEvent.KEYCODE_ENTER)
-                && (skipBtn.isFocused() || controller == null || !controller.isVisible())) { skipBtn.performClick(); return true; }
+                && (seek.hasFocus() || controller == null || !controller.isVisible())) { seek.click(); return true; }
         if (e.getAction() == KeyEvent.ACTION_DOWN && mp != null) {
             switch (e.getKeyCode()) {
                 case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: setPlaying(paused); showControls(); return true;

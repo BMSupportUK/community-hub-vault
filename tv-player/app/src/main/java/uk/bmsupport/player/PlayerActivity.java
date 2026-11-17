@@ -349,23 +349,20 @@ public class PlayerActivity extends Activity {
     private void showSkipToListed() {
         final long listed = getIntent().getLongExtra("catchup_listed", 0);
         if (rootView == null || listed <= 0) return;
-        final android.widget.Button b = new android.widget.Button(this);
-        final Runnable hide = () -> { if (b.getParent() != null) rootView.removeView(b); };
-        b.setText("⏭ Old show still on? Skip ahead 2 min");
-        b.setAllCaps(false);
-        b.setOnClickListener(v -> {
+        final android.view.View[] box = new android.view.View[1];
+        final Runnable hide = () -> { if (box[0] != null && box[0].getParent() != null) rootView.removeView(box[0]); };
+        final CatchupSeek seek = new CatchupSeek(this, minutes -> {
             long reached = cuSegStart + (player == null ? 0 : Math.max(0, player.getCurrentPosition()) / 1000);
-            long to = CatchupStart.skipAhead(reached, listed, cuEnd);
+            long to = CatchupStart.jump(reached, minutes, listed, cuEnd);
             catchupOpenAt(to);
             String id = getIntent().getStringExtra("catchup_id");
             if (id != null) prefs(this).edit().putInt(CatchupStart.learnKey(id), CatchupStart.learned(to, listed)).apply();
-            ui.removeCallbacks(hide); ui.postDelayed(hide, 20000);
-            b.requestFocus();
-        });
+        }, () -> { ui.removeCallbacks(hide); ui.postDelayed(hide, 20000); });
+        final android.view.View b = seek.row; box[0] = b;
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
         lp.topMargin = 40; lp.rightMargin = 40;
         rootView.addView(b, lp);
-        b.requestFocus();
+        seek.forward.requestFocus();
         ui.postDelayed(hide, 20000);
     }
 
