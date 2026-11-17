@@ -8,6 +8,12 @@ The VPN switch, server picker and per-device login come back, this time using yo
 - **Automatic logins:** when a device links, or first turns the VPN on, BM Support creates a VPNresellers account for it with a generated username and a strong password. The box fetches these itself, so customers never type them in or see the password.
 - **Shut-off rules:** when a device is unlinked or its subscription runs out, its VPN account is switched off at VPNresellers too. Staff and test accounts stay exempt, as they are now.
 
+## Charging for the VPN in the shop
+- Every package in the shop (Single 1/6/12 months, Multi Room, Triple Room) gets an optional **"Add VPN"** tick box at checkout, priced per month of the package (price to be confirmed).
+- The VPN price is added to the order total and shown on the order, the invoice, and Profit & costs as its own line.
+- Each paid order with the VPN creates or extends the VPN logins for that customer's devices until the package's end date. Renewals carry it on if it's ticked again. With no VPN on the order, the switch in the player shows "Add VPN to your next order" instead.
+- Staff manual orders get the same tick box.
+
 ## What I need from you
 - Your **VPNresellers API token**. You make it in your VPNresellers reseller panel, and you'll enter it in a secure box, never in chat. I'm not linked to VPNresellers yet.
 
@@ -24,7 +30,8 @@ The VPN switch, server picker and per-device login come back, this time using yo
 5. Add the dashboard VPN page to the BM Player admin sections, with its own role permission.
 6. Android: a built-in VPN connection with the Settings card, an "always reconnect" option, and a key icon while connected.
 7. Add tests for: a generated login is unique per device; an unlinked or expired device gets switched off; a customer can't control another device's VPN.
-8. Build and release box 5.84 after the tests pass, then check the download from the website.
+8. Shop: add the VPN option to the checkout, order total, invoices and profit report; switch VPN access on when an order is paid and off when it expires.
+9. Build and release box 5.84 after the tests pass, then check the download from the website.
 
 ## Technical details
 - VPNresellers REST API (bearer token): accounts create/enable/disable/delete/change_password, servers list, configuration download. Base URL and endpoints to be checked against their docs before coding; it becomes a custom connector so the token never touches code.
