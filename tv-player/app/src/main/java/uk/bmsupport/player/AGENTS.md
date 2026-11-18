@@ -22,3 +22,4 @@
 - Sports Guide previews a channel in its own preview box first (OK previews, OK again on the same channel carries it full screen), reusing the Live TV stage/hand-back so neither direction reconnects.
 - The home-screen 50Hz button also resets video: it releases the preview and any carried/hand-back players and drops the stage surface before the display mode changes.
 - The guide-load drawer snapshot must stay cheap: never call streamUrls() (Keystore binder) or categoryName() (reads cache file) per channel; use the loaded category rows. Both caused ANRs/slow EPG loads.
+- VPN off is applied on the device first (tunnel down, userOff) before the website is told, and sync re-sends "off" instead of bringing the tunnel back while userOff, because the off request travels through a possibly broken tunnel.

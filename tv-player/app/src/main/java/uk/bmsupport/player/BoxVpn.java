@@ -33,8 +33,14 @@ final class BoxVpn {
     private BoxVpn() { }
 
     /** Home-screen VPN icons: "best" = move to the best server now, "on"/"off" = switch the VPN. */
+    /** The customer switched off here: stays off locally even if the website hasn't heard yet. */
+    static volatile boolean userOff;
     static void command(Activity a, String token, String what, Runnable after) {
+        if ("off".equals(what)) { userOff = true; enabled = false; }
+        else userOff = false;
         new Thread(() -> {
+            // Switch off on the box first: the website message used to travel through the tunnel, so a bad tunnel kept the VPN on.
+            if ("off".equals(what)) { down(a); report(token, "off", null, "Turned off on the box", false); }
             try {
                 JSONObject b = new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", what);
                 if ("best".equals(what) || "on".equals(what)) b.put("pings", bestPings(a, token));
@@ -55,6 +61,7 @@ final class BoxVpn {
 
     /** Settings › VPN › Choose a server. */
     static void server(Activity a, String token, int serverId, Runnable after) {
+        userOff = false;
         new Thread(() -> {
             try { Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", "server").put("server_id", serverId).toString()); } catch (Exception ignored) { }
             sync(a, token);
@@ -87,7 +94,14 @@ final class BoxVpn {
                 Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", "off").toString());
                 return;
             }
-            Step s = decide(v != null, v != null && v.optBoolean("enabled"), config, applied);
+            if (userOff && enabled) {
+                // The off message didn't arrive: send it again and keep the tunnel down.
+                enabled = false;
+                if (applied != null) down(a);
+                Net.postJson(Net.SITE + "/api/public/player", new JSONObject().put("action", "vpn_command").put("device_token", token).put("command", "off").toString());
+                return;
+            }
+            Step s = decide(v != null, enabled, config, applied);
             if (s == Step.DOWN) { down(a); report(token, "off", null, "Turned off from the website", false); return; }
             if (s != Step.UP) return;
             String server = v.optString("server");
