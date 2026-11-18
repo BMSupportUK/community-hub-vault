@@ -21,6 +21,9 @@ const PROFIT_STATUSES = ["paid", "processing", "shipped", "completed"];
 
 type Product = { id: string; name: string; price_cents: number };
 type Item = { product_id: string | null; product_name: string; unit_price_cents: number; quantity: number; unit_cost_cents: number | null };
+/** Profit counts a sale on the day it was paid, even when an early renewal's start date is in the future. */
+export const profitSaleAt = (o: { created_at: string; paid_at?: string | null }) => o.paid_at || o.created_at;
+
 type Order = { id: string; user_id?: string | null; customer_type: string | null; status: string; total_cents: number; created_at: string; shipping_name: string | null; existing_username: string | null; order_items: Item[]; payments: ProfitPayment[] };
 
 const calc = calculateProfit;
@@ -44,7 +47,7 @@ export function ProfitCostsPanel() {
     const [p, c, o] = await Promise.all([
       supabase.from("products").select("id, name, price_cents").order("name"),
       supabase.from("product_costs").select("product_id, cost_cents"),
-      supabase.from("orders").select("id, user_id, customer_type, status, total_cents, created_at, shipping_name, existing_username").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("orders").select("id, user_id, customer_type, status, total_cents, created_at, paid_at, shipping_name, existing_username").order("created_at", { ascending: false }).limit(5000),
     ]);
     const loadError = p.error ?? c.error ?? o.error;
     if (loadError) { toast.error(loadError.message); return; }
@@ -88,7 +91,7 @@ export function ProfitCostsPanel() {
     }
     setMethodOf(methods);
     setUserNames(await fetchOrderUserNames((o.data ?? []).map((x) => x.user_id as string | null)));
-    setOrders(((o.data ?? []) as unknown as Order[]).map((x) => ({ ...x, order_items: items.filter((i) => i.order_id === x.id), payments: payments[x.id] ?? [] })).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
+    setOrders(((o.data ?? []) as unknown as (Order & { paid_at?: string | null })[]).map((x) => ({ ...x, created_at: profitSaleAt(x), order_items: items.filter((i) => i.order_id === x.id), payments: payments[x.id] ?? [] })).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
     setLoaded(true);
   };
   useEffect(() => { if (!loaded) void load(); }, [loaded]);
