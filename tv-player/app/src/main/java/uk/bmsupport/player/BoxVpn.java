@@ -69,6 +69,11 @@ final class BoxVpn {
         }).start();
     }
 
+    /** Home-screen pill text: once connected it names the location, e.g. "On · London #3 (GB)". */
+    static String homeLabel(String state, boolean running, String server) {
+        return running && server != null && !server.trim().isEmpty() ? state + " · " + server.trim() : state;
+    }
+
     /** Label for the on/off icon. */
     static String toggleLabel(boolean enabled, boolean running) {
         return enabled ? (running ? "🔒 VPN: On" : "🔒 VPN: Connecting") : "🔓 VPN: Off";

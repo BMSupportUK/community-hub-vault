@@ -1413,7 +1413,7 @@ public class MainActivity extends Activity {
             // VPN switch: the customer turns it on/off here; switching on picks the lowest-ping server in their own country.
             int col = !BoxVpn.enabled ? 0xFFFF5252 : BoxVpn.on() ? 0xFF69F06E : 0xFFFFC400;
             String state = !BoxVpn.enabled ? "Off" : BoxVpn.on() ? "On" : "Connecting";
-            android.text.SpannableString sp = new android.text.SpannableString("● VPN: " + state);
+            android.text.SpannableString sp = new android.text.SpannableString("● VPN: " + BoxVpn.homeLabel(state, BoxVpn.on(), BoxVpn.server));
             sp.setSpan(new android.text.style.ForegroundColorSpan(col), 0, 1, 0);
             Button vpnBtn = headerPill("", v -> {
                 boolean turnOn = !BoxVpn.enabled;
@@ -1421,7 +1421,7 @@ public class MainActivity extends Activity {
                 BoxVpn.command(this, prefs.getString("token", ""), turnOn ? "on" : "off", this::showHome);
             });
             vpnBtn.setText(sp);
-            vpnBtn.setContentDescription(!BoxVpn.enabled ? "VPN off, press to switch on" : "VPN " + state.toLowerCase() + ", press to switch off");
+            vpnBtn.setContentDescription(!BoxVpn.enabled ? "VPN off, press to switch on" : "VPN " + BoxVpn.homeLabel(state, BoxVpn.on(), BoxVpn.server).toLowerCase() + ", press to switch off");
             LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(-2, -2);
             vlp.leftMargin = (int) (10 * dd);
             top.addView(vpnBtn, vlp);        } else {
