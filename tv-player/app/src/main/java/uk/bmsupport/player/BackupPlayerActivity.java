@@ -24,6 +24,8 @@ import org.videolan.libvlc.util.VLCVideoLayout;
  * by itself when the main player can't open or keep a stream going; customers install nothing extra.
  */
 public class BackupPlayerActivity extends Activity {
+    /** Corner VPN light on the backup player too, matching the Media3 player. */
+    @Override protected void onResume() { super.onResume(); BoxVpn.badge(this); getWindow().getDecorView().postDelayed(() -> BoxVpn.badge(this), 1500); }
     @Override protected void attachBaseContext(android.content.Context b) { super.attachBaseContext(PhoneScale.wrap(b)); }
     private androidx.media3.ui.PlayerControlView controller;
     private android.widget.LinearLayout controlsRow;
