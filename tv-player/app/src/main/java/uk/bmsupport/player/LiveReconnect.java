@@ -3,12 +3,12 @@ package uk.bmsupport.player;
 /** Live TV drop recovery: keep reopening the same channel for up to two minutes with growing gaps before giving up. */
 final class LiveReconnect {
     static final long WINDOW_MS = 120000;
-    private static final long[] GAPS = {0, 2000, 3000, 5000, 8000, 10000};
+    private static final long[] GAPS = {1000, 2000, 3000, 5000, 8000, 10000};
     private long since = -1; private int tries;
     private long lastPictures = -1, lastAudio = -1, progressAt = -1;
-    static final long STALL_MS = 3000;
+    static final long STALL_MS = 12000;
     static final long UHD_STALL_MS = 30000, UHD_NO_DATA_MS = 20000;
-    private long stallMs = STALL_MS, noDataMs = 3000;
+    private long stallMs = STALL_MS, noDataMs = 8000;
     /** UHD channels wait longer before a gap counts as a drop, as other players do. */
     void patient(boolean uhd) { stallMs = uhd ? UHD_STALL_MS : STALL_MS; noDataMs = uhd ? UHD_NO_DATA_MS : NO_DATA_MS; }
     long stallMs() { return stallMs; }
@@ -32,8 +32,8 @@ final class LiveReconnect {
     }
 
     private long lastBytes = -1, bytesAt = -1;
-    static final long NO_DATA_MS = 3000;
-    /** The server stopped sending: no new bytes for 3s means the feed dropped even if VLC still reports Playing. */
+    static final long NO_DATA_MS = 8000;
+    /** The server stopped sending: no new bytes for 8s means the feed dropped even if VLC still reports Playing. */
     boolean noData(long readBytes, long now) {
         if (lastBytes < 0 || readBytes > lastBytes) bytesAt = now;
         lastBytes = readBytes;
