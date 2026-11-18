@@ -1,4 +1,6 @@
 # Roadmap
+- [x] Published shared VPN purchase fixes: live device quote and buy succeed, signed-out live payment page displays £25.30 through 7 December 2027 and Square card fields on desktop/phone. Eight website and twelve desktop checks pass. Existing Windows 0.4.115, Mac 0.1.116 and box/phone 6.11 use these endpoints without rebuilding.
+- [ ] Verify a real paid VPN purchase and native screens on physical Windows/Mac/box/phone devices; no connected devices/payment credentials available. Android focused test could not run because Java is absent.
 
 - [x] Paid VPN setup fixes the provider expiry before use; failed expiry disables the new account, and TV renewal never extends paid VPN. Sixteen focused checks pass; website publication and real paid provisioning remain unverified.
 

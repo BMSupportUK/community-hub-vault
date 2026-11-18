@@ -55,7 +55,7 @@ export async function vpnBuy(device: Device) {
   if (ie) throw new Error(ie.message);
   const token = hex(32), password = pw();
   const { error: le } = await supabaseAdmin.from("order_checkout_links").insert({
-    order_id: orderId, token, password, customer_kind: "vpn", claimed_by: q.userId, skip_registration: true,
+    order_id: orderId, token, password, customer_kind: "vpn", claimed_by: q.userId,
     account_setup_at: new Date().toISOString(), subscription_expiry_at: q.until,
   } as never);
   if (le) throw new Error(le.message);
