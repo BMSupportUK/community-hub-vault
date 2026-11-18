@@ -34,6 +34,20 @@ export function newVpnLogin() {
 
 const ymd = (iso: string) => new Date(iso).toISOString().slice(0, 10);
 
+/** Provider accounts default to auto-renewal until a non-null expiry is set. */
+export async function createFixedVpnAccount(login: { username: string; password: string }, until: string) {
+  const expireAt = ymd(until);
+  const made = await vr<{ data: { id: number } }>("POST", "/accounts", login);
+  try {
+    await vr("PUT", `/accounts/${made.data.id}/expire`, { expire_at: expireAt });
+  } catch (error) {
+    // Never expose an account whose fixed expiry was not accepted by the provider.
+    await vr("PUT", `/accounts/${made.data.id}/disable`).catch(() => null);
+    throw error;
+  }
+  return made;
+}
+
 /** Is this login paid up for the VPN right now? Returns the end date when it is. */
 export async function vpnEntitlement(credentialId: string | null | undefined): Promise<{ until: string } | null> {
   if (!credentialId) return null;
@@ -64,9 +78,9 @@ export async function syncRemote(acc: Account, until: string | null) {
   if (!until) {
     if (acc.remote_active) { await vr("PUT", `/accounts/${acc.vpnr_account_id}/disable`); patch.remote_active = false; }
   } else {
-    if (!acc.remote_active) { await vr("PUT", `/accounts/${acc.vpnr_account_id}/enable`); patch.remote_active = true; }
     const d = ymd(until);
     if (acc.expire_at !== d) { await vr("PUT", `/accounts/${acc.vpnr_account_id}/expire`, { expire_at: d }); patch.expire_at = d; }
+    if (!acc.remote_active) { await vr("PUT", `/accounts/${acc.vpnr_account_id}/enable`); patch.remote_active = true; }
   }
   if (Object.keys(patch).length) await supabaseAdmin.from("vpn_accounts").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", acc.id);
   return { ...acc, ...patch } as Account;
@@ -93,7 +107,7 @@ export async function boxVpn(device: { id: string; user_id: string | null; geo_c
       acc = spare;
     } else {
       const login = newVpnLogin();
-      const made = await vr<{ data: { id: number } }>("POST", "/accounts", { username: login.username, password: login.password });
+      const made = await createFixedVpnAccount(login, ent.until);
       const { lockVpnCreds } = await import("./box-vpn.server");
       const { data: row, error } = await supabaseAdmin.from("vpn_accounts").insert({
         credential_id: credentialId, user_id: device.user_id, device_id: device.id, vpnr_account_id: made.data.id,
