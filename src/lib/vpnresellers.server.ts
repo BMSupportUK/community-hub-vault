@@ -37,10 +37,12 @@ const ymd = (iso: string) => new Date(iso).toISOString().slice(0, 10);
 /** Is this login paid up for the VPN right now? Returns the end date when it is. */
 export async function vpnEntitlement(credentialId: string | null | undefined): Promise<{ until: string } | null> {
   if (!credentialId) return null;
-  const [{ data: sub }, { data: cred }] = await Promise.all([
+  const [{ data: sub }, { data: cred, error: expiryError }] = await Promise.all([
     supabaseAdmin.from("vpn_subscriptions").select("active, source, paid_until").eq("credential_id", credentialId).maybeSingle(),
-    supabaseAdmin.from("app_credentials").select("expiry_at").eq("id", credentialId).maybeSingle(),
+    supabaseAdmin.rpc("vpn_credential_expiry", { p_credential: credentialId }).maybeSingle(),
   ]);
+  if (expiryError) throw new Error("Could not read VPN subscription expiry");
+  if (!cred) return null;
   if (!sub?.active) return null;
   // Logins with no end date saved (e.g. owner/test lines) keep an admin-allocated VPN on a rolling year.
   if (!cred?.expiry_at) return sub.source === "admin" ? { until: new Date(Date.now() + 365 * 864e5).toISOString() } : null;

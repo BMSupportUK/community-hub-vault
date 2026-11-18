@@ -11871,6 +11871,13 @@ export type Database = {
         Args: { _code: string; _ticket_id: string }
         Returns: boolean
       }
+      vpn_credential_expiry: {
+        Args: { p_credential: string }
+        Returns: {
+          expiry_at: string
+          owner_id: string
+        }[]
+      }
       wc_calc_points: {
         Args: {
           ap: number

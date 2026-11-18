@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Correct Get VPN rejecting a saved expiry; user clarified VPN is a separate subscription. Duration changes wait for whether VPN chooses its own term or still matches TV expiry.
+- [x] Correct Get VPN rejecting a saved expiry via a server-only metadata read; separate VPN purchase still ends with TV. Regression checks cover 7 December 2027 and private access. Website publication and real Windows scan/payment remain unverified.
 
 - [x] VPN bought only inside BM Player (box 6.11, Windows 0.4.113, Mac 0.1.114); shop/renewal VPN removed; Profit › VPN tab at $1.99≈£1.57 cost. A real paid purchase not yet tried on a device.
 

@@ -20,7 +20,9 @@ export async function vpnQuote(device: Device, nowMs = Date.now()): Promise<VpnQ
   const { data: dev } = await supabaseAdmin.from("player_devices").select("credential_id").eq("id", device.id).maybeSingle();
   const credentialId = dev?.credential_id as string | null;
   if (!credentialId) return { ok: false, reason: "Sign in with your subscription login first." };
-  const { data: cred } = await supabaseAdmin.from("app_credentials").select("expiry_at").eq("id", credentialId).maybeSingle();
+  const { data: cred, error: expiryError } = await supabaseAdmin.rpc("vpn_credential_expiry", { p_credential: credentialId }).maybeSingle();
+  if (expiryError) return { ok: false, reason: "Couldn't check your subscription end date. Try again shortly." };
+  if (!cred || cred.owner_id !== device.user_id) return { ok: false, reason: "Sign in with your subscription login first." };
   const q = vpnProRata(cred?.expiry_at as string | null, nowMs);
   if (!q) return { ok: false, reason: "Your subscription has no end date we can match the VPN to. Message BM Support to add it." };
   if (q.pence < VPN_MIN_PENCE) return { ok: false, reason: `Your subscription ends in ${q.days} day${q.days === 1 ? "" : "s"}. Renew first, then add the VPN for the new period.` };
