@@ -985,9 +985,13 @@ export const Route = createFileRoute("/api/public/player")({
         if (here && body.vpn_up === false && here.toUpperCase() !== device.home_country) {
           await supabaseAdmin.from("player_devices").update({ home_country: here.toUpperCase() }).eq("id", device.id);
         }
-        if (loginNow && here && device.user_id) {
-          const { data: others } = await supabaseAdmin.from("player_devices").select("geo_country, last_seen_at")
+        // BM's own VPN moves the check-in abroad; never treat that as login sharing.
+        if (loginNow && here && device.user_id && body.vpn_up !== true) {
+          const { data: vpnOn } = await supabaseAdmin.from("vpn_accounts").select("device_id").eq("status", "on");
+          const vpnIds = new Set((vpnOn ?? []).map((r: { device_id: string }) => r.device_id));
+          const { data: othersRaw } = await supabaseAdmin.from("player_devices").select("id, geo_country, last_seen_at")
             .eq("iptv_username", loginNow).neq("id", device.id).gte("last_seen_at", new Date(now - 30 * 60_000).toISOString()).limit(20);
+          const others = (othersRaw ?? []).filter((o: { id: string }) => !vpnIds.has(o.id));
           const away = unusualPlace(here, others ?? [], now);
           if (away) {
             const { count } = await supabaseAdmin.from("player_security_events").select("id", { count: "exact", head: true })
