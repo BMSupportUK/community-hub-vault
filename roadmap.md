@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Correct Get VPN rejecting a saved expiry; user clarified VPN is a separate subscription. Duration changes wait for whether VPN chooses its own term or still matches TV expiry.
+
 - [x] VPN bought only inside BM Player (box 6.11, Windows 0.4.113, Mac 0.1.114); shop/renewal VPN removed; Profit › VPN tab at $1.99≈£1.57 cost. A real paid purchase not yet tried on a device.
 
 - [ ] Build secure desktop VPN with an embedded WireGuard userspace tunnel, private streaming proxy, connection verification and server controls; release Windows and universal Mac only after tunnel/build/security checks. User confirmed BM Player-only protection.
