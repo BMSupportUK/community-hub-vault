@@ -988,6 +988,12 @@ async function openSecureCheckout(orderId: string, fallback: (id: string) => voi
   const { data, error } = await supabase.rpc("create_my_checkout_link" as never, { p_order_id: orderId, p_method: null } as never);
   const row = (Array.isArray(data) ? data[0] : data) as { token: string; password: string } | null;
   if (error || !row?.token) { if (error) toast.error(error.message); return fallback(orderId); }
+  const { data: kind } = await supabase.from("orders").select("customer_type").eq("id", orderId).maybeSingle();
+  if ((kind as { customer_type?: string | null } | null)?.customer_type === "vpn") {
+    // VPN orders pay on their own page, which carries the Pay by bank / Card buttons.
+    window.location.assign(`/vpn-pay/${row.token}#${encodeURIComponent(row.password)}`);
+    return;
+  }
   try { sessionStorage.setItem(`bm-pay-${row.token}`, row.password); } catch { /* ignore */ }
   window.location.assign(`/pay/${row.token}`);
 }
