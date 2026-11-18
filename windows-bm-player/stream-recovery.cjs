@@ -54,6 +54,19 @@ function frozen(session, state, position, now, status = {}) {
   if (now - session.stillSince >= FREEZE_MS) { session.stillSince = now; return true; }
   return false;
 }
+const SILENT_MS = 5000, MAX_SILENT_REOPENS = 3;
+/** Picture moving but no new sound for 5s on live: reopen to pick the audio back up (3 per channel, same as Android LiveReconnect.soundLost). */
+function soundLost(session, status, now) {
+  if (session.item?.kind !== 'live' || status.state !== 3) { session.muteAt = 0; session.muteAudio = undefined; return false; }
+  const audio = Number(status.audioBuffers), pics = Number(status.videoFrames) > 0 ? Number(status.videoFrames) : Number(status.position) || 0;
+  if (!Number.isFinite(audio) || audio < 0) return false;
+  const picsMoving = session.mutePics !== undefined && pics !== session.mutePics; session.mutePics = pics;
+  if (session.muteAudio !== undefined && audio > session.muteAudio) session.soundSeen = true;
+  if (session.muteAudio === undefined || audio !== session.muteAudio || !picsMoving) { session.muteAudio = audio; session.muteAt = now; return false; }
+  if (!(session.soundSeen || status.hasAudio) || inAdvertGrace(session, now)) return false;
+  if (now - session.muteAt >= SILENT_MS && (session.silentReopens || 0) < MAX_SILENT_REOPENS) { session.silentReopens = (session.silentReopens || 0) + 1; session.muteAt = now; session.muteAudio = undefined; return true; }
+  return false;
+}
 /** Remembered working format (ts/m3u8) goes first. */
 // Sky channels start on HLS: it copes with the provider's advert switches far better than MPEG-TS.
 function startFormat(pref, name) { return pref || (/\bsky\b/i.test(String(name || '')) ? 'm3u8' : null); }
@@ -164,4 +177,4 @@ function tick(session, state, now, live) {
   return out;
 }
 
-module.exports = { isDazn, isCoupang, isHeavyName, heavyFormat, isHeavy, rememberHeavy, loadHeavy, heavyList, HEAVY_MAX, cushioned, providerTag, profile, advertJump, feedChange, noteSwitch, SWITCH_DEDUPE_MS, ADVERT_WINDOW_MS, ADVERT_GRACE_MS, inAdvertGrace, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };
+module.exports = { soundLost, SILENT_MS, MAX_SILENT_REOPENS, isDazn, isCoupang, isHeavyName, heavyFormat, isHeavy, rememberHeavy, loadHeavy, heavyList, HEAVY_MAX, cushioned, providerTag, profile, advertJump, feedChange, noteSwitch, SWITCH_DEDUPE_MS, ADVERT_WINDOW_MS, ADVERT_GRACE_MS, inAdvertGrace, startFormat, FREEZE_MS, STABLE_RAISE_MS, LIVE_BUFFER_MS, liveBufferMs, frozen, preferFormat, otherFormat, DEFAULT_BUFFER_MS, MAX_TRIES, STALL_RECONNECT_MS, BATCH, bufferMs, backoffMs, giveUp, recentStalls, isHdName, tick };

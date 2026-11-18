@@ -73,3 +73,24 @@ test('frame rate change starts grace',()=>{const s={ready:true};r.feedChange(s,{
 test('provider restart reopens at once on an ordinary channel and is logged',()=>{const s={ready:true,item:{name:'BBC One'},recoveryName:'BBC One'};const out=r.tick(s,6,1000,true);assert.equal(out.reconnect,0);assert.equal(out.cause,'provider_cut');assert.equal(s.switchLog[0].type,'provider_restart');});
 test('switch log counts one type per 30s',()=>{const s={};assert.equal(r.noteSwitch(s,'sound',0),true);assert.equal(r.noteSwitch(s,'sound',29999),false);assert.equal(r.noteSwitch(s,'sound',30000),true);assert.equal(r.noteSwitch(s,'picture',1),true);assert.equal(s.switchLog.length,3);});
 test('picture size change while playing logs a picture switch',()=>{const s={ready:true};r.advertJump(s,1920,1080,3,0,true);r.advertJump(s,1280,720,3,1000,true);assert.equal(s.switchLog[0].type,'picture');});
+
+test('live sound lost for 5s while picture moves reopens, at most 3 times', () => {
+  const r = require('../stream-recovery.cjs');
+  const s = { item: { kind: 'live' } };
+  let hits = 0;
+  for (let i = 0; i <= 60; i++) if (r.soundLost(s, { state: 3, videoFrames: 100 + i * 25, audioBuffers: i < 3 ? i * 40 : 80 }, i * 1000)) hits++;
+  assert.equal(hits, 3);
+  const t = { item: { kind: 'live' } };
+  assert.equal(r.soundLost(t, { state: 3, videoFrames: 10, audioBuffers: 0, hasAudio: true }, 0), false);
+  assert.equal(r.soundLost(t, { state: 3, videoFrames: 20, audioBuffers: 0, hasAudio: true }, 1000), false);
+  assert.equal(r.soundLost(t, { state: 3, videoFrames: 30, audioBuffers: 0, hasAudio: true }, 4999), false);
+  assert.equal(r.soundLost(t, { state: 3, videoFrames: 40, audioBuffers: 0, hasAudio: true }, 5000), true);
+});
+
+test('a channel with no sound track and a still picture are not treated as lost sound', () => {
+  const r = require('../stream-recovery.cjs');
+  const s = { item: { kind: 'live' } };
+  for (let i = 0; i <= 20; i++) assert.equal(r.soundLost(s, { state: 3, videoFrames: i * 25, audioBuffers: 0 }, i * 1000), false);
+  const f = { item: { kind: 'film' } };
+  for (let i = 0; i <= 20; i++) assert.equal(r.soundLost(f, { state: 3, videoFrames: i * 25, audioBuffers: 0, hasAudio: true }, i * 1000), false);
+});

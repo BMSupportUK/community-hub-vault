@@ -481,7 +481,7 @@ public class BackupPlayerActivity extends Activity {
             if (st != null) { link.bytes(st.readBytes, st.demuxReadBytes, now); BufferBlame.pingMs = link.pingMs(); BufferBlame.channelKbps = link.kbps(); }
             reconnect.patient(UhdChannel.is(getIntent().getStringExtra("content_name")));
             boolean noData = st != null && isLive() && started && reconnect.noData(st.readBytes, now);
-            boolean mute = st != null && isLive() && started && !noData && reconnect.soundLost(st.displayedPictures, st.decodedAudio, now);
+            boolean mute = st != null && isLive() && started && !noData && reconnect.soundLost(st.displayedPictures, st.playedAbuffers, now, mp.getAudioTracksCount() > 1);
             if (st != null && isLive() && (reconnect.stalled(st.displayedPictures, st.decodedAudio, now) | noData | mute)) {
                 // A drop is always reported, even when VLC never raised a Buffering event.
                 link.stalled(now);

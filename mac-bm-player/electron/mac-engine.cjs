@@ -187,12 +187,13 @@ class MacEngine {
     s.seekable = !!value.seekable;
     s.tracks = {audio:Array.isArray(value.audioTracks)?value.audioTracks.slice(0,50):[],subtitles:Array.isArray(value.subtitleList)?value.subtitleList.slice(0,50):[],audioId:Number(value.audioId),subtitleId:Number(value.subtitleId)};
     s.subs = Math.max(0, Math.min(50, Number(value.subs) || 0));
+    s.audioBuffers = num(value.audioBytes); s.videoFrames = num(value.videoFrames); s.hasAudio = !!value.hasAudio;
     s.w = Math.max(0, Math.min(10000, Number(value.w) || 0)); s.h = Math.max(0, Math.min(10000, Number(value.h) || 0));
   }
   status(index) {
     const s = this.sessions.get(index);
     if (!s) return null;
-    if (!s.backup) return { position: s.position, duration: s.duration, state: s.state, seekable: s.seekable, subs: s.subs || 0, w: s.w || 0, h: s.h || 0 };
+    if (!s.backup) return { position: s.position, duration: s.duration, state: s.state, seekable: s.seekable, subs: s.subs || 0, w: s.w || 0, h: s.h || 0, audioBuffers: s.audioBuffers, videoFrames: s.videoFrames, hasAudio: s.hasAudio };
     const duration = s.backup.live ? 0 : backups.get(s.backup.token)?.duration || 0;
     return { position: s.position + s.backup.offset, duration, state: s.state, seekable: duration > 0, backup: true };
   }

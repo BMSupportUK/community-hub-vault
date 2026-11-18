@@ -804,6 +804,12 @@ public class PlayerActivity extends Activity {
     }
     private boolean advertGrace() { return "live".equals(kind()) && StreamRecovery.inAdvertGrace(android.os.SystemClock.elapsedRealtime() - formatChangedAt); }
 
+    private final LiveReconnect soundWatch = new LiveReconnect();
+    private long audioOut() {
+        androidx.media3.exoplayer.DecoderCounters a = player == null ? null : player.getAudioDecoderCounters();
+        return a == null ? 0 : a.renderedOutputBufferCount;
+    }
+
     private final Runnable antiFreeze = new Runnable() {
         @Override public void run() {
             if (player == null) return;
@@ -817,6 +823,11 @@ public class PlayerActivity extends Activity {
                 afTicks = 0; afLastFrames = -1;
                 reportBuffer(StreamRecovery.FREEZE_TICKS * 1000L, true, true, null);
                 if ("live".equals(kind())) { recoverFrozenLive(); return; } else reconnect();
+            } else if (playing && "live".equals(kind()) && !advertGrace() && frames > 0 && soundWatch.soundLost(frames, audioOut(), android.os.SystemClock.elapsedRealtime(),
+                    player.getCurrentTracks().containsType(androidx.media3.common.C.TRACK_TYPE_AUDIO))) {
+                // Picture running but no sound for 5s: reopen the channel to pick the audio back up.
+                reportBuffer(LiveReconnect.SILENT_MS, true, false, "audio_drop");
+                reconnect(true); return;
             } else if (playing && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset(), defaultLiveOffset(), recoveryName())) {
                 player.seekToDefaultPosition();
             }

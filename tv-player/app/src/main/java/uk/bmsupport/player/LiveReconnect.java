@@ -22,13 +22,19 @@ final class LiveReconnect {
     }
     void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; soundSeen = false; muteAudio = -1; muteAt = -1; lastLost = -1; blockySince = -1; }
 
-    static final long SILENT_MS = 8000;
-    private boolean soundSeen; private long muteAudio = -1, muteAt = -1;
-    /** Sound dropped out while the picture keeps going: once a channel has had audio, 8s without new audio means reopen it. */
-    boolean soundLost(long pictures, long audio, long now) {
+    static final long SILENT_MS = 5000;
+    static final int MAX_SILENT_REOPENS = 3;
+    private boolean soundSeen; private long muteAudio = -1, muteAt = -1; private int silentReopens;
+    /** Sound dropped out while the picture keeps going: 5s without new audio means reopen it. */
+    boolean soundLost(long pictures, long audio, long now) { return soundLost(pictures, audio, now, false); }
+    /** hasTrack: the stream lists an audio track, so silence from the very start also counts. At most 3 sound reopens per channel. */
+    boolean soundLost(long pictures, long audio, long now, boolean hasTrack) {
         if (muteAudio >= 0 && audio > muteAudio) soundSeen = true;
-        if (muteAudio < 0 || audio > muteAudio) { muteAudio = audio; muteAt = now; return false; }
-        return soundSeen && pictures > 0 && now - muteAt >= SILENT_MS;
+        if (muteAudio < 0 || audio != muteAudio) { muteAudio = audio; muteAt = now; return false; }
+        if ((soundSeen || hasTrack) && pictures > 0 && now - muteAt >= SILENT_MS && silentReopens < MAX_SILENT_REOPENS) {
+            silentReopens++; muteAt = now; return true;
+        }
+        return false;
     }
 
     private long lastBytes = -1, bytesAt = -1;

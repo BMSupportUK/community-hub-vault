@@ -88,7 +88,7 @@ class EmbeddedVlc {
  checkBars(){}
  status(index){const s=this.surfaces.get(index);if(!s)return null;this.applyVolume(s);return{position:Math.max(0,Number(this.api.media_player_get_time(s.player))/1000),duration:Math.max(0,Number(this.api.media_player_get_length(s.player))/1000),state:this.api.media_player_get_state(s.player),seekable:!!this.api.media_player_is_seekable(s.player),nativeVideo:true,...this.pictureProgress(s.player),...this.size(s.player)};}
  /** VLC 3's live MPEG-TS clock may stay at zero while pictures advance. */
- pictureProgress(player){try{const media=this.api.media_player_get_media(player);if(!media)return{};const stats=Buffer.alloc(60);if(!this.api.media_get_stats(media,stats))return{};return{videoFrames:stats.readInt32LE(32)};}catch{return{};}}
+ pictureProgress(player){try{const media=this.api.media_player_get_media(player);if(!media)return{};const stats=Buffer.alloc(60);if(!this.api.media_get_stats(media,stats))return{};return{videoFrames:stats.readInt32LE(32),audioBuffers:stats.readInt32LE(40),hasAudio:this.api.audio_get_track(player)!==-1};}catch{return{};}}
  size(player){try{const w=[0],h=[0];if(this.api.video_get_size(player,0,w,h)===0)return{w:w[0]||0,h:h[0]||0};}catch{}return{};}
  pause(index,paused){const s=this.surfaces.get(index);if(s)this.api.media_player_set_pause(s.player,paused?1:0);}
  seek(index,seconds){const s=this.surfaces.get(index);if(s&&this.api.media_player_is_seekable(s.player))this.api.media_player_set_time(s.player,Math.round(seconds*1000));}

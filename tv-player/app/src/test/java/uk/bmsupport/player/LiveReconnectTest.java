@@ -40,12 +40,25 @@ public class LiveReconnectTest {
         r.opened(0);
         assertFalse(r.soundLost(10, 100, 0));
         assertFalse(r.soundLost(20, 200, 1000));
-        assertFalse(r.soundLost(100, 200, 8000));
-        assertTrue(r.soundLost(110, 200, 9000));
+        assertFalse(r.soundLost(100, 200, 5999));
+        assertTrue(r.soundLost(110, 200, 6000));
     }
     @Test public void channelWithoutSoundIsNotReopened() {
         LiveReconnect r = new LiveReconnect();
         r.opened(0);
         for (int i = 0; i <= 20; i++) assertFalse(r.soundLost(i * 10L, 0, i * 1000L));
+    }
+    @Test public void silentFromStartWithAudioTrackIsReopened() {
+        LiveReconnect r = new LiveReconnect();
+        r.opened(0);
+        assertFalse(r.soundLost(10, 0, 0, true));
+        assertFalse(r.soundLost(50, 0, 4999, true));
+        assertTrue(r.soundLost(60, 0, 5000, true));
+    }
+    @Test public void soundReopensStopAfterThree() {
+        LiveReconnect r = new LiveReconnect();
+        int hits = 0;
+        for (int i = 0; i <= 60; i++) if (r.soundLost(i * 10L, 0, i * 1000L, true)) hits++;
+        assertEquals(3, hits);
     }
 }
