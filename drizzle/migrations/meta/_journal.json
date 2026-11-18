@@ -2703,6 +2703,13 @@
       "when": 1795004291621,
       "tag": "0385_vpn_order_server_creation",
       "breakpoints": true
+    },
+    {
+      "idx": 386,
+      "version": "7",
+      "when": 1795006118390,
+      "tag": "0386_vpn_order_chat_summary",
+      "breakpoints": true
     }
   ]
 }
