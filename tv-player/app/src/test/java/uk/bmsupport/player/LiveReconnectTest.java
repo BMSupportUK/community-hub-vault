@@ -6,7 +6,7 @@ import org.junit.Test;
 public class LiveReconnectTest {
     @Test public void keepsRetryingForTwoMinutesThenGivesUp() {
         LiveReconnect r = new LiveReconnect();
-        assertEquals(1000, r.failed(0));
+        assertEquals(0, r.failed(0));
         assertEquals(2000, r.failed(1000));
         assertTrue(r.failed(119000) > 0);
         assertEquals(-1, r.failed(120000));
@@ -20,15 +20,15 @@ public class LiveReconnectTest {
         LiveReconnect r = new LiveReconnect();
         r.failed(0); r.recovered();
         assertFalse(r.active());
-        assertEquals(1000, r.failed(500000));
+        assertEquals(0, r.failed(500000));
     }
     @Test public void serverStoppingSendingIsADrop() {
         LiveReconnect r = new LiveReconnect();
         r.opened(0);
         assertFalse(r.noData(100, 1000));
         assertFalse(r.noData(500, 2000));
-        assertFalse(r.noData(500, 9000));
-        assertTrue(r.noData(500, 10000));
+        assertFalse(r.noData(500, 4999));
+        assertTrue(r.noData(500, 5000));
     }
     @Test public void bytesStillArrivingIsNotADrop() {
         LiveReconnect r = new LiveReconnect();
