@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Landmark, CreditCard, Loader2, ShieldCheck } from "lucide-react";
-import { vpnPaySummary } from "@/lib/vpn-pay.functions";
+import { vpnPayConfirm, vpnPaySummary } from "@/lib/vpn-pay.functions";
 import { PayByBankSection } from "@/components/checkout/PayByBankSection";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
 import { warmSquareCardEntry } from "@/lib/square-card-sdk";
@@ -23,13 +23,15 @@ export const Route = createFileRoute("/vpn-pay/$token")({
   component: VpnPayPage,
 });
 
-type Summary = { pence: number; days: number; until: string; ref: string; paid: boolean };
+type Summary = { pence: number; days: number; until: string; ref: string; paid: boolean; confirm?: boolean };
 const money = (p: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(p / 100);
 const day = (iso: string) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" }) : "");
 
 function VpnPayPage() {
   const { token } = Route.useParams();
   const summary = useServerFn(vpnPaySummary);
+  const confirmBuy = useServerFn(vpnPayConfirm);
+  const [busy, setBusy] = useState(false);
   const [password, setPassword] = useState<string | null>(null);
   const [info, setInfo] = useState<Summary | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -54,10 +56,21 @@ function VpnPayPage() {
 
   useEffect(() => { void load(); }, [load]);
   useEffect(() => {
-    if (!info || info.paid) return;
+    if (!info || info.paid || info.confirm) return;
     const t = setInterval(() => void load(), 5000);
     return () => clearInterval(t);
   }, [info, load]);
+
+  const onConfirm = async () => {
+    if (!password || busy) return;
+    setBusy(true);
+    try {
+      const r = await confirmBuy({ data: { token, password } });
+      if ("error" in r) { setErr(r.error ?? "Something went wrong"); setBusy(false); return; }
+      sessionStorage.setItem(`vpn-pay:${r.token}`, r.password);
+      window.location.replace(`/vpn-pay/${r.token}`);
+    } catch { setErr("Couldn't start the purchase. Check your connection and try again."); setBusy(false); }
+  };
 
   return (
     <main className="min-h-dvh bg-background px-4 py-8 text-foreground">
@@ -83,7 +96,13 @@ function VpnPayPage() {
             </dl>
             <p className="text-xs text-muted-foreground">£2 a month, charged by the day for the time left on your subscription.</p>
 
-            {info.paid ? (
+            {info.confirm ? (
+              <div className="space-y-3 rounded-lg border border-border bg-background p-4">
+                <p className="font-semibold">Do you want to buy the VPN for {money(info.pence)}?</p>
+                <p className="text-sm text-muted-foreground">Nothing is ordered until you confirm. If you didn't mean to, just close this page.</p>
+                <Button type="button" className="w-full" disabled={busy} onClick={onConfirm}>{busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}Yes, buy the VPN</Button>
+              </div>
+            ) : info.paid ? (
               <div className="flex items-start gap-3 rounded-lg border border-success/50 bg-background p-4">
                 <CheckCircle2 className="size-6 shrink-0 text-success" />
                 <div><p className="font-semibold">Paid — thank you</p><p className="text-sm text-muted-foreground">Your VPN is ready in BM Player. Press the VPN button on the home screen to switch it on.</p></div>

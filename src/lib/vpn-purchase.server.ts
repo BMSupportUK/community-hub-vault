@@ -31,8 +31,43 @@ export async function vpnQuote(device: Device, nowMs = Date.now()): Promise<VpnQ
 
 const payUrl = (token: string, password: string) => `https://bmsupport.uk/vpn-pay/${token}#${encodeURIComponent(password)}`;
 
-/** Reuse this box's unpaid VPN order from the last 6 hours (same price), otherwise make a new one. */
+const INTENT_MS = 6 * 3600e3;
+async function intentSig(deviceId: string, exp: string) {
+  const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secret) throw new Error("VPN link signing is unavailable");
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(`vpn-intent:${secret}`), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${deviceId}.${exp}`));
+  return Array.from(new Uint8Array(sig), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Get VPN on the box only makes a signed "ask to buy" link — no order exists yet. The order is created
+ * only when the customer presses Confirm on the pay page, so opening Get VPN never leaves false orders.
+ */
 export async function vpnBuy(device: Device) {
+  const q = await vpnQuote(device);
+  if (!q.ok) return { error: q.reason };
+  const exp = (Date.now() + INTENT_MS).toString(36);
+  return { url: payUrl(await intentSig(device.id, exp), `i.${device.id}.${exp}`), pence: q.pence, days: q.days, until: q.until };
+}
+
+/** Device id for a valid, unexpired "ask to buy" link, else null. */
+export async function vpnIntentDevice(token: string, password: string, nowMs = Date.now()): Promise<string | null> {
+  const m = /^i\.([0-9a-f-]{36})\.([0-9a-z]+)$/.exec(password);
+  if (!m || parseInt(m[2], 36) < nowMs) return null;
+  const want = await intentSig(m[1], m[2]);
+  let diff = want.length ^ token.length;
+  for (let i = 0; i < want.length; i++) diff |= want.charCodeAt(i) ^ (token.charCodeAt(i) || 0);
+  return diff === 0 ? m[1] : null;
+}
+
+export async function vpnIntentDeviceRow(deviceId: string): Promise<Device | null> {
+  const { data } = await supabaseAdmin.from("player_devices").select("id, user_id").eq("id", deviceId).maybeSingle();
+  return data ? { id: String(data.id), user_id: (data.user_id as string | null) ?? null } : null;
+}
+
+/** After the customer confirms: reuse this box's unpaid VPN order from the last 6 hours (same price), otherwise make one. */
+export async function vpnCreateOrder(device: Device) {
   const q = await vpnQuote(device);
   if (!q.ok) return { error: q.reason };
   const since = new Date(Date.now() - 6 * 3600e3).toISOString();
@@ -42,7 +77,7 @@ export async function vpnBuy(device: Device) {
       supabaseAdmin.from("orders").select("paid_at, status").eq("id", prev.order_id).maybeSingle(),
       supabaseAdmin.from("order_checkout_links").select("token, password").eq("order_id", prev.order_id).maybeSingle(),
     ]);
-    if (o && !o.paid_at && o.status !== "cancelled" && l) return { url: payUrl(l.token, l.password), pence: q.pence, days: q.days, until: q.until };
+    if (o && !o.paid_at && o.status !== "cancelled" && l) return { token: l.token as string, password: l.password as string, url: payUrl(l.token, l.password), pence: q.pence, days: q.days, until: q.until };
   }
   const { data: prof } = await supabaseAdmin.from("profiles").select("display_name, username").eq("id", q.userId).maybeSingle();
   const { data: order, error } = await supabaseAdmin.from("orders").insert({
@@ -61,7 +96,7 @@ export async function vpnBuy(device: Device) {
   if (le) throw new Error(le.message);
   const { error: pe } = await supabaseAdmin.from("vpn_purchases").insert({ order_id: orderId, device_id: device.id, credential_id: q.credentialId, user_id: q.userId, days: q.days, pence: q.pence, paid_until: q.until } as never);
   if (pe) throw new Error(pe.message);
-  return { url: payUrl(token, password), pence: q.pence, days: q.days, until: q.until };
+  return { token, password, url: payUrl(token, password), pence: q.pence, days: q.days, until: q.until };
 }
 
 /** Check card/bank payment for a VPN order and complete it once paid (which switches the VPN on). */
