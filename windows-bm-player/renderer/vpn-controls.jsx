@@ -13,7 +13,8 @@ function GetVpn({onReady,compact}){
  if(!q)return <span className="muted">Checking price…</span>;
  if(!q.ok)return <span className="muted">{q.reason}</span>;
  const end=q.until?new Date(q.until).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'Europe/London'}):'';
- const start=()=>bm.vpnPayLink().then(url=>{setLink(url);setWaiting(true);}).catch(e=>setErr(e?.message||'Couldn\'t start the payment.'));
+ useEffect(()=>{if(q?.ok&&!link)start();},[q]);
+ function start(){return bm.vpnPayLink().then(url=>{setLink(url);setWaiting(true);}).catch(e=>setErr(e?.message||'Couldn\'t start the payment.'));}
  return <><span className="muted">{pounds(q.pence)} for {q.days} days · £2 a month, charged by the day · ends with your subscription on {end}</span>
   {link?<><div className="vpn-qr" aria-label="Scan to pay for the VPN" dangerouslySetInnerHTML={{__html:qrSvg(link)}}/><span className="muted">📱 Scan with your phone camera to pay, or <button className="link-button" onClick={()=>bm.vpnBuy().catch(()=>{})}>open the pay page on this computer</button>.</span><span className="muted" role="status">⏳ The VPN appears here once it's paid.</span></>
   :<div className="setting-actions"><button onClick={start}>🔐 Get VPN · {pounds(q.pence)}</button></div>}</>;
