@@ -22,6 +22,8 @@ test("Get VPN makes no order until the customer confirms", async () => {
   const id = "11111111-2222-3333-4444-555555555555";
   const r: any = await vpnBuy({ id, user_id: owner });
   expect(inserted.orders).toBeUndefined();
+  // Windows/Mac apps only accept links matching this check.
+  expect(/^https:\/\/bmsupport\.uk\/vpn-pay\/[a-f0-9]{64}#[A-Za-z0-9%-]{1,80}$/.test(r.url)).toBe(true);
   const [token, pw] = r.url.replace("https://bmsupport.uk/vpn-pay/", "").split("#");
   expect(await vpnIntentDevice(token, decodeURIComponent(pw))).toBe(id);
   expect(await vpnIntentDevice("0".repeat(64), decodeURIComponent(pw))).toBeNull();
@@ -35,4 +37,14 @@ test("VPN purchase creates a private link without requesting the manual registra
   expect(inserted.order_checkout_links.skip_registration).toBeUndefined();
   expect(inserted.orders.credential_id).toBe("credential");
   expect(inserted.vpn_purchases.paid_until).toBe("2027-12-07T13:36:00.000Z");
+});
+test("Get VPN pay link passes the Windows/Mac app link check", async () => {
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||= "test-secret";
+  const { vpnIntentDevice } = await import("../src/lib/vpn-purchase.server");
+  const PAY = /^https:\/\/bmsupport\.uk\/vpn-pay\/[a-f0-9]{64}#[A-Za-z0-9%-]{1,80}$/;
+  const id = "11111111-2222-3333-4444-555555555555";
+  const exp = (Date.now() + 3600e3).toString(36);
+  const pw = `i-${id}-${exp}`;
+  expect(PAY.test(`https://bmsupport.uk/vpn-pay/${"a".repeat(64)}#${encodeURIComponent(pw)}`)).toBe(true);
+  expect(await vpnIntentDevice("0".repeat(64), pw)).toBeNull();
 });

@@ -48,12 +48,13 @@ export async function vpnBuy(device: Device) {
   const q = await vpnQuote(device);
   if (!q.ok) return { error: q.reason };
   const exp = (Date.now() + INTENT_MS).toString(36);
-  return { url: payUrl(await intentSig(device.id, exp), `i.${device.id}.${exp}`), pence: q.pence, days: q.days, until: q.until };
+  // Only letters, digits and hyphens: Windows/Mac 0.4.115/0.1.116 reject pay links with any other character.
+  return { url: payUrl(await intentSig(device.id, exp), `i-${device.id}-${exp}`), pence: q.pence, days: q.days, until: q.until };
 }
 
 /** Device id for a valid, unexpired "ask to buy" link, else null. */
 export async function vpnIntentDevice(token: string, password: string, nowMs = Date.now()): Promise<string | null> {
-  const m = /^i\.([0-9a-f-]{36})\.([0-9a-z]+)$/.exec(password);
+  const m = /^i[.-]([0-9a-f-]{36})[.-]([0-9a-z]+)$/.exec(password);
   if (!m || parseInt(m[2], 36) < nowMs) return null;
   const want = await intentSig(m[1], m[2]);
   let diff = want.length ^ token.length;
