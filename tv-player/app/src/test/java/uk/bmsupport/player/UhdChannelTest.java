@@ -22,6 +22,6 @@ public class UhdChannelTest {
     }
     @Test public void hdKeepsItsQuickReconnect() {
         LiveReconnect r = new LiveReconnect(); r.opened(0);
-        assertFalse(r.stalled(5, 5, 0)); assertTrue(r.stalled(5, 5, 12_000));
+        assertFalse(r.stalled(5, 5, 0)); assertFalse(r.stalled(5, 5, 24_999)); assertTrue(r.stalled(5, 5, 25_000));
     }
 }

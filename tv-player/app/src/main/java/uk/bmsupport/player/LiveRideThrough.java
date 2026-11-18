@@ -2,7 +2,7 @@ package uk.bmsupport.player;
 
 /** Live TV ride-through rules for the libVLC engine: frozen picture with running sound, retry budget, audio track keep. */
 final class LiveRideThrough {
-    static final long FROZEN_MS = 4000, STABLE_MS = 30000;
+    static final long FROZEN_MS = 10000, STABLE_MS = 30000;
     static final int MAX_FREEZE_REOPENS = 3;
     private long lastPics = -1, lastAudio = -1, stuckSince = -1, playingSince = -1;
     int freezeReopens;

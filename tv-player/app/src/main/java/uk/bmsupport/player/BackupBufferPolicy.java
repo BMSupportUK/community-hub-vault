@@ -7,6 +7,6 @@ final class BackupBufferPolicy {
     static int previewCacheMs() { return 1500; }
 
     static int networkCacheMs(boolean live, String setting, String name) {
-        return live ? Math.min(60000, StreamRecovery.bufferMs(setting, name)[0]) : 3000;
+        return live ? Math.min(60000, Math.max(40000, StreamRecovery.bufferMs(setting, name)[0])) : 3000;
     }
 }

@@ -7,12 +7,12 @@ package uk.bmsupport.player;
 final class StreamRecovery {
     private StreamRecovery() {}
 
-    static final String DEFAULT_BUFFER = "smooth";
+    static final String DEFAULT_BUFFER = "large";
     static final String[] BUFFER_LABELS = {"Small (faster zapping)", "Medium", "Large", "Extra Large (more cushion)"};
     static final String[] BUFFER_IDS = {"small", "normal", "smooth", "large"};
     static final int MAX_TRIES = 8;
     /** A stall this long is treated as a dropped stream and reconnected. */
-    static final long STALL_RECONNECT_MS = 12000;
+    static final long STALL_RECONNECT_MS = 25000;
     /** Stalls shorter than this are normal start-up and not recorded. */
     static final long MIN_REPORT_MS = 1000;
     static final long STALL_WINDOW_MS = 120000;
@@ -59,7 +59,7 @@ final class StreamRecovery {
     /** Diagnostic tag for the admin buffering report. */
     static String providerTag(String name) { return isDazn(name) ? "dazn" : isCoupang(name) ? "coupang" : isHeavy(name) ? "high_bitrate" : null; }
     static long liveTargetMs(String name) { return cushioned(name) ? 30000 : LIVE_TARGET_MS; }
-    static long stallReconnectMs(String name) { return cushioned(name) ? 6000 : STALL_RECONNECT_MS; }
+    static long stallReconnectMs(String name) { return STALL_RECONNECT_MS; }
     /**
      * Stalls in two minutes before the other format is tried/shared. One stall used to flip the
      * channel ts↔m3u8 for every device, which made the feed thrash between formats.

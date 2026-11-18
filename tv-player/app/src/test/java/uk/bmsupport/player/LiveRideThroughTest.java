@@ -7,8 +7,8 @@ public class LiveRideThroughTest {
     @Test public void frozenPictureWithRunningSoundTripsAfterFourSeconds() {
         LiveRideThrough r = new LiveRideThrough();
         r.frozen(100, 50, 0); r.frozen(100, 60, 1000);
-        assertFalse(r.frozen(100, 70, 4000));
-        assertTrue(r.frozen(100, 80, 5000));
+        assertFalse(r.frozen(100, 70, 10000));
+        assertTrue(r.frozen(100, 80, 11000));
     }
     @Test public void movingPictureNeverTrips() {
         LiveRideThrough r = new LiveRideThrough();

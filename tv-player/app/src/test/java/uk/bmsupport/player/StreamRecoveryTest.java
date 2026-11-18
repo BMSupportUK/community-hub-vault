@@ -19,7 +19,7 @@ public class StreamRecoveryTest {
         assertFalse(StreamRecovery.isCoupang("BBC One"));
         assertArrayEquals(new int[]{40000,90000,3000,6000}, StreamRecovery.bufferMs("small", "Coupang Play 3"));
         assertEquals(30000, StreamRecovery.liveTargetMs("Coupang Play 3"));
-        assertEquals(6000, StreamRecovery.stallReconnectMs("Coupang Play 3"));
+        assertEquals(25000, StreamRecovery.stallReconnectMs("Coupang Play 3"));
         assertEquals(3, StreamRecovery.formatSwapStalls("Coupang Play 3"));
         assertFalse(StreamRecovery.drifted(31000, "Coupang Play 3"));
         assertTrue(StreamRecovery.drifted(61000, "Coupang Play 3"));
@@ -28,15 +28,15 @@ public class StreamRecoveryTest {
         assertNull(StreamRecovery.providerTag("BBC One"));
     }
     @Test public void daznRecoversAfterSixSecondsAndFirstStall() {
-        assertEquals(6000, StreamRecovery.stallReconnectMs("DAZN CA 19"));
+        assertEquals(25000, StreamRecovery.stallReconnectMs("DAZN CA 19"));
         assertEquals(3, StreamRecovery.formatSwapStalls("DAZN CA 19"));
-        assertEquals(12000, StreamRecovery.stallReconnectMs("Sky Sports"));
+        assertEquals(25000, StreamRecovery.stallReconnectMs("Sky Sports"));
         assertEquals(3, StreamRecovery.formatSwapStalls("Sky Sports"));
         assertArrayEquals(StreamRecovery.bufferMs("normal"), StreamRecovery.bufferMs("normal", "BBC One"));
     }
     @Test public void smoothIsDefaultAndBiggerThanNormal() {
-        assertEquals("smooth", StreamRecovery.DEFAULT_BUFFER);
-        assertEquals(30000, StreamRecovery.bufferMs(null)[0]);
+        assertEquals("large", StreamRecovery.DEFAULT_BUFFER);
+        assertEquals(40000, StreamRecovery.bufferMs(null)[0]);
         assertEquals(60000, StreamRecovery.bufferMs("smooth")[1]);
         assertTrue(StreamRecovery.bufferMs("smooth")[1] > StreamRecovery.bufferMs("normal")[1]);
     }

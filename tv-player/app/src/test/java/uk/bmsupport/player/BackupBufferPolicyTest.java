@@ -14,7 +14,7 @@ public final class BackupBufferPolicyTest {
         assertEquals(40000, BackupBufferPolicy.networkCacheMs(true, "small", "USA Network | FHD |"));
     }
     @Test public void normalChannelUsesChosenProfile() {
-        assertEquals(15000, BackupBufferPolicy.networkCacheMs(true, "normal", "BBC One"));
+        assertEquals(40000, BackupBufferPolicy.networkCacheMs(true, "normal", "BBC One"));
     }
     @Test public void filmsAndCatchupKeepExistingCache() {
         assertEquals(3000, BackupBufferPolicy.networkCacheMs(false, "large", "Film UHD"));

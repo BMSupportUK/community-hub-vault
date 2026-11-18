@@ -27,8 +27,8 @@ public class LiveReconnectTest {
         r.opened(0);
         assertFalse(r.noData(100, 1000));
         assertFalse(r.noData(500, 2000));
-        assertFalse(r.noData(500, 9000));
-        assertTrue(r.noData(500, 10000));
+        assertFalse(r.noData(500, 21999));
+        assertTrue(r.noData(500, 22000));
     }
     @Test public void bytesStillArrivingIsNotADrop() {
         LiveReconnect r = new LiveReconnect();
