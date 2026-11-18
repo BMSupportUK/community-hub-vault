@@ -20,4 +20,14 @@ test('catch-up command stops then opens finite recordings, advances repeatedly a
  expect(Object.values(JSON.parse(saved[1]))).toEqual([6]);
  command({index:0,action:'catchupSkip',delta:-60});
  expect(session.catchupBase).toBe(300);
+});test('stacked fast forward presses arrive as one jump of several minutes',()=>{
+ const source=fs.readFileSync(require.resolve('../electron/main.cjs'),'utf8');
+ const handler=source.slice(source.indexOf("  register('control',value=>{"),source.indexOf("  register('settings',async value=>{"));
+ const item={kind:'catchup',id:'7',name:'Test show',start:Date.UTC(2026,10,14,10),end:Date.UTC(2026,10,14,11)};
+ const session={index:0,item,catchupBase:120,position:0},calls=[],store={dns:'https://example.test',user:'test',pass:'fixture'};let command;
+ vm.runInNewContext(handler,{register:(n,fn)=>{command=fn;},sessions:[session],engine:{stop:()=>{},play:(i,url)=>calls.push(url)},core,catchupStart,store,key:i=>'k',recovery:{bufferMs:()=>3000},save:()=>{},applyAudio:()=>{},send:()=>{},publicState:()=>({})});
+ command({index:0,action:'catchupSkip',delta:300});
+ expect(calls[0]).toContain('/2026-11-14:10-07/7.ts');
+ command({index:0,action:'catchupSkip',delta:45});
+ expect(calls.length).toBe(1);
 });

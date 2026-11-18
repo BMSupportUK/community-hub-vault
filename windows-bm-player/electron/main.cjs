@@ -18,9 +18,10 @@ const checkin=require('../checkin.cjs');
 const broadband=require('../network-test.cjs');
 const categoryOrder=require('../category-order.cjs');
 const catchupStart=require('../catchup-start.cjs');
+const channelLink=require('../channel-link.cjs');
 const watchreq=require('../watch-request.cjs');
 const nativeVpn=require('../vpn-native.cjs').createNative();
-const vpn=require('../vpn.cjs').createVpn({site,native:nativeVpn,changed:state=>send({type:'vpn',state})});
+const vpn=require('../vpn.cjs').createVpn({site,native:nativeVpn,pinger:require('../vpn.cjs').tcpPinger(),changed:state=>send({type:'vpn',state})});
 let vpnReady=null;
 function prepareVpn(){if(!vpnReady)vpnReady=nativeVpn.init().then(()=>vpn.sync()).catch(()=>{send({type:'notice',message:'VPN could not connect. Switch it off or choose another server.'});});return vpnReady;}
 require('./mac-engine.cjs').setTransport({fetch:(url,options)=>nativeVpn.fetch(url,options),stream:url=>nativeVpn.stream(url)});
@@ -195,7 +196,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,ta
  try{engine.play(index,urls[0],{kind:item.kind,name:item.name,steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
  catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
  const onBackup=engine.usingBackup(index);
- const session={index,item,event,recoveryName,catchupBase:catchupMinutes*60,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
+ const session={link:channelLink.createLink(),index,item,event,recoveryName,catchupBase:catchupMinutes*60,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
  if(index===0)audible=0;applyAudio();send({type:"audible",index:audible});
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
@@ -218,7 +219,9 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  if(session.item.kind==='live'&&recovery.heavyFormat(Number(s.w)||0,Number(s.h)||0,Number(s.fps)||0,Number(s.bitrate)||0)&&recovery.rememberHeavy(session.recoveryName)){store.heavyChannels=recovery.heavyList();try{save();}catch{}}
  if(session.item.kind==='live')recovery.feedChange(session,s,Date.now());
  if(recovery.advertJump(session,Number(s.w)||0,Number(s.h)||0,s.state,Date.now(),session.item.kind==='live')){try{engine.play(session.index,session.urls[session.urlIndex],{steady:recovery.cushioned(session.recoveryName),buffer:recovery.liveBufferMs(store.settings?.buffer,session.recoveryName),resume:0,maxHeight:session.maxHeight});applyAudio();}catch{}}
- if(rec.event)queueBuffer(session.item,rec.event,session);
+ if(rec.event){queueBuffer(session.item,rec.event,session);session.link?.stalled();}
+ if(rec.reconnect!==undefined)session.link?.reconnected();
+ if(session.item.kind==='live'&&session.link&&Date.now()-(session.linkPingAt||0)>15000){session.linkPingAt=Date.now();streamPing(session.urls?.[session.urlIndex]||session.urls?.[0]).then(ms=>session.link.ping(ms)).catch(()=>{});}
  if(session.switchLog?.length&&session.item.kind==='live'){for(const w of session.switchLog.splice(0))switchQueue.push({type:w.type,content_id:String(session.item.id||'').slice(0,200),name:String(session.item.name||'').slice(0,200),...(session.item.category?{category:String(session.item.category).slice(0,200)}:{}),stalled:!!session.advertStall,at:w.at});if(switchQueue.length>50)switchQueue=switchQueue.slice(-50);}
  if(rec.lower)session.maxHeight=720;
  /* ts/m3u8 is never switched or shared because of buffering: playlist order only. */
@@ -232,7 +235,7 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
  // Like Android: subtitles start on; only ask (paused) when the film actually has some.
  if(session.subCheck&&s.state===3){const n=Number(engine.subtitleTracks?.(session.index))||0;if(n>0){session.subCheck=false;engine.pause(session.index,true);session.paused=true;send({type:'subtitles-found',index:session.index,item:session.item});}else if(Date.now()-session.since>25000)session.subCheck=false;}
  healthTick(session,s);
- persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable,backup:session.backup});}catch{}}}
+ persistProgress(session);send({type:'playback',index:session.index,item:session.item,position:session.position,duration:session.duration,paused:session.paused,seekable:session.seekable,backup:session.backup,link:session.item.kind==='live'&&session.link?session.link.snapshot():null});}catch{}}}
 // Sports Guide crosses: tell the website a live channel failed, showed no picture after 10s, or played 2 clean minutes.
 function healthTick(session,s){if(session.item.kind!=='live')return;const now=Date.now(),name=String(session.item.name||'').slice(0,200);if(!name)return;
  const report=status=>site({action:'channel_health',name,status}).catch(()=>{});
@@ -331,7 +334,7 @@ else{
    else if(value.action==='audioTrack'&&Number.isInteger(value.id)){engine.setAudioTrack(index,value.id);return engine.tracks(index);}
    else if(value.action==='subtitleTrack'&&Number.isInteger(value.id)){engine.setSubtitleTrack(index,value.id);return engine.tracks(index);}
    else if(value.action==='pause'){session.paused=!session.paused;engine.pause(index,session.paused);}
-   else if(value.action==='catchupSkip'&&session.item.kind==='catchup'&&[-60,60,120].includes(value.delta)){
+   else if(value.action==='catchupSkip'&&session.item.kind==='catchup'&&Number.isInteger(value.delta)&&value.delta!==0&&value.delta%60===0&&Math.abs(value.delta)<=10800){
     const minutes=catchupStart.target(session.catchupBase,session.position,value.delta,session.item);
     const item=catchupStart.recording(session.item,minutes);
     const urls=core.streamUrls(store.dns,store.user,store.pass,item);
@@ -364,8 +367,9 @@ else{
   register('themes',async()=>{if(!store.token||!gate.unlocked)return null;const r=await site({action:'themes'});if(!r||!Array.isArray(r.items))return null;return require('../theme.cjs').clean(r.items);});
   register('vpnState',async()=>{await prepareVpn();return vpn.snapshot();});
   register('vpnServers',()=>vpn.servers());
-  register('vpnCommand',value=>vpn.command(value));
+  register('vpnCommand',async value=>{const r=await vpn.command(value);if(value?.command!=='off')for(const x of sessions)x.link?.serverChanged();return r;});
   register('vpnQuote',()=>vpn.quote());
+  register('vpnPayLink',()=>vpn.buy());
   register('vpnBuy',async()=>{const url=await vpn.buy();await shell.openExternal(url);return true;});
   register('vpnRefresh',()=>vpn.sync());
   register('openLink',()=>shell.openExternal(SITE+'/send-to-app'));

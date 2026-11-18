@@ -1,13 +1,20 @@
 import React,{useEffect,useRef,useState} from 'react';
 import controls from '../player-controls.cjs';
 const time=v=>`${Math.floor((v||0)/60)}:${String(Math.floor((v||0)%60)).padStart(2,'0')}`;
+// Box 6.10 catch up: each press stacks one minute (back or forward); the recording reopens once, 1.5s after the last press.
+function CatchupJump({command}){
+ const [pending,setPending]=useState(0),timer=useRef(null),total=useRef(0);
+ useEffect(()=>()=>clearTimeout(timer.current),[]);
+ const press=step=>{total.current+=step;setPending(total.current);clearTimeout(timer.current);timer.current=setTimeout(()=>{const minutes=total.current;total.current=0;setPending(0);if(minutes)command('catchupSkip',{delta:minutes*60});},1500);};
+ return <><button aria-label="Back one minute" title="Back one minute" onClick={()=>press(-1)}>⏪ Back 1 min</button><button aria-label="Fast forward one minute" title="Fast forward – press again to add a minute" onClick={()=>press(1)}>⏩ Fast forward</button>{pending!==0&&<span className="playback-time" role="status">{pending>0?'+':'−'}{Math.abs(pending)} min</span>}</>;
+}
 export function PlayerControls({p,bm,actions,volume,onVolume}){
  const [tracks,setTracks]=useState({audio:[],subtitles:[]}),[rate,setRate]=useState(1);
  useEffect(()=>{let active=true;const load=()=>bm.control({index:p.index,action:'tracks'}).then(t=>{if(active&&t)setTracks(t);}).catch(()=>{});load();const id=setInterval(load,5000);return()=>{active=false;clearInterval(id);};},[p.index,p.item.id,p.backup]);
  const command=(action,value={})=>bm.control({index:p.index,action,...value});
  return <div className="playback-controls">
  <div className="transport-controls">
- {p.item.kind==='catchup'&&<><button aria-label="Back one minute" title="Back one minute" onClick={()=>command('catchupSkip',{delta:-60})}>↶ 1 min</button><button title="Old show still on? Skip ahead 2 min" onClick={()=>command('catchupSkip',{delta:120})}>⏭ Skip ahead 2 min</button><button aria-label="Forward one minute" title="Forward one minute" onClick={()=>command('catchupSkip',{delta:60})}>1 min ↷</button></>}
+ {p.item.kind==='catchup'&&<CatchupJump command={command}/>}
  {controls.canSkip(p.item.kind)&&<button aria-label="Rewind 10 seconds" title="Rewind 10 seconds" disabled={!p.seekable} onClick={()=>command('seek',{seconds:controls.skipPosition(p.position,p.duration,-10)})}>↶ 10</button>}
  <button aria-label={p.paused?'Resume playback':'Pause playback'} onClick={()=>command('pause')}>{p.paused?'▶':'Ⅱ'}</button>
  {controls.canSkip(p.item.kind)&&<button aria-label="Forward 10 seconds" title="Forward 10 seconds" disabled={!p.seekable} onClick={()=>command('seek',{seconds:controls.skipPosition(p.position,p.duration,10)})}>10 ↷</button>}
