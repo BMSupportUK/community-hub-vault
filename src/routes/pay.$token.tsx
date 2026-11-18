@@ -95,6 +95,11 @@ function PayPage() {
   const load = useCallback(async (pw: string) => {
     const r = await fetchCheckout({ data: { token, password: pw } });
     if (!r.ok) return false;
+    // Unpaid VPN orders pay on the VPN page, which has the Pay by bank / Card buttons.
+    if (!r.order.paidAt && !r.order.cancelled && r.items.some((i: { name: string }) => i.name.startsWith("VPN add-on"))) {
+      window.location.replace(`/vpn-pay/${token}#${encodeURIComponent(pw)}`);
+      return true;
+    }
     setView({ order: r.order, items: r.items, invoice: r.invoice, bank: r.bank, canPayByBank: Boolean((r as { canPayByBank?: boolean }).canPayByBank), squareLocked: Boolean((r as { squareLocked?: boolean }).squareLocked), qdCode: (r as { qdCode?: { label: string; code: string } | null }).qdCode ?? null });
     return true;
   }, [fetchCheckout, token]);
