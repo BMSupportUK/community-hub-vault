@@ -98,7 +98,7 @@ function ServersTab() {
             <h3 className="font-semibold flex items-center justify-between">{g.label}<span className="text-xs text-muted-foreground">{g.servers.length}</span></h3>
             <ul className="mt-2 space-y-1">
               {g.servers.map((s) => (
-                <li key={s.id} className="flex items-center gap-2 text-xs text-muted-foreground"><MapPin className="size-3 text-primary-glow shrink-0" />{s.name}{s.city && !s.name.includes(s.city) ? ` · ${s.city}` : ""}</li>
+                <li key={s.id} className="flex items-center gap-2 text-xs text-muted-foreground"><MapPin className="size-3 text-primary-glow shrink-0" />{s.name}</li>
               ))}
             </ul>
           </div>

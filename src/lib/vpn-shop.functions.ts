@@ -9,8 +9,8 @@ export const vpnShopServers = createServerFn({ method: "GET" })
     const { vpnServers } = await import("./vpnresellers.server");
     const list = await vpnServers();
     return list
-      .map((s) => ({ id: s.id, name: s.name, country: s.country_code, city: s.city }))
-      .sort((a, b) => a.country.localeCompare(b.country) || a.city.localeCompare(b.city) || a.name.localeCompare(b.name));
+      .map((s) => ({ id: s.id, name: s.city || s.country_code, country: s.country_code, city: s.city }))
+      .sort((a, b) => a.country.localeCompare(b.country) || a.name.localeCompare(b.name, undefined, { numeric: true }));
   });
 
 /** The signed-in customer's own linked BM Player devices that can take the VPN. */
