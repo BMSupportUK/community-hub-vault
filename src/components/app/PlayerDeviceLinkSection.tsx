@@ -6,7 +6,8 @@ import { devicesForPlayerLogin, manualPlayerLogin, selectedPlayerLogin, type Sav
 import { usePlayerDevices, type PlayerDevice } from "@/hooks/use-player-devices";
 import { useCustomerNumber, useLoginPlayerNumbers } from "@/components/app/CustomerNumber";
 import { useServerFn } from "@tanstack/react-start";
-import { Laptop, Loader2, Send, Trash2, Tv } from "lucide-react";
+import { Laptop, Loader2, Send, Smartphone, Trash2, Tv } from "lucide-react";
+import { deviceGroupKey, groupDevicesByType } from "@/lib/device-groups";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -169,9 +170,15 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
               <span className="font-mono text-base font-bold leading-none tracking-[0.1em]">{activeNumber}</span>
             </span> : null}
           </div>
-          {visibleDevices.length ? <ul className="mt-3 space-y-3">{visibleDevices.map((d) => <li key={d.id} className="rounded-xl border border-border bg-background/50 p-3 transition-colors hover:border-primary/50">
+          {visibleDevices.length ? <div className="mt-3 space-y-4">{groupDevicesByType(visibleDevices).map((group) => <div key={group.key}>
+            <h3 data-device-group={group.key} className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              {group.key === "computer" ? <Laptop className="size-3.5" /> : group.key === "phone" ? <Smartphone className="size-3.5" /> : <Tv className="size-3.5" />}
+              {group.label}
+              <span className="rounded-full border border-border px-1.5 py-0.5 text-[10px] font-normal normal-case tracking-normal">{group.devices.length}</span>
+            </h3>
+            <ul className="mt-2 space-y-3">{group.devices.map((d) => <li key={d.id} className="rounded-xl border border-border bg-background/50 p-3 transition-colors hover:border-primary/50">
             <div className="flex items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/20 text-primary">{d.platform === "windows" || d.platform === "mac" ? <Laptop className="size-5" /> : <Tv className="size-5" />}</span>
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/20 text-primary">{deviceGroupKey(d.platform) === "computer" ? <Laptop className="size-5" /> : deviceGroupKey(d.platform) === "phone" ? <Smartphone className="size-5" /> : <Tv className="size-5" />}</span>
             <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{isRooms && d.room_name ? <>{d.room_name} <span className="font-normal text-muted-foreground">· {readableName(d)}</span></> : readableName(d)}</div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className={`size-2 rounded-full ${isOn(d) ? "bg-success" : "bg-muted-foreground/50"}`} />{isOn(d) ? "On" : "Off"} · {platformLabel[d.platform] ?? d.platform}</div></div>
             </div>
@@ -187,7 +194,8 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
             <Button size="sm" variant="outline" disabled={busy} title="This box isn't mine" onClick={() => void notMe(d)}>Not me</Button>
             <Button size="icon" variant="ghost" aria-label={`Remove ${d.name}`} onClick={() => void remove(d)}><Trash2 /></Button>
             </div>
-          </li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Open BM Player on your device and enter the 6-digit code it shows above.</p>}
+            </li>)}</ul>
+          </div>)}</div> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Open BM Player on your device and enter the 6-digit code it shows above.</p>}
           {isRooms && visibleDevices.some((d) => !d.room_name) ? <p className="mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs">Give each device a room name, like Living room or Bedroom, so you can tell your boxes apart.</p> : null}
           {isRooms && visibleDevices.length ? <div className="mt-4 rounded-xl border border-border bg-background/50 p-3 text-xs text-muted-foreground">
             <p>Multi Room and Triple Room work in one home plus one phone. Only one device can watch away from home at a time, and nothing at home plays while it does.</p>
