@@ -2724,6 +2724,13 @@
       "when": 1795097789085,
       "tag": "0388_vpn_slots_per_room",
       "breakpoints": true
+    },
+    {
+      "idx": 389,
+      "version": "7",
+      "when": 1795098904756,
+      "tag": "0389_player_device_room",
+      "breakpoints": true
     }
   ]
 }

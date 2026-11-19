@@ -6390,6 +6390,7 @@ export type Database = {
           platform: string
           private_dns_used: string | null
           remote_unlock_at: string | null
+          room_name: string | null
           stream_claimed_at: string | null
           stream_stop_at: string | null
           token_hash: string
@@ -6442,6 +6443,7 @@ export type Database = {
           platform?: string
           private_dns_used?: string | null
           remote_unlock_at?: string | null
+          room_name?: string | null
           stream_claimed_at?: string | null
           stream_stop_at?: string | null
           token_hash: string
@@ -6494,6 +6496,7 @@ export type Database = {
           platform?: string
           private_dns_used?: string | null
           remote_unlock_at?: string | null
+          room_name?: string | null
           stream_claimed_at?: string | null
           stream_stop_at?: string | null
           token_hash?: string
@@ -11629,6 +11632,10 @@ export type Database = {
           _matchday_memory: string
           _supporter_since: number
         }
+        Returns: undefined
+      }
+      set_player_device_room: {
+        Args: { _device_id: string; _room: string }
         Returns: undefined
       }
       sports_blogs_clear_expired: { Args: never; Returns: undefined }

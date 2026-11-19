@@ -20,7 +20,7 @@ export const vpnShopDevices = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin
       .from("player_devices")
-      .select("id, name, nickname, credential_id, last_seen_at")
+      .select("id, name, nickname, room_name, credential_id, last_seen_at")
       .eq("user_id", context.userId)
       .not("credential_id", "is", null)
       .order("last_seen_at", { ascending: false });
@@ -29,7 +29,7 @@ export const vpnShopDevices = createServerFn({ method: "GET" })
     const credId = (data ?? []).find((d) => d.credential_id)?.credential_id as string | undefined;
     const until = slots ? (await vpnEntitlement(credId ?? null, context.userId).catch(() => null))?.until ?? null : null;
     return {
-      devices: (data ?? []).map((d) => ({ id: String(d.id), name: String(d.nickname || d.name || "BM Player") })),
+      devices: (data ?? []).map((d) => ({ id: String(d.id), name: String(d.room_name ? `${d.room_name} · ${d.nickname || d.name || "BM Player"}` : (d.nickname || d.name || "BM Player")) })),
       holders: slots ? holders : [], slots, rooms, until,
     };
   });

@@ -23,6 +23,7 @@ function readableName(d: PlayerDevice) {
   if (!n || /^[A-Z0-9_-]{2,}$/.test(n) || /^[0-9a-f-]{12,}$/i.test(n) || n.toLowerCase() === d.platform) return kind;
   return n;
 }
+const ROOM_IDEAS = ["Living room", "Bedroom", "Kitchen", "Kids' room", "Office", "Phone"];
 const isOn = (d: PlayerDevice) => Date.now() - new Date(d.last_seen_at).getTime() < 3 * 60_000;
 
 export function PlayerDeviceLinkSection() {
@@ -58,6 +59,14 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [target, setTarget] = useState<PlayerDevice | null>(null);
+  const [roomEdit, setRoomEdit] = useState<{ id: string; value: string } | null>(null);
+  const isRooms = Boolean(activeAccount && /multi|triple/i.test(activeAccount.account_type ?? ""));
+  async function saveRoom(d: PlayerDevice, value: string) {
+    const { error } = await supabase.rpc("set_player_device_room", { _device_id: d.id, _room: value });
+    if (error) { toast.error(error.message); return; }
+    toast.success(value.trim() ? `${readableName(d)} is now in the ${value.trim()}` : "Room removed");
+    setRoomEdit(null); void reload();
+  }
   const [manual, setManual] = useState({ username: "", password: "" });
   // Nothing saved on the account: let the subscriber type their login in instead.
   const typeItIn = !loadingAccounts && !accountsFailed && accounts.length === 0;
@@ -163,16 +172,24 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
           {visibleDevices.length ? <ul className="mt-3 space-y-3">{visibleDevices.map((d) => <li key={d.id} className="rounded-xl border border-border bg-background/50 p-3 transition-colors hover:border-primary/50">
             <div className="flex items-center gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/20 text-primary">{d.platform === "windows" || d.platform === "mac" ? <Laptop className="size-5" /> : <Tv className="size-5" />}</span>
-            <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{readableName(d)}</div>
+            <div className="min-w-0 flex-1"><div className="truncate text-sm font-semibold">{isRooms && d.room_name ? <>{d.room_name} <span className="font-normal text-muted-foreground">· {readableName(d)}</span></> : readableName(d)}</div>
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground"><span className={`size-2 rounded-full ${isOn(d) ? "bg-success" : "bg-muted-foreground/50"}`} />{isOn(d) ? "On" : "Off"} · {platformLabel[d.platform] ?? d.platform}</div></div>
             </div>
+            {isRooms && roomEdit?.id === d.id ? <form className="mt-3 space-y-2" onSubmit={(e) => { e.preventDefault(); void saveRoom(d, roomEdit.value); }}>
+              <Label htmlFor={`room-${d.id}`} className="text-xs">Which room is this device in?</Label>
+              <div className="flex gap-2"><Input id={`room-${d.id}`} maxLength={40} autoFocus value={roomEdit.value} placeholder="e.g. Living room" onChange={(e) => setRoomEdit({ id: d.id, value: e.target.value })} />
+                <Button type="submit" size="sm">Save</Button><Button type="button" size="sm" variant="ghost" onClick={() => setRoomEdit(null)}>Cancel</Button></div>
+              <div className="flex flex-wrap gap-1.5">{ROOM_IDEAS.map((r) => <Button key={r} type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setRoomEdit({ id: d.id, value: r })}>{r}</Button>)}</div>
+            </form> : null}
             <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+            {isRooms && roomEdit?.id !== d.id ? <Button size="sm" variant="outline" onClick={() => setRoomEdit({ id: d.id, value: d.room_name ?? "" })}>{d.room_name ? "Change room" : "Set room"}</Button> : null}
             <Button size="sm" disabled={busy} variant="secondary" title="Only needed if the app has lost its login" onClick={() => void sendToDevice(d)}>Resend login</Button>
             <Button size="sm" variant="outline" disabled={busy} title="This box isn't mine" onClick={() => void notMe(d)}>Not me</Button>
             <Button size="icon" variant="ghost" aria-label={`Remove ${d.name}`} onClick={() => void remove(d)}><Trash2 /></Button>
             </div>
           </li>)}</ul> : <p className="mt-2 text-sm text-muted-foreground">No devices yet. Open BM Player on your device and enter the 6-digit code it shows above.</p>}
-          {activeAccount && /multi|triple/i.test(activeAccount.account_type ?? "") && visibleDevices.length ? <div className="mt-4 rounded-xl border border-border bg-background/50 p-3 text-xs text-muted-foreground">
+          {isRooms && visibleDevices.some((d) => !d.room_name) ? <p className="mt-3 rounded-xl border border-primary/40 bg-primary/10 p-3 text-xs">Give each device a room name, like Living room or Bedroom, so you can tell your boxes apart.</p> : null}
+          {isRooms && visibleDevices.length ? <div className="mt-4 rounded-xl border border-border bg-background/50 p-3 text-xs text-muted-foreground">
             <p>Multi Room and Triple Room work in one home plus one phone. Only one device can watch away from home at a time, and nothing at home plays while it does.</p>
             <Button size="sm" variant="outline" className="mt-2" disabled={busy} onClick={async () => {
               try { const r = await moveFn({ data: { login: activeAccount.app_login_name } }); toast.success(r.already ? "Your move request is already with BM Support." : "Sent. BM Support will approve your new home."); }
