@@ -56,3 +56,10 @@ export function vpnLineDays(name: string, qty: number): number {
   const m = /\((\d+) months?\)/.exec(name); if (m) return Math.round(Number(m[1]) * VPN_DAYS_PER_MONTH);
   return Math.round(Math.max(1, qty) * VPN_DAYS_PER_MONTH);
 }
+
+/** One VPN = 1 device at a time; Single 1, Multi Room 2, Triple Room 3 VPNs. */
+export function vpnRoomVerdict(o: { here: boolean; held: number; slots: number; rooms: number }): "here" | "spare" | "buy" | "full" {
+  if (o.here) return "here";
+  if (o.held < o.slots) return "spare";
+  return o.slots < Math.min(Math.max(o.rooms, 1), 3) ? "buy" : "full";
+}

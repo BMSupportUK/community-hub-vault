@@ -2717,6 +2717,13 @@
       "when": 1795095662772,
       "tag": "0387_order_provisioning",
       "breakpoints": true
+    },
+    {
+      "idx": 388,
+      "version": "7",
+      "when": 1795097789085,
+      "tag": "0388_vpn_slots_per_room",
+      "breakpoints": true
     }
   ]
 }

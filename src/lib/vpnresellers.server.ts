@@ -122,8 +122,13 @@ export async function boxVpn(device: { id: string; user_id: string | null; geo_c
   }
   if (!acc) {
     // One VPN connection per account: if another linked device holds it, the customer moves it from the website.
-    const { data: held } = await supabaseAdmin.from("vpn_accounts").select("device_id").eq("user_id", device.user_id).not("device_id", "is", null).neq("device_id", device.id).limit(1).maybeSingle();
-    if (held) return { vpn: null, offer: "elsewhere" };
+    // One connection per VPN bought (Multi Room 2, Triple Room 3): every one in use on other devices → move one from the website.
+    const [held, slots] = await Promise.all([vpnHolders(device.user_id), vpnSlots(device.user_id)]);
+    if (held.length >= slots) return { vpn: null, offer: "elsewhere" };
+    const { data: freeRow } = await supabaseAdmin.from("vpn_accounts").select(SEL).eq("user_id", device.user_id).is("device_id", null).order("updated_at", { ascending: false }).limit(1).maybeSingle();
+    if (freeRow) { await supabaseAdmin.from("vpn_accounts").update({ device_id: device.id, enabled: false }).eq("id", freeRow.id); acc = { ...freeRow, enabled: false }; }
+  }
+  if (!acc) {
     // An admin-allocated login for this subscriber not yet on a box is used first.
     const { data: spare } = await supabaseAdmin.from("vpn_accounts").select(SEL).eq("credential_id", credentialId).is("device_id", null).limit(1).maybeSingle();
     if (spare) {
@@ -163,17 +168,45 @@ export async function boxVpn(device: { id: string; user_id: string | null; geo_c
   return { vpn: { enabled: true, server: serverName, server_id: serverId, until: ent.until, config: cfg.config } };
 }
 
-/** Which of this account's devices holds its single VPN connection (null when none). */
-export async function vpnHolder(userId: string): Promise<string | null> {
-  const { data } = await supabaseAdmin.from("vpn_accounts").select("device_id").eq("user_id", userId).not("device_id", "is", null).order("updated_at", { ascending: false }).limit(1).maybeSingle();
-  return (data?.device_id as string | null) ?? null;
+/** Devices on this account currently holding one of its VPN connections. */
+export async function vpnHolders(userId: string): Promise<string[]> {
+  const { data } = await supabaseAdmin.from("vpn_accounts").select("device_id").eq("user_id", userId).not("device_id", "is", null);
+  return (data ?? []).map((r) => r.device_id as string);
 }
 
-/** Move the account's one VPN connection to another of its own devices. Arrives switched off; the customer turns it on in BM Player. */
-export async function vpnMoveTo(userId: string, deviceId: string): Promise<{ ok: true } | { error: string }> {
-  const { data: rows } = await supabaseAdmin.from("vpn_accounts").select("id, device_id").eq("user_id", userId).order("updated_at", { ascending: false });
-  if (!rows?.length) return { error: "Your account doesn't have the VPN yet." };
-  if (rows.some((r) => r.device_id === deviceId)) return { ok: true };
-  const { error } = await supabaseAdmin.from("vpn_accounts").update({ device_id: deviceId, enabled: false, server_id: null, server_name: null, status: "off", status_detail: null, updated_at: new Date().toISOString() } as never).eq("id", rows[0].id);
-  return error ? { error: "Couldn't move the VPN. Try again shortly." } : { ok: true };
+/** VPN connections paid for on this account right now (one per VPN bought; admin/order VPNs count as 1). */
+export async function vpnSlots(userId: string): Promise<number> {
+  const { data: subs } = await supabaseAdmin.from("vpn_subscriptions").select("credential_id, slots").eq("user_id", userId).eq("active", true);
+  let n = 0;
+  for (const s of subs ?? []) if (await credentialEntitlement(s.credential_id as string).catch(() => null)) n += Math.max(1, Number(s.slots) || 1);
+  return n;
+}
+
+/** VPNs the account may own: 1 for a single package, 2 for Multi Room, 3 for Triple Room. */
+export async function vpnRooms(userId: string): Promise<number> {
+  const { data } = await supabaseAdmin.from("player_devices").select("iptv_username").eq("user_id", userId).not("iptv_username", "is", null).limit(20);
+  const logins = [...new Set((data ?? []).map((d) => String(d.iptv_username)))];
+  const { loginConnections } = await import("./player-connections.server");
+  let best = 1;
+  for (const l of logins) best = Math.max(best, (await loginConnections(supabaseAdmin, l).catch(() => null)) ?? 1);
+  return Math.min(best, 3);
+}
+
+/** Take the VPN off a device so its connection can be used on another linked device. */
+export async function vpnRelease(userId: string, deviceId: string) {
+  const { error } = await supabaseAdmin.from("vpn_accounts").update({ device_id: null, enabled: false, server_id: null, server_name: null, status: "off", status_detail: null, updated_at: new Date().toISOString() } as never).eq("user_id", userId).eq("device_id", deviceId);
+  return error ? { error: "Couldn't remove the VPN. Try again shortly." } : { ok: true as const };
+}
+
+/** Put a free VPN connection on this device. Arrives switched off; the customer turns it on in BM Player. */
+export async function vpnAssign(userId: string, deviceId: string) {
+  const [held, slots] = await Promise.all([vpnHolders(userId), vpnSlots(userId)]);
+  if (held.includes(deviceId)) return { ok: true as const };
+  if (held.length >= slots) return { error: "All your VPNs are in use. Remove one from another device first." };
+  const { data: free } = await supabaseAdmin.from("vpn_accounts").select("id").eq("user_id", userId).is("device_id", null).limit(1).maybeSingle();
+  if (free) {
+    const { error } = await supabaseAdmin.from("vpn_accounts").update({ device_id: deviceId, enabled: false, updated_at: new Date().toISOString() } as never).eq("id", free.id);
+    if (error) return { error: "Couldn't add the VPN. Try again shortly." };
+  }
+  return { ok: true as const };
 }

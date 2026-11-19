@@ -1,5 +1,5 @@
 # src/lib rules
-- The VPN is account-wide: entitlement checks the device login then any paid VPN on the same owner account, one purchase allows one device at a time (moved by the owner), and quotes refuse a second purchase.
+- The VPN is account-wide: entitlement checks the device login then any paid VPN on the same owner account, each VPN bought is one device connection (vpn_subscriptions.slots); packages allow 1/2/3 by room count (vpnRooms), owners add/remove devices via vpnShopMove, and vpnRoomVerdict decides quotes.
 - Service-created VPN orders preserve credential_id and use the service-role insert guard; already-owned VPN links omit the admin-only manual skip_registration flag so player purchases can create checkout links.
 - VPN pricing and entitlement read expiry through the service-only vpn_credential_expiry RPC, not the profile-filtered credential view; quotes verify its owner to keep purchases profile-bound.
 - Paid VPN provisioning sets a non-null provider expiry before storing or enabling access; provider null expiry enables auto-renewal, so failed expiry setup disables the new account.

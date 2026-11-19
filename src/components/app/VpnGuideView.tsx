@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Shield, Lock, Eye, Globe2, Wifi, Zap, CheckCircle2, ArrowLeft, Loader2, MapPin, Tv, Gauge, Power } from "lucide-react";
 import hackerBg from "@/assets/vpn-hacker-bg.jpg";
@@ -28,24 +28,31 @@ function OrderPanel({ onBack }: { onBack: () => void }) {
   const start = useServerFn(vpnShopStart);
   const move = useServerFn(vpnShopMove);
   const [devices, setDevices] = useState<{ id: string; name: string }[] | null>(null);
-  const [holder, setHolder] = useState<string | null>(null);
+  const [holders, setHolders] = useState<string[]>([]);
+  const [slots, setSlots] = useState(0);
+  const [rooms, setRooms] = useState(1);
   const [until, setUntil] = useState<string | null>(null);
   const [moved, setMoved] = useState("");
   const [pick, setPick] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
-  useEffect(() => {
-    const load = () => getDevices().then((d) => { setDevices(d.devices); setHolder(d.vpnDevice); setUntil(d.until); setPick(d.devices[0]?.id ?? ""); });
-    load().catch(() => setErr("Couldn't load your devices. Try again shortly."));
-  }, [getDevices]);
-  const moveHere = async (id: string, name: string) => {
+  const load = useCallback(() => getDevices().then((d) => {
+    setDevices(d.devices); setHolders(d.holders); setSlots(d.slots); setRooms(d.rooms); setUntil(d.until);
+    setPick(d.devices.find((x) => !d.holders.includes(x.id))?.id ?? "");
+  }), [getDevices]);
+  useEffect(() => { load().catch(() => setErr("Couldn't load your devices. Try again shortly.")); }, [load]);
+  const change = async (id: string, name: string, action: "add" | "remove") => {
     setBusy(true); setErr(""); setMoved("");
     try {
-      const r = await move({ data: { deviceId: id } });
-      if ("error" in r) setErr(r.error); else { setHolder(id); setMoved(`The VPN is now on "${name}". Switch it on from that BM Player's home screen.`); }
-    } catch { setErr("Couldn't move the VPN. Try again shortly."); }
+      const r = await move({ data: { deviceId: id, action } });
+      if ("error" in r) setErr(r.error ?? "Couldn't change the VPN.");
+      else { await load(); setMoved(action === "add" ? `The VPN is now on "${name}". Switch it on from that BM Player's home screen.` : `The VPN is off "${name}". You can add it to another linked device now.`); }
+    } catch { setErr("Couldn't change the VPN. Try again shortly."); }
     setBusy(false);
   };
+  const free = slots - holders.length;
+  const canBuy = slots < rooms;
+  const fmt = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
   const go = async () => {
     setBusy(true); setErr("");
     try {
@@ -65,23 +72,32 @@ function OrderPanel({ onBack }: { onBack: () => void }) {
       {devices && devices.length === 0 && (
         <p className="rounded-lg border border-border bg-background p-4 text-sm">You don't have a BM Player device linked yet. Link your box, phone, PC or Mac first from the Link Device page, then come back here.</p>
       )}
-      {devices && devices.length > 0 && holder && (
+      {devices && devices.length > 0 && (
+        <p className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">
+          Each VPN works on <strong>1 device at a time</strong>. Your package allows {rooms} VPN{rooms === 1 ? "" : "s"}{rooms > 1 ? ` (${rooms === 2 ? "Multi" : "Triple"} Room)` : ""}.
+          {slots > 0 ? ` You have ${slots}${until ? ` until ${fmt(until)}` : ""}${free > 0 ? ` — ${free} not on a device yet` : ""}.` : ""}
+        </p>
+      )}
+      {devices && devices.length > 0 && slots > 0 && (
         <div className="space-y-2">
-          <p className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">You already have the VPN{until ? ` until ${new Date(until).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}` : ""}. It works on <strong>1 device at a time</strong> — move it to whichever linked BM Player you want to use.</p>
           {devices.map((d) => (
-            <div key={d.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3 text-sm">
+            <div key={d.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-background p-3 text-sm">
               <Tv className="size-4 text-primary-glow" /><span className="flex-1 min-w-0 truncate">{d.name}</span>
-              {holder === d.id ? <span className="inline-flex items-center gap-1 text-primary-glow"><CheckCircle2 className="size-4" />VPN is here</span>
-                : <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => moveHere(d.id, d.name)}>Move VPN here</Button>}
+              {holders.includes(d.id) ? (<>
+                <span className="inline-flex items-center gap-1 text-primary-glow"><CheckCircle2 className="size-4" />VPN is here</span>
+                <Button type="button" size="sm" variant="ghost" disabled={busy} onClick={() => change(d.id, d.name, "remove")}>Remove</Button>
+              </>) : free > 0
+                ? <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => change(d.id, d.name, "add")}>Add VPN here</Button>
+                : <span className="text-muted-foreground">No VPN</span>}
             </div>
           ))}
           {moved && <p className="text-sm text-primary-glow">{moved}</p>}
         </div>
       )}
-      {devices && devices.length > 0 && !holder && (
+      {devices && devices.length > 0 && canBuy && (
         <div className="space-y-2" role="radiogroup" aria-label="Which device">
-          <p className="text-sm font-medium">The VPN works on 1 device at a time. Which device should it start on? You can move it to another linked device later.</p>
-          {devices.map((d) => (
+          <p className="text-sm font-medium">{slots > 0 ? `Buy another VPN (${slots + 1} of ${rooms}) — which device is it for?` : "Which device should the VPN start on? You can move it to another linked device later."}</p>
+          {devices.filter((d) => !holders.includes(d.id)).map((d) => (
             <button key={d.id} type="button" role="radio" aria-checked={pick === d.id} onClick={() => setPick(d.id)}
               className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-sm transition-colors ${pick === d.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
               <Tv className="size-4 text-primary-glow" />{d.name}
@@ -92,7 +108,7 @@ function OrderPanel({ onBack }: { onBack: () => void }) {
       {err && <p className="rounded-lg border border-destructive/50 bg-background p-3 text-sm text-destructive">{err}</p>}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button type="button" variant="outline" onClick={onBack}><ArrowLeft className="size-4" />No thanks, go back</Button>
-        <Button type="button" disabled={!pick || busy || !!holder} onClick={go}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Shield className="size-4" />}See my price</Button>
+        <Button type="button" disabled={!pick || busy || !canBuy || free > 0} onClick={go}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Shield className="size-4" />}{slots > 0 ? "Buy another VPN" : "See my price"}</Button>
       </div>
     </section>
   );

@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { VPN_MIN_PENCE, vpnAppLineName, vpnProRata } from "./vpn-addon";
+import { VPN_MIN_PENCE, vpnAppLineName, vpnProRata, vpnRoomVerdict } from "./vpn-addon";
 
 /**
  * VPN bought inside BM Player only. The box asks for a quote, then a pay link (shown as a QR code);
@@ -26,12 +26,14 @@ export async function vpnQuote(device: Device, nowMs = Date.now()): Promise<VpnQ
   const { vpnEntitlement } = await import("./vpnresellers.server");
   const covered = await vpnEntitlement(credentialId, device.user_id).catch(() => null);
   if (covered) {
-    const { vpnHolder } = await import("./vpnresellers.server");
-    const holder = await vpnHolder(device.user_id).catch(() => null);
+    const { vpnHolders, vpnSlots, vpnRooms } = await import("./vpnresellers.server");
+    const [held, slots, rooms] = await Promise.all([vpnHolders(device.user_id), vpnSlots(device.user_id), vpnRooms(device.user_id)]);
     const until = new Date(covered.until).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-    if (!holder || holder === device.id) return { ok: false, reason: `You already have the VPN on this device until ${until}. Switch it on from the home screen.` };
-    const { data: h } = await supabaseAdmin.from("player_devices").select("name, nickname").eq("id", holder).maybeSingle();
-    return { ok: false, reason: `Your VPN works on 1 device at a time and is on "${h?.nickname || h?.name || "another device"}" until ${until}. To use it here, go to bmsupport.uk › Shop › VPN and press "Move VPN here".` };
+    const v = vpnRoomVerdict({ here: held.includes(device.id), held: held.length, slots, rooms });
+    if (v === "here") return { ok: false, reason: `You already have the VPN on this device until ${until}. Switch it on from the home screen.` };
+    if (v === "spare") return { ok: false, reason: `You have a spare VPN on your account until ${until}. Switch it on from this device's home screen.` };
+    if (v === "full") return { ok: false, reason: `Each VPN works on 1 device at a time, and all ${slots} of yours are in use${rooms > 1 ? ` (your package allows ${rooms})` : ""}. To use one here, go to bmsupport.uk › Shop › VPN, remove it from another device and add it to this one.` };
+    // Multi/Triple Room: room for another VPN, priced the same way to the same end date.
   }
   const q = vpnProRata(cred?.expiry_at as string | null, nowMs);
   if (!q) return { ok: false, reason: "Your subscription has no end date we can match the VPN to. Message BM Support to add it." };

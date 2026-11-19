@@ -24,17 +24,13 @@ export const vpnShopDevices = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .not("credential_id", "is", null)
       .order("last_seen_at", { ascending: false });
-    const { vpnHolder, vpnEntitlement } = await import("./vpnresellers.server");
-    const holder = await vpnHolder(context.userId);
-    let until: string | null = null;
-    if (holder) {
-      const { data: h } = await supabaseAdmin.from("player_devices").select("credential_id").eq("id", holder).maybeSingle();
-      until = (await vpnEntitlement(h?.credential_id as string | null, context.userId).catch(() => null))?.until ?? null;
-    }
+    const { vpnHolders, vpnSlots, vpnRooms, vpnEntitlement } = await import("./vpnresellers.server");
+    const [holders, slots, rooms] = await Promise.all([vpnHolders(context.userId), vpnSlots(context.userId), vpnRooms(context.userId)]);
+    const credId = (data ?? []).find((d) => d.credential_id)?.credential_id as string | undefined;
+    const until = slots ? (await vpnEntitlement(credId ?? null, context.userId).catch(() => null))?.until ?? null : null;
     return {
       devices: (data ?? []).map((d) => ({ id: String(d.id), name: String(d.nickname || d.name || "BM Player") })),
-      vpnDevice: until ? holder : null,
-      until,
+      holders: slots ? holders : [], slots, rooms, until,
     };
   });
 
@@ -53,14 +49,15 @@ export const vpnShopStart = createServerFn({ method: "POST" })
     return { path: `${u.pathname}?from=shop${u.hash}` } as const;
   });
 
-/** Move the account's single VPN connection to another of the caller's own linked devices. */
+/** Add a free VPN to, or remove a VPN from, one of the caller's own linked devices. */
 export const vpnShopMove = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ deviceId: z.string().uuid() }).parse(d))
+  .inputValidator((d) => z.object({ deviceId: z.string().uuid(), action: z.enum(["add", "remove"]) }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: dev } = await supabaseAdmin.from("player_devices").select("id, user_id").eq("id", data.deviceId).maybeSingle();
     if (!dev || dev.user_id !== context.userId) return { error: "That device isn't linked to your account." };
-    const { vpnMoveTo } = await import("./vpnresellers.server");
-    return vpnMoveTo(context.userId, data.deviceId);
+    const { vpnAssign, vpnRelease } = await import("./vpnresellers.server");
+    const r = data.action === "add" ? await vpnAssign(context.userId, data.deviceId) : await vpnRelease(context.userId, data.deviceId);
+    return "error" in r ? { error: r.error as string } : { ok: true as const };
   });

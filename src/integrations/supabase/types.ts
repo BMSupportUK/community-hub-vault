@@ -9718,6 +9718,7 @@ export type Database = {
           credential_id: string
           order_id: string | null
           paid_until: string | null
+          slots: number
           source: string
           updated_at: string
           user_id: string
@@ -9727,6 +9728,7 @@ export type Database = {
           credential_id: string
           order_id?: string | null
           paid_until?: string | null
+          slots?: number
           source?: string
           updated_at?: string
           user_id: string
@@ -9736,6 +9738,7 @@ export type Database = {
           credential_id?: string
           order_id?: string | null
           paid_until?: string | null
+          slots?: number
           source?: string
           updated_at?: string
           user_id?: string
