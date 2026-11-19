@@ -12,7 +12,7 @@ const hex = (n: number) => Array.from(crypto.getRandomValues(new Uint8Array(n)),
 const pw = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[b % 32]).join("").replace(/(.{4})(?=.)/g, "$1-");
 
 export type VpnQuote =
-  | { ok: true; days: number; pence: number; until: string; credentialId: string; userId: string }
+  | { ok: true; days: number; pence: number; until: string; credentialId: string; userId: string; connections: number; unitPence: number }
   | { ok: false; reason: string };
 
 export async function vpnQuote(device: Device, nowMs = Date.now()): Promise<VpnQuote> {
@@ -25,6 +25,12 @@ export async function vpnQuote(device: Device, nowMs = Date.now()): Promise<VpnQ
   if (!cred || cred.owner_id !== device.user_id) return { ok: false, reason: "Sign in with your subscription login first." };
   const { vpnEntitlement } = await import("./vpnresellers.server");
   const covered = await vpnEntitlement(credentialId, device.user_id).catch(() => null);
+  // First purchase covers every room on the package (Multi Room 2, Triple Room 3); top-ups add one.
+  let connections = 1;
+  if (!covered) {
+    const { vpnRooms } = await import("./vpnresellers.server");
+    connections = Math.min(Math.max(await vpnRooms(device.user_id).catch(() => 1), 1), 3);
+  }
   if (covered) {
     const { vpnHolders, vpnSlots, vpnRooms } = await import("./vpnresellers.server");
     const [held, slots, rooms] = await Promise.all([vpnHolders(device.user_id), vpnSlots(device.user_id), vpnRooms(device.user_id)]);
@@ -38,7 +44,7 @@ export async function vpnQuote(device: Device, nowMs = Date.now()): Promise<VpnQ
   const q = vpnProRata(cred?.expiry_at as string | null, nowMs);
   if (!q) return { ok: false, reason: "Your subscription has no end date we can match the VPN to. Message BM Support to add it." };
   if (q.pence < VPN_MIN_PENCE) return { ok: false, reason: `Your subscription ends in ${q.days} day${q.days === 1 ? "" : "s"}. Renew first, then add the VPN for the new period.` };
-  return { ok: true, ...q, credentialId, userId: device.user_id };
+  return { ok: true, ...q, pence: q.pence * connections, unitPence: q.pence, connections, credentialId, userId: device.user_id };
 }
 
 const payUrl = (token: string, password: string) => `https://bmsupport.uk/vpn-pay/${token}#${encodeURIComponent(password)}`;
@@ -99,7 +105,7 @@ export async function vpnCreateOrder(device: Device) {
   } as never).select("id").single();
   if (error || !order) throw new Error(error?.message ?? "Could not start the VPN order");
   const orderId = (order as { id: string }).id;
-  const { error: ie } = await supabaseAdmin.from("order_items").insert({ order_id: orderId, product_id: null, product_name: vpnAppLineName(q.days), unit_price_cents: q.pence, quantity: 1 } as never);
+  const { error: ie } = await supabaseAdmin.from("order_items").insert({ order_id: orderId, product_id: null, product_name: vpnAppLineName(q.days), unit_price_cents: q.unitPence, quantity: q.connections } as never);
   if (ie) throw new Error(ie.message);
   const token = hex(32), password = pw();
   const { error: le } = await supabaseAdmin.from("order_checkout_links").insert({
@@ -107,7 +113,7 @@ export async function vpnCreateOrder(device: Device) {
     account_setup_at: new Date().toISOString(), subscription_expiry_at: q.until,
   } as never);
   if (le) throw new Error(le.message);
-  const { error: pe } = await supabaseAdmin.from("vpn_purchases").insert({ order_id: orderId, device_id: device.id, credential_id: q.credentialId, user_id: q.userId, days: q.days, pence: q.pence, paid_until: q.until } as never);
+  const { error: pe } = await supabaseAdmin.from("vpn_purchases").insert({ order_id: orderId, device_id: device.id, credential_id: q.credentialId, user_id: q.userId, days: q.days, pence: q.pence, connections: q.connections, paid_until: q.until } as never);
   if (pe) throw new Error(pe.message);
   return { token, password, url: payUrl(token, password), pence: q.pence, days: q.days, until: q.until };
 }

@@ -9682,6 +9682,7 @@ export type Database = {
       vpn_purchases: {
         Row: {
           completed_at: string | null
+          connections: number
           created_at: string
           credential_id: string
           days: number
@@ -9693,6 +9694,7 @@ export type Database = {
         }
         Insert: {
           completed_at?: string | null
+          connections?: number
           created_at?: string
           credential_id: string
           days: number
@@ -9704,6 +9706,7 @@ export type Database = {
         }
         Update: {
           completed_at?: string | null
+          connections?: number
           created_at?: string
           credential_id?: string
           days?: number
