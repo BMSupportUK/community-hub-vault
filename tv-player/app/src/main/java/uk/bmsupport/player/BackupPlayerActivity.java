@@ -201,6 +201,17 @@ public class BackupPlayerActivity extends Activity {
         } else mp.attachViews(layout, null, false, false);
         // Films and series fill the screen (zoom, like the main player); live TV and catch up keep their shape.
         if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind"))) mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
+        else {
+            // Live/catch up: always show the whole picture. A preview surface carried to full screen keeps its small
+            // size until told otherwise, which cut the picture off on phones, so refit whenever the screen size changes.
+            mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_BEST_FIT);
+            layout.addOnLayoutChangeListener((v, l, t, r, btm, ol, ot, or, ob) -> {
+                if (mp != null && (r - l != or - ol || btm - t != ob - ot)) {
+                    mp.getVLCVout().setWindowSize(r - l, btm - t);
+                    mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_BEST_FIT);
+                }
+            });
+        }
         mp.setEventListener(ev -> {
             switch (ev.type) {
                 case MediaPlayer.Event.Playing:
