@@ -39,7 +39,7 @@ final class VlcPreview {
         mp.setEventListener(null);
         Session session = new Session(vlc, mp, boost, urls, at);
         session.stage = stage;
-        if (stage != null) stage.full(true);
+        if (stage != null) { stage.player = mp; stage.full(true); }
         else {
             mp.detachViews();
             if (host != null && layout != null) host.removeView(layout);
@@ -133,11 +133,11 @@ final class VlcPreview {
         mp = new MediaPlayer(vlc);
         }
         if (carried != null && carried.stage != null) {
-            stage = carried.stage; stage.full(false);
+            stage = carried.stage; stage.player = mp; stage.full(false);
             layout = (VLCVideoLayout) stage.picture;
         } else {
             layout = new VLCVideoLayout(c);
-            if (index == -1 && c instanceof android.app.Activity) stage = new VlcStage((android.app.Activity)c, host, layout);
+            if (index == -1 && c instanceof android.app.Activity) { stage = new VlcStage((android.app.Activity)c, host, layout); stage.player = mp; }
             else host.addView(layout, index, new FrameLayout.LayoutParams(-1, -1));
             mp.attachViews(layout, null, false, false);
         }

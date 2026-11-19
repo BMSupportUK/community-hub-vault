@@ -11,6 +11,8 @@ final class VlcStage implements AutoCloseable {
     final View anchor;
     final View picture;
     boolean full;
+    /** Engine drawing into picture; told the new size so it refits instead of cropping. */
+    org.videolan.libvlc.MediaPlayer player;
     private final View.OnLayoutChangeListener follow = (v,l,t,r,b,ol,ot,or,ob) -> place();
 
     VlcStage(Activity activity, View anchor, View picture) {
@@ -41,6 +43,15 @@ final class VlcStage implements AutoCloseable {
         lp.leftMargin = full ? 0 : a[0] - d[0];
         lp.topMargin = full ? 0 : a[1] - d[1];
         picture.setLayoutParams(lp);
+        final int w = lp.width, h = lp.height;
+        picture.post(() -> {
+            org.videolan.libvlc.MediaPlayer p = player;
+            if (p == null || w < 2 || h < 2) return;
+            try {
+                p.getVLCVout().setWindowSize(w, h);
+                p.setVideoScale(org.videolan.libvlc.MediaPlayer.ScaleType.SURFACE_BEST_FIT);
+            } catch (RuntimeException ignored) { }
+        });
     }
 
     @Override public void close() {
