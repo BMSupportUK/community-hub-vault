@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Landmark, CreditCard, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Landmark, CreditCard, Loader2, ShieldCheck } from "lucide-react";
 import { vpnPayConfirm, vpnPaySummary } from "@/lib/vpn-pay.functions";
 import { PayByBankSection } from "@/components/checkout/PayByBankSection";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
@@ -99,8 +99,11 @@ function VpnPayPage() {
             {info.confirm ? (
               <div className="space-y-3 rounded-lg border border-border bg-background p-4">
                 <p className="font-semibold">Do you want to buy the VPN for {money(info.pence)}?</p>
-                <p className="text-sm text-muted-foreground">Nothing is ordered until you confirm. If you didn't mean to, just close this page.</p>
+                <p className="text-sm text-muted-foreground">Nothing is ordered until you confirm. If you didn't mean to, just go back.</p>
                 <Button type="button" className="w-full" disabled={busy} onClick={onConfirm}>{busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}Yes, buy the VPN</Button>
+                {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("from") === "shop" && (
+                  <Button type="button" variant="outline" className="w-full" onClick={() => window.location.assign("/shop?view=store&tab=vpn")}><ArrowLeft className="size-4" />Back to the VPN page</Button>
+                )}
               </div>
             ) : info.paid ? (
               <div className="flex items-start gap-3 rounded-lg border border-success/50 bg-background p-4">
