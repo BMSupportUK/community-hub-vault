@@ -24,7 +24,18 @@ export const vpnShopDevices = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .not("credential_id", "is", null)
       .order("last_seen_at", { ascending: false });
-    return (data ?? []).map((d) => ({ id: String(d.id), name: String(d.nickname || d.name || "BM Player") }));
+    const { vpnHolder, vpnEntitlement } = await import("./vpnresellers.server");
+    const holder = await vpnHolder(context.userId);
+    let until: string | null = null;
+    if (holder) {
+      const { data: h } = await supabaseAdmin.from("player_devices").select("credential_id").eq("id", holder).maybeSingle();
+      until = (await vpnEntitlement(h?.credential_id as string | null, context.userId).catch(() => null))?.until ?? null;
+    }
+    return {
+      devices: (data ?? []).map((d) => ({ id: String(d.id), name: String(d.nickname || d.name || "BM Player") })),
+      vpnDevice: until ? holder : null,
+      until,
+    };
   });
 
 /** Make the "ask to buy" link for one of the caller's own devices. No order is created here. */
@@ -40,4 +51,16 @@ export const vpnShopStart = createServerFn({ method: "POST" })
     if ("error" in r && r.error) return { error: String(r.error) } as const;
     const u = new URL((r as { url: string }).url);
     return { path: `${u.pathname}?from=shop${u.hash}` } as const;
+  });
+
+/** Move the account's single VPN connection to another of the caller's own linked devices. */
+export const vpnShopMove = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ deviceId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: dev } = await supabaseAdmin.from("player_devices").select("id, user_id").eq("id", data.deviceId).maybeSingle();
+    if (!dev || dev.user_id !== context.userId) return { error: "That device isn't linked to your account." };
+    const { vpnMoveTo } = await import("./vpnresellers.server");
+    return vpnMoveTo(context.userId, data.deviceId);
   });

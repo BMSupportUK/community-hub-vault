@@ -25,7 +25,14 @@ export async function vpnQuote(device: Device, nowMs = Date.now()): Promise<VpnQ
   if (!cred || cred.owner_id !== device.user_id) return { ok: false, reason: "Sign in with your subscription login first." };
   const { vpnEntitlement } = await import("./vpnresellers.server");
   const covered = await vpnEntitlement(credentialId, device.user_id).catch(() => null);
-  if (covered) return { ok: false, reason: `Your account already has the VPN until ${new Date(covered.until).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}. It works on every BM Player linked to your account — switch it on from the home screen.` };
+  if (covered) {
+    const { vpnHolder } = await import("./vpnresellers.server");
+    const holder = await vpnHolder(device.user_id).catch(() => null);
+    const until = new Date(covered.until).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+    if (!holder || holder === device.id) return { ok: false, reason: `You already have the VPN on this device until ${until}. Switch it on from the home screen.` };
+    const { data: h } = await supabaseAdmin.from("player_devices").select("name, nickname").eq("id", holder).maybeSingle();
+    return { ok: false, reason: `Your VPN works on 1 device at a time and is on "${h?.nickname || h?.name || "another device"}" until ${until}. To use it here, go to bmsupport.uk › Shop › VPN and press "Move VPN here".` };
+  }
   const q = vpnProRata(cred?.expiry_at as string | null, nowMs);
   if (!q) return { ok: false, reason: "Your subscription has no end date we can match the VPN to. Message BM Support to add it." };
   if (q.pence < VPN_MIN_PENCE) return { ok: false, reason: `Your subscription ends in ${q.days} day${q.days === 1 ? "" : "s"}. Renew first, then add the VPN for the new period.` };

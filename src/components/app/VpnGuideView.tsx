@@ -4,10 +4,10 @@ import { Shield, Lock, Eye, Globe2, Wifi, Zap, CheckCircle2, ArrowLeft, Loader2,
 import hackerBg from "@/assets/vpn-hacker-bg.jpg";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { vpnShopDevices, vpnShopServers, vpnShopStart } from "@/lib/vpn-shop.functions";
+import { vpnShopDevices, vpnShopServers, vpnShopStart, vpnShopMove } from "@/lib/vpn-shop.functions";
 
 const BENEFITS = [
-  { icon: Tv, title: "Built into BM Player", desc: "No extra app to install. Switch it on from the BM Player home screen on your box, phone, PC or Mac." },
+  { icon: Tv, title: "Built into BM Player", desc: "1 connection at a time on one linked box, phone, PC or Mac — move it to another linked device any time from this page." },
   { icon: Gauge, title: "Picks the best server", desc: "BM Player measures every nearby server and connects you to the fastest, least busy one." },
   { icon: Zap, title: "Stop ISP throttling", desc: "Your broadband provider can't see you're streaming, so it can't slow your channels down." },
   { icon: Eye, title: "Stay private", desc: "Your streaming is encrypted end to end — your provider only sees scrambled traffic." },
@@ -16,7 +16,7 @@ const BENEFITS = [
 ];
 
 const STEPS = [
-  "Press Order the VPN below — one VPN covers every BM Player linked to your account.",
+  "Press Order the VPN below and pick the device. One VPN = 1 connection at a time; move it between your linked devices whenever you like.",
   "Confirm the price — nothing is ordered until you press Yes.",
   "Pay by bank or card. The VPN is ready in BM Player straight away.",
 ];
@@ -26,13 +26,26 @@ function money(p: number) { return `£${(p / 100).toFixed(2)}`; }
 function OrderPanel({ onBack }: { onBack: () => void }) {
   const getDevices = useServerFn(vpnShopDevices);
   const start = useServerFn(vpnShopStart);
+  const move = useServerFn(vpnShopMove);
   const [devices, setDevices] = useState<{ id: string; name: string }[] | null>(null);
+  const [holder, setHolder] = useState<string | null>(null);
+  const [until, setUntil] = useState<string | null>(null);
+  const [moved, setMoved] = useState("");
   const [pick, setPick] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   useEffect(() => {
-    getDevices().then((d) => { setDevices(d); setPick(d[0]?.id ?? ""); }).catch(() => setErr("Couldn't load your devices. Try again shortly."));
+    const load = () => getDevices().then((d) => { setDevices(d.devices); setHolder(d.vpnDevice); setUntil(d.until); setPick(d.devices[0]?.id ?? ""); });
+    load().catch(() => setErr("Couldn't load your devices. Try again shortly."));
   }, [getDevices]);
+  const moveHere = async (id: string, name: string) => {
+    setBusy(true); setErr(""); setMoved("");
+    try {
+      const r = await move({ data: { deviceId: id } });
+      if ("error" in r) setErr(r.error); else { setHolder(id); setMoved(`The VPN is now on "${name}". Switch it on from that BM Player's home screen.`); }
+    } catch { setErr("Couldn't move the VPN. Try again shortly."); }
+    setBusy(false);
+  };
   const go = async () => {
     setBusy(true); setErr("");
     try {
@@ -52,13 +65,34 @@ function OrderPanel({ onBack }: { onBack: () => void }) {
       {devices && devices.length === 0 && (
         <p className="rounded-lg border border-border bg-background p-4 text-sm">You don't have a BM Player device linked yet. Link your box, phone, PC or Mac first from the Link Device page, then come back here.</p>
       )}
-      {devices && devices.length > 0 && (
-        <p className="rounded-lg border border-border bg-background p-4 text-sm">One VPN covers your whole account — it works on all {devices.length} of your linked BM Player device{devices.length === 1 ? "" : "s"}, and any you link later.</p>
+      {devices && devices.length > 0 && holder && (
+        <div className="space-y-2">
+          <p className="rounded-lg border border-primary/40 bg-primary/10 p-4 text-sm">You already have the VPN{until ? ` until ${new Date(until).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}` : ""}. It works on <strong>1 device at a time</strong> — move it to whichever linked BM Player you want to use.</p>
+          {devices.map((d) => (
+            <div key={d.id} className="flex items-center gap-3 rounded-xl border border-border bg-background p-3 text-sm">
+              <Tv className="size-4 text-primary-glow" /><span className="flex-1 min-w-0 truncate">{d.name}</span>
+              {holder === d.id ? <span className="inline-flex items-center gap-1 text-primary-glow"><CheckCircle2 className="size-4" />VPN is here</span>
+                : <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => moveHere(d.id, d.name)}>Move VPN here</Button>}
+            </div>
+          ))}
+          {moved && <p className="text-sm text-primary-glow">{moved}</p>}
+        </div>
+      )}
+      {devices && devices.length > 0 && !holder && (
+        <div className="space-y-2" role="radiogroup" aria-label="Which device">
+          <p className="text-sm font-medium">The VPN works on 1 device at a time. Which device should it start on? You can move it to another linked device later.</p>
+          {devices.map((d) => (
+            <button key={d.id} type="button" role="radio" aria-checked={pick === d.id} onClick={() => setPick(d.id)}
+              className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-sm transition-colors ${pick === d.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
+              <Tv className="size-4 text-primary-glow" />{d.name}
+            </button>
+          ))}
+        </div>
       )}
       {err && <p className="rounded-lg border border-destructive/50 bg-background p-3 text-sm text-destructive">{err}</p>}
       <div className="flex flex-col gap-2 sm:flex-row">
         <Button type="button" variant="outline" onClick={onBack}><ArrowLeft className="size-4" />No thanks, go back</Button>
-        <Button type="button" disabled={!pick || busy} onClick={go}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Shield className="size-4" />}See my price</Button>
+        <Button type="button" disabled={!pick || busy || !!holder} onClick={go}>{busy ? <Loader2 className="size-4 animate-spin" /> : <Shield className="size-4" />}See my price</Button>
       </div>
     </section>
   );

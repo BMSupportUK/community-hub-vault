@@ -121,6 +121,9 @@ export async function boxVpn(device: { id: string; user_id: string | null; geo_c
     return { vpn: null, offer: "buy" };
   }
   if (!acc) {
+    // One VPN connection per account: if another linked device holds it, the customer moves it from the website.
+    const { data: held } = await supabaseAdmin.from("vpn_accounts").select("device_id").eq("user_id", device.user_id).not("device_id", "is", null).neq("device_id", device.id).limit(1).maybeSingle();
+    if (held) return { vpn: null, offer: "elsewhere" };
     // An admin-allocated login for this subscriber not yet on a box is used first.
     const { data: spare } = await supabaseAdmin.from("vpn_accounts").select(SEL).eq("credential_id", credentialId).is("device_id", null).limit(1).maybeSingle();
     if (spare) {
@@ -158,4 +161,19 @@ export async function boxVpn(device: { id: string; user_id: string | null; geo_c
     configCache.set(key, cfg);
   }
   return { vpn: { enabled: true, server: serverName, server_id: serverId, until: ent.until, config: cfg.config } };
+}
+
+/** Which of this account's devices holds its single VPN connection (null when none). */
+export async function vpnHolder(userId: string): Promise<string | null> {
+  const { data } = await supabaseAdmin.from("vpn_accounts").select("device_id").eq("user_id", userId).not("device_id", "is", null).order("updated_at", { ascending: false }).limit(1).maybeSingle();
+  return (data?.device_id as string | null) ?? null;
+}
+
+/** Move the account's one VPN connection to another of its own devices. Arrives switched off; the customer turns it on in BM Player. */
+export async function vpnMoveTo(userId: string, deviceId: string): Promise<{ ok: true } | { error: string }> {
+  const { data: rows } = await supabaseAdmin.from("vpn_accounts").select("id, device_id").eq("user_id", userId).order("updated_at", { ascending: false });
+  if (!rows?.length) return { error: "Your account doesn't have the VPN yet." };
+  if (rows.some((r) => r.device_id === deviceId)) return { ok: true };
+  const { error } = await supabaseAdmin.from("vpn_accounts").update({ device_id: deviceId, enabled: false, server_id: null, server_name: null, status: "off", status_detail: null, updated_at: new Date().toISOString() } as never).eq("id", rows[0].id);
+  return error ? { error: "Couldn't move the VPN. Try again shortly." } : { ok: true };
 }
