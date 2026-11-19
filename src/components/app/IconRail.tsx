@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogIn, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, ClipboardList, MonitorPlay, Popcorn, Crown, UserPlus, Lock } from "lucide-react";
+import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogIn, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, ClipboardList, MonitorPlay, Popcorn, Crown, UserPlus, Lock } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useProfilePortal } from "@/components/app/AccountProfiles";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -291,8 +291,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, resetSportsGuides: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: false },
     { to: "/new-content", label: "New content", icon: Tv, show: false, badge: unreadNewContent },
-    { to: "/members", label: "Members", icon: Users, show: isStaff },
-    { to: "/staff", label: "Staff", icon: Briefcase, show: isStaff },
+    // Members and Staff directories open from the boxes at the bottom of the
+    // Staff Portal home, so they stay out of the rail.
     { to: "/jobs", label: "BM Support jobs", icon: ClipboardList, show: true },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
   ];

@@ -18,8 +18,6 @@ export const RAIL_EDITOR_ITEMS = {
     { id: "portal:/home/$channel", label: "Talk" },
     { id: "portal:/moderation", label: "Access Requests" },
     { id: "portal:my-shift", label: "My shift (Shifts, Shift history, Staff PIN)" },
-    { id: "/members", label: "Members" },
-    { id: "/staff", label: "Staff" },
     { id: "portal:admin-customers", label: "Customers" },
     { id: "portal:admin-orders", label: "Shop Orders" },
     { id: "portal:/send-to-app", label: "Link Device" },
@@ -46,7 +44,7 @@ export const RAIL_EDITOR_ITEMS = {
 const STAFF_GROUPS: Record<string, number> = {
   "portal:/tickets": 0, "portal:/home/$channel": 0, "portal:/moderation": 0,
   "portal:my-shift": 1,
-  "/members": 2, "/staff": 2, "portal:admin-customers": 2,
+  "portal:admin-customers": 2,
   "portal:admin-orders": 3, "portal:/send-to-app": 3,
 };
 export function staffRailGroup(id: string): number {
