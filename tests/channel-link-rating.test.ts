@@ -4,7 +4,7 @@ const stable = { ping_ms: 38, stalls: 0, reconnects: 0, delivery_ratio: 1 };
 test('ping boundaries match the box exactly', () => {
  for (const [ping, rating] of [[80,'Excellent'],[81,'Good'],[200,'Good'],[201,'Fair'],[400,'Fair'],[401,'Poor']] as const) expect(channelLinkRating({...stable,ping_ms:ping})).toBe(rating);
 });
-test('one reconnect is Poor even at 38 ms', () => expect(channelLinkRating({...stable,reconnects:1})).toBe('Poor'));
+test('one reconnect is Fair and two are Poor, even at 38 ms', () => { expect(channelLinkRating({...stable,reconnects:1})).toBe('Fair'); expect(channelLinkRating({...stable,reconnects:2})).toBe('Poor'); });
 test('one or two stalls are Fair and three are Poor', () => {
  expect(channelLinkRating({...stable,stalls:1})).toBe('Fair'); expect(channelLinkRating({...stable,stalls:2})).toBe('Fair'); expect(channelLinkRating({...stable,stalls:3})).toBe('Poor');
 });

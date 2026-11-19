@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-test("Amazon skips developer activation when already enabled but still needs installation permission", () => {
+test.skipIf(!Bun.which("javac"))("Amazon skips developer activation when already enabled but still needs installation permission", () => {
   const dir = mkdtempSync(join(tmpdir(), "direct-developer-"));
   try {
     const source = readFileSync("tv-direct-install/app/src/main/java/uk/bmsupport/directinstall/DeveloperSetup.java", "utf8");

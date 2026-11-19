@@ -12,7 +12,7 @@ test("only admin and management can request installer codes", async () => {
   for (const role of ["admin", "management", "staff", "member"]) {
     const sb = { rpc: async (_: string, args: { _role: string }) => ({ data: args._role === role }) };
     if (role === "admin" || role === "management") await expect(requireAdminInstallerAccess(sb, "verified-user")).resolves.toBeUndefined();
-    else await expect(requireAdminInstallerAccess(sb, "verified-user")).rejects.toThrow("Only admin and management");
+    else await expect(requireAdminInstallerAccess(sb, "verified-user")).rejects.toThrow("You don't have access to installer codes.");
   }
 });
 test("issued website code is restricted to its paired PIN", () => {

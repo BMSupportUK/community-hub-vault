@@ -10,7 +10,7 @@ test("manual add-user uses its own email template, separate from temporary-passw
 });
 
 test("manual add-user email subject is the welcome/login-details wording", () => {
-  expect(TEMPLATES["manual-account-login"]!.subject).toBe("🎉 Your BM Support login details");
+  expect(TEMPLATES["manual-account-login"]!.subject).toBe("Your BM Support login details");
 });
 
 test("manual add-user email exposes the placeholders the send provides", () => {
