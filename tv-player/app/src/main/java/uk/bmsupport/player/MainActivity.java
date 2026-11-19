@@ -4763,8 +4763,8 @@ public class MainActivity extends Activity {
                 android.view.GestureDetector tap = new android.view.GestureDetector(this, new android.view.GestureDetector.SimpleOnGestureListener() {
                     @Override public boolean onDown(android.view.MotionEvent e) { return true; }
                     @Override public boolean onSingleTapUp(android.view.MotionEvent e) {
-                        // Once a preview is on the box, tapping it brings up that channel's play menu.
-                        if (previewItem != null) open(previewItem);
+                        // Phones: tapping a playing preview goes straight to full screen; the Play menu button stays for the menu.
+                        if (previewItem != null) play(previewItem, defaultVlc());
                         else Toast.makeText(MainActivity.this, "Preview a channel first", Toast.LENGTH_SHORT).show();
                         return true;
                     }
