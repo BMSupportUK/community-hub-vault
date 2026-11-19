@@ -48,6 +48,12 @@ const html = renderToStaticMarkup(
   createElement(QueryClientProvider, { client }, createElement(PlayerDeviceLinkSection)),
 );
 
+// Optional: dump the rendered markup so it can be opened in a real browser for a visual check.
+if (process.env.DUMP_HTML) {
+  const { writeFileSync } = await import("node:fs");
+  writeFileSync(process.env.DUMP_HTML, html);
+}
+
 const marker = (key: string) => `data-device-group="${key}"`;
 const at = (key: string) => html.indexOf(marker(key));
 
