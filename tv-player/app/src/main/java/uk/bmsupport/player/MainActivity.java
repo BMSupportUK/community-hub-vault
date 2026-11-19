@@ -2047,7 +2047,12 @@ public class MainActivity extends Activity {
             panel.setPadding(dp(18), dp(24), dp(18), dp(16));
             panel.addView(text("Categories", 22, TEXT, true));
             panel.addView(cats, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-            panel.addView(button("Close", v -> { hidePanel(); items.requestFocus(); }));
+            // Like the Live TV guide: no Close button — Left on the remote (or Back/scrim) closes the categories.
+            cats.setOnKeyListener((v, code, ev) -> {
+                if (code != KeyEvent.KEYCODE_DPAD_LEFT) return false;
+                if (ev.getAction() == KeyEvent.ACTION_DOWN) { hidePanel(); items.requestFocus(); }
+                return true;
+            });
             LinearLayout content = root;
             if (isPhone()) {
                 content = row(); content.setPadding(0, 0, 0, 0);
@@ -3826,9 +3831,25 @@ public class MainActivity extends Activity {
             String id = o.optString("category_id");
             ids.add(new String[]{id, o.optString("category_name")}); values.put(id, o);
         }
+        java.util.Set<String> used = usedCategoryIds(kind);
         JSONArray result = new JSONArray();
-        for (String[] row : CategoryOrder.visible(CategoryOrder.apply(ids, prefs.getString(CategoryOrder.key(prefs, kind), "[]")), CategoryOrder.hidden(prefs, kind))) result.put(values.get(row[0]));
+        for (String[] row : CategoryOrder.visible(CategoryOrder.apply(ids, prefs.getString(CategoryOrder.key(prefs, kind), "[]")), CategoryOrder.hidden(prefs, kind))) { if (!AdultCategoryContent.emptyAdult(isAdultCategory(row[1]), row[0], used)) result.put(values.get(row[0])); }
         return result;
+    }
+
+    private final java.util.Map<String, Object[]> usedIdCache = new java.util.HashMap<>();
+    /** IDs present in the cached full list for this kind, or null when no full list is cached yet. */
+    private java.util.Set<String> usedCategoryIds(String kind) {
+        try {
+            java.io.File f = cacheFile(kind, listActionFor(kind));
+            if (!f.exists() || f.length() == 0) return null;
+            Object[] hit = usedIdCache.get(kind);
+            if (hit != null && (Long) hit[0] == f.lastModified()) return (java.util.Set<String>) hit[1];
+            String raw = new String(java.nio.file.Files.readAllBytes(f.toPath()), java.nio.charset.StandardCharsets.UTF_8);
+            java.util.Set<String> used = AdultCategoryContent.usedIds(raw);
+            usedIdCache.put(kind, new Object[]{f.lastModified(), used});
+            return used;
+        } catch (Throwable t) { return null; }
     }
 
     private void editCategoryOrder(String kind) {
@@ -3837,8 +3858,10 @@ public class MainActivity extends Activity {
             try {
                 JSONArray categories = new JSONArray(cachedGet(kind, catActionFor(kind), ""));
                 List<String[]> original = new ArrayList<>();
+                java.util.Set<String> usedIds = usedCategoryIds(kind);
                 for (int i = 0; i < categories.length(); i++) {
                     JSONObject o = categories.getJSONObject(i);
+                    if (AdultCategoryContent.emptyAdult(isAdultCategory(o.optString("category_name")), o.optString("category_id"), usedIds)) continue;
                     if (!hideAdult(o.optString("category_name"))) original.add(new String[]{o.optString("category_id"), o.optString("category_name")});
                 }
                 ui.post(() -> {

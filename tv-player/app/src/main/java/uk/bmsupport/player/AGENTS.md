@@ -23,3 +23,4 @@
 - The home-screen 50Hz button also resets video: it releases the preview and any carried/hand-back players and drops the stage surface before the display mode changes.
 - The guide-load drawer snapshot must stay cheap: never call streamUrls() (Keystore binder) or categoryName() (reads cache file) per channel; use the loaded category rows. Both caused ANRs/slow EPG loads.
 - VPN off is applied on the device first (tunnel down, userOff) before the website is told, and sync re-sends "off" instead of bringing the tunnel back while userOff, because the off request travels through a possibly broken tunnel.
+- Adult categories are listed only when the cached full playlist has streams in them (AdultCategoryContent via orderedCategories and the category editor), because panels send every category name to non-adult packages. Films/Series category drawers have no Close button: Left, Back or the scrim close them, like the Live TV guide.
