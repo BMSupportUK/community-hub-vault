@@ -37,7 +37,7 @@ function OrderPanel({ onBack }: { onBack: () => void }) {
     setBusy(true); setErr("");
     try {
       const r = await start({ data: { deviceId: pick } });
-      if ("error" in r) { setErr(r.error); setBusy(false); return; }
+      if ("error" in r) { setErr(r.error ?? "Couldn't start your VPN order."); setBusy(false); return; }
       window.location.assign(r.path);
     } catch { setErr("Couldn't start your VPN order. Try again shortly."); setBusy(false); }
   };

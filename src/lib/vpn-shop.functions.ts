@@ -37,7 +37,7 @@ export const vpnShopStart = createServerFn({ method: "POST" })
     if (!dev || dev.user_id !== context.userId) return { error: "That device isn't linked to your account." } as const;
     const { vpnBuy } = await import("./vpn-purchase.server");
     const r = await vpnBuy({ id: String(dev.id), user_id: String(dev.user_id) });
-    if ("error" in r && r.error) return { error: r.error } as const;
+    if ("error" in r && r.error) return { error: String(r.error) } as const;
     const u = new URL((r as { url: string }).url);
     return { path: `${u.pathname}?from=shop${u.hash}` } as const;
   });
