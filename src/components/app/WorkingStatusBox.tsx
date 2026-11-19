@@ -858,13 +858,6 @@ export function WorkingStatusBox({
         >
           <Clock className="size-4" />
         </Link>
-        <Link
-          to="/shifts"
-          title="Shifts"
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
-        >
-          <Calendar className="size-4" />
-        </Link>
       </div>
     );
   }

@@ -32,7 +32,8 @@ import { CalendarClock, History, KeyRound as KeyIcon, Shield, Receipt, ShieldChe
 import { ADMIN_CUSTOMERS_LINK } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
-import { RAIL_ORDER_CHANGED, railOrderRows, sortRailItems } from "./rail-order";
+import { RAIL_ORDER_CHANGED, railOrderRows, sortRailItems, staffRailGroup } from "./rail-order";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
@@ -129,6 +130,10 @@ interface RailItem {
   /** Portal page pinned under Home; not draggable. */
   key?: string;
   extra?: React.ReactNode;
+  /** Staff rail group (dividers drawn between groups). */
+  group?: number;
+  /** Renders the "My shift" pop-out instead of a link. */
+  shiftMenu?: boolean;
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
@@ -343,13 +348,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const portalItems: RailItem[] = inFanZone || !user ? [] : isStaff ? [
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !isModOnly },
     { to: "/home/$channel", label: "Talk", icon: MessagesSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
-    { to: "/shifts", label: "Shifts", icon: CalendarClock, show: true },
-    { to: "/shift-history", label: "Shift history", icon: History, show: true },
-    { to: "/staff-pin", label: "Staff PIN", icon: KeyIcon, show: true },
-    { to: "/send-to-app", label: "Link Device", icon: Tv, show: true },
     { to: "/moderation", label: "Access Requests", icon: Shield, show: isAdmin, extra: <ModerationPendingBadge /> },
-    { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge /> },
+    { to: "/shifts", key: "my-shift", label: "My shift", icon: CalendarClock, show: true, shiftMenu: true },
     { to: ADMIN_CUSTOMERS_LINK.to as string, key: "admin-customers", label: "Customers", icon: ShieldCheck, show: isAdmin, search: ADMIN_CUSTOMERS_LINK.search as Record<string, string> },
+    { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge /> },
+    { to: "/send-to-app", label: "Link Device", icon: Tv, show: true },
   ] : portalUnlocked ? [
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: true },
@@ -372,7 +375,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   // staff, customer) so each role's icon set keeps its own sequence.
   const railScope = inFanZone ? "fanzone" : isStaff ? "staff" : "member";
   const idOf = (i: RailItem) => i.key ?? i.to;
-  const sorted = sortRailItems(base, order, railScope, idOf);
+  const sortedRaw = sortRailItems(isStaff && !inFanZone ? base.filter((i) => i.to !== "/staff-portal") : base, order, railScope, idOf);
+  // Staff rail: saved order applies inside each group (Work, My shift, People, Sales, Community).
+  const sorted = isStaff && !inFanZone
+    ? sortedRaw.map((i, n) => ({ i, n, g: staffRailGroup(idOf(i)) })).sort((a, b) => a.g - b.g || a.n - b.n).map((x) => ({ ...x.i, group: x.g }))
+    : sortedRaw;
   // The unlock control is not a page: pin it directly beside Home.
   if (unlockItem) {
     const homeIndex = sorted.findIndex((i) => i.to === "/portal" || i.to === "/staff-portal");
@@ -415,6 +422,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
       <PortalExpiryWatcher />
+      {isStaff && !inFanZone ? (
+        <Link to="/staff-portal" aria-label="Staff Portal home" title="Staff Portal home" className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 select-none">BM</Link>
+      ) : (
       <div
         aria-label={!user || isFanZoneOnly || inFanZone ? "Boro Fan Zone" : "BM Support"}
         title={!user || isFanZoneOnly || inFanZone ? "Boro Fan Zone" : "BM Support"}
@@ -422,20 +432,32 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       >
         {!user || isFanZoneOnly || inFanZone ? "BF" : "BM"}
       </div>
+      )}
 
 
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       <div className="relative z-10 flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {sorted.map((i) => {
+      {sorted.map((i, n) => {
+        const divider = n > 0 && i.group !== undefined && sorted[n - 1].group !== i.group
+          ? <div key={`g-${i.group}`} className="relative z-10 shrink-0 h-px w-10 bg-primary-glow/40 my-1" />
+          : null;
+        if (i.shiftMenu) {
+          const sActive = ["/shifts", "/shift-history", "/staff-pin"].some((p) => path === p || path.startsWith(p + "/"));
+          return [divider, (
+            <div key={i.key} {...dragProps(i.key!)}>
+              <ShiftRailMenu active={sActive} />
+            </div>
+          )];
+        }
         if (i.key?.startsWith("portal:")) {
           const searchTab = (i.search as { tab?: string } | undefined)?.tab;
           const curTab = (searchState as { tab?: string }).tab ?? null;
           const pActive = i.to === "/home/$channel" ? path.startsWith("/home/") : i.to === "/admin" ? path.startsWith("/admin") && (searchTab ?? null) === (curTab ?? null) : (path === i.to || path.startsWith(i.to + "/"));
-          return (
+          return [divider, (
             <div key={i.key} {...dragProps(i.key)}>
               <RailIcon to={i.to} label={i.label} Icon={i.icon} active={pActive} draggable={isAdmin} badge={i.badge} badgeVariant={i.badgeVariant} search={i.search} params={i.params} extra={i.extra} />
             </div>
-          );
+          )];
         }
         const active =
           i.to === "/home"
@@ -450,11 +472,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
             </div>
           );
         }
-        return (
+        return [divider, (
           <div key={i.to} {...dragProps(i.to)}>
             <RailIcon to={i.to} label={i.label} Icon={i.icon} active={active} badge={i.badge} badgeVariant={i.badgeVariant} draggable={isAdmin} search={i.search} params={i.params} resetSportsGuides={i.resetSportsGuides} />
           </div>
-        );
+        )];
       })}
       </div>
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
@@ -553,5 +575,42 @@ function RailIcon({
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+/** One rail icon for everything about the signed-in staff member's own shifts. */
+function ShiftRailMenu({ active }: { active: boolean }) {
+  const [open, setOpen] = useState(false);
+  const links = [
+    { to: "/shifts", label: "Shifts", Icon: CalendarClock },
+    { to: "/shift-history", label: "Shift history", Icon: History },
+    { to: "/staff-pin", label: "Staff PIN", Icon: KeyIcon },
+  ] as const;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label="My shift"
+          title="My shift"
+          className={cn(
+            "group relative z-10 size-[52px] rounded-2xl flex items-center justify-center transition-all duration-200",
+            active
+              ? "bg-gradient-primary text-primary-foreground rounded-xl shadow-glow ring-2 ring-primary-glow scale-110"
+              : "bg-[color-mix(in_oklab,var(--surface)_62%,transparent)] text-primary-glow ring-1 ring-primary-glow/35 hover:bg-gradient-primary hover:text-primary-foreground hover:rounded-xl hover:shadow-glow hover:scale-110",
+          )}
+        >
+          <CalendarClock className="size-[22px]" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="right" align="start" sideOffset={10} className="z-[1000] w-48 p-1.5">
+        <p className="px-2 py-1 text-xs font-semibold text-muted-foreground">My shift</p>
+        {links.map(({ to, label, Icon }) => (
+          <Link key={to} to={to} onClick={() => setOpen(false)} className="flex items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-surface-2">
+            <Icon className="size-4 text-primary-glow" />{label}
+          </Link>
+        ))}
+      </PopoverContent>
+    </Popover>
   );
 }

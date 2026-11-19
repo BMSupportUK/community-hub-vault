@@ -14,18 +14,15 @@ export function railOrderRows(scope: RailScope, ids: readonly string[]) {
 
 export const RAIL_EDITOR_ITEMS = {
   staff: [
-    { id: "/staff-portal", label: "Home" },
     { id: "portal:/tickets", label: "Tickets" },
     { id: "portal:/home/$channel", label: "Talk" },
-    { id: "portal:/shifts", label: "Shifts" },
-    { id: "portal:/shift-history", label: "Shift history" },
-    { id: "portal:/staff-pin", label: "Staff PIN" },
-    { id: "portal:/send-to-app", label: "Link Device" },
     { id: "portal:/moderation", label: "Access Requests" },
-    { id: "portal:admin-orders", label: "Shop Orders" },
-    { id: "portal:admin-customers", label: "Customers" },
+    { id: "portal:my-shift", label: "My shift (Shifts, Shift history, Staff PIN)" },
     { id: "/members", label: "Members" },
     { id: "/staff", label: "Staff" },
+    { id: "portal:admin-customers", label: "Customers" },
+    { id: "portal:admin-orders", label: "Shop Orders" },
+    { id: "portal:/send-to-app", label: "Link Device" },
     { id: "/sports-guides", label: "Sports guides" },
     { id: "/jobs", label: "BM Support jobs" },
     { id: "/forum", label: "Boro Fan Zone" },
@@ -45,3 +42,13 @@ export const RAIL_EDITOR_ITEMS = {
     { id: "/forum", label: "Boro Fan Zone" },
   ],
 } as const;
+/** Staff rail groups: 0 Work, 1 My shift, 2 People, 3 Sales, 4 Community. */
+const STAFF_GROUPS: Record<string, number> = {
+  "portal:/tickets": 0, "portal:/home/$channel": 0, "portal:/moderation": 0,
+  "portal:my-shift": 1,
+  "/members": 2, "/staff": 2, "portal:admin-customers": 2,
+  "portal:admin-orders": 3, "portal:/send-to-app": 3,
+};
+export function staffRailGroup(id: string): number {
+  return STAFF_GROUPS[id] ?? 4;
+}

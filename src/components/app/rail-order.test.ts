@@ -11,4 +11,11 @@ test("the stored order is restored instead of the default sequence", () => {
   const saved = Object.fromEntries(rows.map(row => [row.key, row.sort_order]));
   expect(sortRailItems(["home", "shop"], saved, "member", i => i)).toEqual(["shop", "home"]);
   expect(sortRailItems(["home", "shop"], saved, "staff", i => i)).toEqual(["home", "shop"]);
+});test("staff rail groups keep shifts together and community last", () => {
+  const { staffRailGroup } = require("./rail-order");
+  expect(staffRailGroup("portal:/tickets")).toBe(0);
+  expect(staffRailGroup("portal:my-shift")).toBe(1);
+  expect(staffRailGroup("portal:admin-customers")).toBe(2);
+  expect(staffRailGroup("portal:admin-orders")).toBe(3);
+  expect(staffRailGroup("/forum")).toBe(4);
 });
