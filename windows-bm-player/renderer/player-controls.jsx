@@ -26,8 +26,8 @@ export function PlayerControls({p,bm,actions,volume,onVolume}){
  <label>Subtitles <select aria-label="Subtitle track" value={tracks.subtitleId??-1} onChange={e=>command('subtitleTrack',{id:Number(e.target.value)}).then(setTracks)}><option value="-1">Off</option>{tracks.subtitles.map(t=><option key={t.id} value={t.id}>{t.name}</option>)}</select></label>
  </div><div className="player-actions">{actions}</div></div>;
 }
-export function usePlayerControls(active,held){
+export function usePlayerControls(active,held,fullscreen=false){
  const last=useRef(Date.now()),[shown,setShown]=useState(true);
- useEffect(()=>{if(!active)return;last.current=Date.now();setShown(true);const reveal=()=>{last.current=Date.now();setShown(true);};const tick=setInterval(()=>setShown(controls.visible(Date.now(),last.current,held)),250);for(const e of ['pointermove','pointerdown','keydown','focusin'])window.addEventListener(e,reveal);return()=>{clearInterval(tick);for(const e of ['pointermove','pointerdown','keydown','focusin'])window.removeEventListener(e,reveal);};},[active,held]);
+ useEffect(()=>{if(!active)return;last.current=Date.now();setShown(true);const reveal=()=>{last.current=Date.now();setShown(true);};const tick=setInterval(()=>setShown(controls.visible(Date.now(),last.current,held)),250);const events=controls.revealEvents(fullscreen);for(const e of events)window.addEventListener(e,reveal);return()=>{clearInterval(tick);for(const e of events)window.removeEventListener(e,reveal);};},[active,held,fullscreen]);
  return shown;
 }

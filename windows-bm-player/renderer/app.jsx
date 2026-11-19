@@ -100,9 +100,9 @@ async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[
  const pane=useRef(null),channelPane=useRef(null),previewTimer=useRef(null),previewSequence=useRef(0);
  const [playingView,setPlayingView]=useState(false),[volume,setVolume]=useState(100);
  const [feed,setFeed]=useState({});
- const controlsShown=usePlayerControls(playingView,!!modal||vpnOpen||inactive>0||!!progress);
  useEffect(()=>{if(!state?.signedIn){setVpn(null);setVpnOpen(false);return;}bm.vpnState().then(setVpn).catch(()=>{});},[state?.signedIn]);
  const [isFs,setIsFs]=React.useState(!!document.fullscreenElement);const toggleFs=React.useCallback(()=>{bm.fullscreen?.('toggle').then(v=>setIsFs(!!v)).catch(()=>{});},[]);React.useEffect(()=>{const f=()=>bm.fullscreen?.('query').then(v=>setIsFs(!!v)).catch(()=>{});window.addEventListener('resize',f);return()=>window.removeEventListener('resize',f);},[]);React.useEffect(()=>{if(!playingView)return;const k=e=>{if(e.key==='Escape'&&isFs){bm.fullscreen?.('off').then(v=>setIsFs(!!v));return;}if((e.key==='f'||e.key==='F')&&!e.ctrlKey&&!e.altKey&&!e.metaKey&&!/INPUT|TEXTAREA|SELECT/.test(e.target?.tagName||'')){e.preventDefault();toggleFs();}};window.addEventListener('keydown',k);return()=>window.removeEventListener('keydown',k);},[playingView,toggleFs,isFs]);
+ const controlsShown=usePlayerControls(playingView,!!modal||vpnOpen||inactive>0||!!progress,isFs);
  function toast(message){setNotice(safeText(message,'Something went wrong. Try again.'));setTimeout(()=>setNotice(''),7000);}
  async function act(fn){try{return await fn();}catch(error){toast(error.message);return null;}}
  useEffect(()=>{bm.state().then(receiveState);return bm.subscribe(event=>{
