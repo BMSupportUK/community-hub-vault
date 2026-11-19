@@ -192,7 +192,7 @@ function ProfileDeviceLinkSection({ profileId, profileLoaded }: { profileId: str
           {isRooms && visibleDevices.length ? <div className="mt-4 rounded-xl border border-border bg-background/50 p-3 text-xs text-muted-foreground">
             <p>Multi Room and Triple Room work in one home plus one phone. Only one device can watch away from home at a time, and nothing at home plays while it does.</p>
             <Button size="sm" variant="outline" className="mt-2" disabled={busy} onClick={async () => {
-              try { const r = await moveFn({ data: { login: activeAccount.app_login_name } }); toast.success(r.already ? "Your move request is already with BM Support." : "Sent. BM Support will approve your new home."); }
+              try { const r = await moveFn({ data: { login: activeAccount!.app_login_name } }); toast.success(r.already ? "Your move request is already with BM Support." : "Sent. BM Support will approve your new home."); }
               catch (e) { toast.error(e instanceof Error ? e.message : "Please try again."); }
             }}>I've moved / new broadband</Button>
           </div> : null}
