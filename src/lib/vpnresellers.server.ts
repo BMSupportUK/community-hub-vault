@@ -57,8 +57,20 @@ export async function createFixedVpnAccount(login: { username: string; password:
   return made;
 }
 
-/** Is this login paid up for the VPN right now? Returns the end date when it is. */
-export async function vpnEntitlement(credentialId: string | null | undefined): Promise<{ until: string } | null> {
+/** Account-wide: one paid VPN on the account covers every linked BM Player. Checks this login first, then any other paid login on the same account. */
+export async function vpnEntitlement(credentialId: string | null | undefined, userId?: string | null): Promise<{ until: string } | null> {
+  const own = await credentialEntitlement(credentialId);
+  if (own || !userId) return own;
+  const { data: subs } = await supabaseAdmin.from("vpn_subscriptions").select("credential_id").eq("user_id", userId).eq("active", true).neq("credential_id", credentialId ?? "00000000-0000-0000-0000-000000000000");
+  let best: { until: string } | null = null;
+  for (const s of subs ?? []) {
+    const e = await credentialEntitlement(s.credential_id as string).catch(() => null);
+    if (e && (!best || e.until > best.until)) best = e;
+  }
+  return best;
+}
+
+async function credentialEntitlement(credentialId: string | null | undefined): Promise<{ until: string } | null> {
   if (!credentialId) return null;
   const [{ data: sub }, { data: cred, error: expiryError }] = await Promise.all([
     supabaseAdmin.from("vpn_subscriptions").select("active, source, paid_until").eq("credential_id", credentialId).maybeSingle(),
@@ -102,7 +114,7 @@ const configCache = new Map<string, { at: number; config: string }>();
 export async function boxVpn(device: { id: string; user_id: string | null; geo_country?: string | null }) {
   const { data: dev } = await supabaseAdmin.from("player_devices").select("credential_id").eq("id", device.id).maybeSingle();
   const credentialId = dev?.credential_id ?? null;
-  const ent = await vpnEntitlement(credentialId);
+  const ent = await vpnEntitlement(credentialId, device.user_id);
   let { data: acc } = await supabaseAdmin.from("vpn_accounts").select(SEL).eq("device_id", device.id).maybeSingle();
   if (!ent || !device.user_id || !credentialId) {
     if (acc) await syncRemote(acc as Account, null).catch(() => null);
