@@ -43,6 +43,13 @@ export const vpnCredits = createServerFn({ method: "GET" }).middleware([requireS
   return { balance: await vpnBalance() };
 });
 
+/** Provider panel (Xtream) reseller credits for the admin dashboard header. */
+export const panelCreditsFn = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  await staffOnly(context);
+  const { panelCredits } = await import("./provider-panel.server");
+  try { return { credits: await panelCredits() }; } catch { return { credits: null as string | null }; }
+});
+
 export const vpnServerList = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   await staffOnly(context);
   const { vpnServers } = await import("./vpnresellers.server");

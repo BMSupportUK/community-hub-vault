@@ -7,4 +7,5 @@ describe("provider panel package choice", () => {
   it("multi room 6 months without adult", () => expect(panelPackageId(6, "multi", false)).toBe(90));
   it("triple room 1 month with adult", () => expect(panelPackageId(1, "triple", true)).toBe(73));
   it("unknown length returns nothing", () => expect(panelPackageId(2, "single", false)).toBeNull());
+  it("3 months is never sold, so has no package", () => expect(panelPackageId(3, "single", false)).toBeNull());
 });

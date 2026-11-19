@@ -24,7 +24,7 @@ export const providerSetupLine = createServerFn({ method: "POST" })
     if (order.customer_type === "vpn") return { ok: false, error: "VPN orders don't use the provider panel." };
     const terms = deriveOrderTerms((items ?? []).map((i) => ({ product_name: i.product_name as string | null, quantity: i.quantity as number | null })));
     const packageId = panelPackageId(terms.months, terms.accountType, order.wants_adult_content === true);
-    if (!packageId) return { ok: false, error: `No panel package matches ${terms.months} month(s) — set this one up by hand.` };
+    if (!packageId) return { ok: false, error: `We only sell 1, 6 and 12 months — ${terms.months} month(s) can't be set up on the panel.` };
     if (data.kind === "renew" && !data.username) return { ok: false, error: "Pick the customer's login to renew first." };
 
     // Once per order: claim the row, or hand back what was already done.

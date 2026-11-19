@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
-import { vpnCredits } from "@/lib/vpn-admin.functions";
+import { vpnCredits, panelCreditsFn } from "@/lib/vpn-admin.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
 import { ADMIN_CUSTOMERS_LINK, adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
@@ -142,11 +142,17 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
 
   const isAdminOrManagement = roles.includes("admin") || roles.includes("management");
   const [vpnBalance, setVpnBalance] = useState<string | null>(null);
+  const [panelBalance, setPanelBalance] = useState<string | null>(null);
   useEffect(() => {
     if (isFz || !isAdminOrManagement) return;
     let on = true;
-    vpnCredits().then((r) => { if (on) setVpnBalance(r.balance); }).catch(() => {});
-    return () => { on = false; };
+    const load = () => {
+      vpnCredits().then((r) => { if (on) setVpnBalance(r.balance); }).catch(() => {});
+      panelCreditsFn().then((r) => { if (on && r.credits !== null) setPanelBalance(r.credits); }).catch(() => {});
+    };
+    load();
+    const t = window.setInterval(load, 30_000);
+    return () => { on = false; window.clearInterval(t); };
   }, [isFz, isAdminOrManagement]);
 
   if (!(isFz ? canOpenFanZoneAdminPanel(roles) : canOpenAdminPanel(roles))) return <Navigate to="/home" />;
@@ -172,6 +178,11 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
               <p className="text-sm text-white/85">Server-wide controls — staff can see the sections admin allows them to.</p>
             </div>
           <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 sm:col-span-1">
+            {!isFz && isAdminOrManagement && panelBalance !== null && (
+              <span title="Provider panel reseller credits (updates every 30 seconds)" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white">
+                Panel credits: {panelBalance}
+              </span>
+            )}
             {!isFz && isAdminOrManagement && vpnBalance !== null && (
               <span title="VPNresellers account balance" className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white">
                 VPN credits: ${vpnBalance}

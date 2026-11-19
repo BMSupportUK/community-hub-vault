@@ -104,3 +104,12 @@ export async function panelExtendLine(panel: Panel, o: { id: string; packageId: 
   if (!after.exp || after.exp === before.exp) throw new Error(panelError(r.text) ?? "The provider panel didn't extend the line (check its credits)");
   return { id: o.id, username: after.username, password: after.password, exp: after.exp };
 }
+
+/** Reseller credit balance shown on the provider panel dashboard. */
+export async function panelCredits() {
+  const panel = await panelLogin();
+  const r = await panel.req("/api.php?action=reseller_dashboard");
+  const n = Number((JSON.parse(r.text) as { credits?: string | number }).credits);
+  if (!Number.isFinite(n)) throw new Error("Panel credits unreadable");
+  return n.toFixed(2);
+}

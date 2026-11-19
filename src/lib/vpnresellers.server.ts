@@ -29,7 +29,7 @@ export async function vpnServers(): Promise<VpnServer[]> {
 
 let balanceCache: { at: number; balance: string } | null = null;
 export async function vpnBalance(): Promise<string> {
-  if (balanceCache && Date.now() - balanceCache.at < 300_000) return balanceCache.balance;
+  if (balanceCache && Date.now() - balanceCache.at < 20_000) return balanceCache.balance;
   const r = await vr<{ data: { balance: string | number } }>("GET", "/profile");
   const balance = String(r.data?.balance ?? "0");
   balanceCache = { at: Date.now(), balance };
