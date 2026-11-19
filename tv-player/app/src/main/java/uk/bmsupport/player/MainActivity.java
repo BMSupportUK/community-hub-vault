@@ -3154,9 +3154,10 @@ public class MainActivity extends Activity {
             try {
                 JSONArray allChannels = new JSONArray(cachedGet("live", "get_live_streams", ""));
                 JSONArray allCategories = new JSONArray(cachedGet("live", "get_live_categories", ""));
+                java.util.Set<String> usedVoice = usedCategoryIds("live");
                 java.util.Set<String> adultIds = new java.util.HashSet<>();
                 JSONArray categories = new JSONArray();
-                for (int i = 0; i < allCategories.length(); i++) { JSONObject o = allCategories.optJSONObject(i); if (o == null) continue; if (hideAdult(o.optString("category_name"))) adultIds.add(o.optString("category_id")); else categories.put(o); }
+                for (int i = 0; i < allCategories.length(); i++) { JSONObject o = allCategories.optJSONObject(i); if (o == null) continue; if (hideAdult(o.optString("category_name")) || AdultCategoryContent.emptyAdult(isAdultCategory(o.optString("category_name")), o.optString("category_id"), usedVoice)) adultIds.add(o.optString("category_id")); else categories.put(o); }
                 JSONArray channels = new JSONArray();
                 for (int i = 0; i < allChannels.length(); i++) { JSONObject o = allChannels.optJSONObject(i); if (o != null && !adultIds.contains(o.optString("category_id"))) channels.put(o); }
                 List<LiveVoiceSearch.Row> rows = LiveVoiceSearch.results(categories, channels, spoken);
