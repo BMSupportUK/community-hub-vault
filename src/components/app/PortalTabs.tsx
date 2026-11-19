@@ -1,6 +1,8 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Settings, Home, Timer } from "lucide-react";
+import { Settings, Home, Timer, ShoppingCart, Wrench } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useHasSalesAccount } from "@/hooks/use-sales-account";
@@ -33,6 +35,20 @@ export function PortalTabs({ active }: { active?: Tab }) {
     <nav aria-label="Customer Portal" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface/80 px-3 py-2 backdrop-blur sm:px-6">
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Customer Portal</span>
       <Link to="/portal" className={cn(item, current === "home" ? on : off)}><Home className="size-4" />Home</Link>
+      {(isStaff || unlocked) && (
+        <TooltipProvider>
+          <Tooltip><TooltipTrigger asChild>
+            <Button asChild variant={current === "shop" || current === "orders" ? "default" : "ghost"} size="icon">
+              <Link to="/shop" aria-label="Shop"><ShoppingCart className="size-4" /></Link>
+            </Button>
+          </TooltipTrigger><TooltipContent>Shop</TooltipContent></Tooltip>
+          <Tooltip><TooltipTrigger asChild>
+            <Button asChild variant={current === "guides" ? "default" : "ghost"} size="icon">
+              <Link to="/install-guides" aria-label="Download App & Install guides"><Wrench className="size-4" /></Link>
+            </Button>
+          </TooltipTrigger><TooltipContent>Download App & Install guides</TooltipContent></Tooltip>
+        </TooltipProvider>
+      )}
       <div className="ml-1 flex shrink-0 items-center gap-1.5 [&_a]:size-9 [&_a]:rounded-lg [&_button]:size-9 [&_button]:rounded-lg">
         <BmInboxBell />
         <MentionsBadge />

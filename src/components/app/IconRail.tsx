@@ -32,7 +32,7 @@ import { CalendarClock, History, KeyRound as KeyIcon, Shield, Receipt, ShieldChe
 import { ADMIN_CUSTOMERS_LINK } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
-import { RAIL_ORDER_CHANGED, railOrderRows, sortRailItems, staffRailGroup } from "./rail-order";
+import { RAIL_ORDER_CHANGED, railOrderRows, sortRailItems, staffRailGroup, memberRailGroup } from "./rail-order";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
@@ -354,12 +354,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge /> },
     { to: "/send-to-app", label: "Link Device", icon: Tv, show: true },
   ] : portalUnlocked ? [
-    { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
+    // Shop and Download App & Install guides sit in the Customer Portal header.
     { to: "/tickets", label: "Tickets", icon: Ticket, show: true },
     { to: "/home/$channel", label: "Talk", icon: MessagesSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     { to: "/portal/logins", label: "Service Credentials", icon: KeyIcon, show: true },
     { to: "/send-to-app", label: "Link Device", icon: Tv, show: true },
-    { to: "/install-guides", label: "Download App & Install guides", icon: Wrench, show: true },
     { to: "/knowledge-base", label: "Knowledge Base", icon: BookOpen, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
   ] : [];
@@ -375,10 +374,12 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   // staff, customer) so each role's icon set keeps its own sequence.
   const railScope = inFanZone ? "fanzone" : isStaff ? "staff" : "member";
   const idOf = (i: RailItem) => i.key ?? i.to;
-  const sortedRaw = sortRailItems(isStaff && !inFanZone ? base.filter((i) => i.to !== "/staff-portal") : base, order, railScope, idOf);
+  const sortedRaw = sortRailItems(!inFanZone && user ? base.filter((i) => i.to !== "/staff-portal" && i.to !== "/portal") : base, order, railScope, idOf);
   // Staff rail: saved order applies inside each group (Work, My shift, People, Sales, Community).
-  const sorted = isStaff && !inFanZone
-    ? sortedRaw.map((i, n) => ({ i, n, g: staffRailGroup(idOf(i)) })).sort((a, b) => a.g - b.g || a.n - b.n).map((x) => ({ ...x.i, group: x.g }))
+  // Customer rail: same idea (Support, My account, Community).
+  const groupOf = isStaff ? staffRailGroup : memberRailGroup;
+  const sorted = !inFanZone && user
+    ? sortedRaw.map((i, n) => ({ i, n, g: groupOf(idOf(i)) })).sort((a, b) => a.g - b.g || a.n - b.n).map((x) => ({ ...x.i, group: x.g }))
     : sortedRaw;
   // The unlock control is not a page: pin it directly beside Home.
   if (unlockItem) {
@@ -424,6 +425,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       <PortalExpiryWatcher />
       {isStaff && !inFanZone ? (
         <Link to="/staff-portal" aria-label="Staff Portal home" title="Staff Portal home" className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 select-none">BM</Link>
+      ) : user && !inFanZone && !isFanZoneOnly ? (
+        <Link to="/portal" aria-label="Customer Portal home" title="Customer Portal home" className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 select-none">BM</Link>
       ) : (
       <div
         aria-label={!user || isFanZoneOnly || inFanZone ? "Boro Fan Zone" : "BM Support"}

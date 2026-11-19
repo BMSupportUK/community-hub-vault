@@ -1,9 +1,9 @@
 // @ts-nocheck — optional rollback-only integration tests use bun test.
 import { test, expect } from "bun:test";
 import postgres from "postgres";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
-const databaseTest = process.env.SUPABASE_DB_URL ? test : test.skip;
+const databaseTest = process.env.SUPABASE_DB_URL && existsSync(`${homedir()}/.cache/lovable-auth/session.json`) ? test : test.skip;
 databaseTest("database blocks duplicate active channel tickets", async () => {
   const sql = postgres(process.env.SUPABASE_DB_URL, { max: 1, onnotice: () => {} });
   const session = JSON.parse(readFileSync(`${homedir()}/.cache/lovable-auth/session.json`, "utf8"));
