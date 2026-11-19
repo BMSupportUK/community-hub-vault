@@ -27,6 +27,16 @@ export function boxLimitReached(otherBoxesOnLogin: number, ownerIsStaff = false,
   return !ownerIsStaff && otherBoxesOnLogin >= boxAllowance(connections);
 }
 
+/** Devices one app login may have linked: exactly its paid connections (Single 1, Multi Room 2, Triple Room 3). */
+export function linkAllowance(connections: number | null | undefined): number {
+  return connections && connections >= 1 ? Math.floor(connections) : 1;
+}
+
+/** True when linking another device would go over the login's connections. Staff and test accounts are exempt. */
+export function linkLimitReached(linkedOnLogin: number, exempt = false, connections?: number | null): boolean {
+  return !exempt && linkedOnLogin >= linkAllowance(connections);
+}
+
 export function isQuietBox(lastSeenAt: string | null | undefined, linkedAt: string | null | undefined, now = Date.now()): boolean {
   const ref = lastSeenAt ?? linkedAt;
   if (!ref) return false;

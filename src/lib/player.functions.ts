@@ -58,6 +58,18 @@ export const sendLoginWithCode = createServerFn({ method: "POST" })
         if (v?.vpn_status === "yes") throw new Error("Turn off the VPN on your box before linking it, then try the same code again. We need the box's real location.");
       }
     }
+    // Linked devices on this login can't exceed its connections; checked before the code is used up.
+    if (!isStaff && !exemptProfile?.player_rules_exempt) {
+      const { count: linked } = await supabaseAdmin.from("player_devices").select("id", { count: "exact", head: true })
+        .eq("user_id", context.userId).eq("iptv_username", data.username).neq("id", row!.device_id);
+      const { loginConnections } = await import("@/lib/player-connections.server");
+      const connections = (await loginConnections(supabaseAdmin, data.username)) as number | null;
+      const { linkLimitReached, linkAllowance } = await import("@/lib/player-security");
+      if (linkLimitReached(linked ?? 0, false, connections)) {
+        const n = linkAllowance(connections);
+        throw new Error(`Your package allows ${n} linked device${n === 1 ? "" : "s"} and you've used ${n === 1 ? "it" : "them all"}. Unlink a device under My linked devices (bin icon), then try the same code again.`);
+      }
+    }
     // Single use: only the first claimant flips used_at.
     const { data: claimed } = await supabaseAdmin.from("player_link_codes").update({ used_at: new Date().toISOString() })
       .eq("code_hash", hash).is("used_at", null).select("device_id").maybeSingle();

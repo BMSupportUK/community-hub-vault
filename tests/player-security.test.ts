@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { appGenuine, BM_ANDROID_SIGNER, boxLimitReached, isQuietBox, lockoutMinutes, recentlySeen, unusualPlace } from "../src/lib/player-security";
+import { linkLimitReached, appGenuine, BM_ANDROID_SIGNER, boxLimitReached, isQuietBox, lockoutMinutes, recentlySeen, unusualPlace } from "../src/lib/player-security";
 
 const now = Date.parse("2026-11-09T12:00:00Z");
 const ago = (ms: number) => new Date(now - ms).toISOString();
@@ -42,4 +42,15 @@ test("staff accounts are never held by the box limit", () => {
   expect(boxLimitReached(3, true)).toBe(false);
   expect(boxLimitReached(10, true)).toBe(false);
   expect(boxLimitReached(3, false)).toBe(true);
+});
+
+test("linked devices are limited to the package's connections", () => {
+  expect(linkLimitReached(0, false, 1)).toBe(false);
+  expect(linkLimitReached(1, false, 1)).toBe(true);
+  expect(linkLimitReached(1, false, null)).toBe(true);
+  expect(linkLimitReached(1, false, 2)).toBe(false);
+  expect(linkLimitReached(2, false, 2)).toBe(true);
+  expect(linkLimitReached(2, false, 3)).toBe(false);
+  expect(linkLimitReached(3, false, 3)).toBe(true);
+  expect(linkLimitReached(5, true, 1)).toBe(false);
 });
