@@ -16,7 +16,7 @@ const BENEFITS = [
 ];
 
 const STEPS = [
-  "Press Order the VPN below and pick the BM Player device it's for.",
+  "Press Order the VPN below — one VPN covers every BM Player linked to your account.",
   "Confirm the price — nothing is ordered until you press Yes.",
   "Pay by bank or card. The VPN is ready in BM Player straight away.",
 ];
@@ -53,15 +53,7 @@ function OrderPanel({ onBack }: { onBack: () => void }) {
         <p className="rounded-lg border border-border bg-background p-4 text-sm">You don't have a BM Player device linked yet. Link your box, phone, PC or Mac first from the Link Device page, then come back here.</p>
       )}
       {devices && devices.length > 0 && (
-        <div className="space-y-2" role="radiogroup" aria-label="Which device">
-          <p className="text-sm font-medium">Which device is the VPN for?</p>
-          {devices.map((d) => (
-            <button key={d.id} type="button" role="radio" aria-checked={pick === d.id} onClick={() => setPick(d.id)}
-              className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-sm transition-colors ${pick === d.id ? "border-primary bg-primary/10" : "border-border bg-background hover:border-primary/40"}`}>
-              <Tv className="size-4 text-primary-glow" />{d.name}
-            </button>
-          ))}
-        </div>
+        <p className="rounded-lg border border-border bg-background p-4 text-sm">One VPN covers your whole account — it works on all {devices.length} of your linked BM Player device{devices.length === 1 ? "" : "s"}, and any you link later.</p>
       )}
       {err && <p className="rounded-lg border border-destructive/50 bg-background p-3 text-sm text-destructive">{err}</p>}
       <div className="flex flex-col gap-2 sm:flex-row">
