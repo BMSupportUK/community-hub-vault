@@ -31,7 +31,7 @@ function OrderPanel({ onBack }: { onBack: () => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   useEffect(() => {
-    getDevices().then((d) => { setDevices(d); if (d[0]) setPick(d[0].id); }).catch(() => setErr("Couldn't load your devices. Try again shortly."));
+    getDevices().then((d) => { setDevices(d); setPick(d[0]?.id ?? ""); }).catch(() => setErr("Couldn't load your devices. Try again shortly."));
   }, [getDevices]);
   const go = async () => {
     setBusy(true); setErr("");
