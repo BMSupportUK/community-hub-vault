@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { providerSetupLine } from "@/lib/provider-panel.functions";
 import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { downloadReceipt } from "@/lib/receipt";
 import { CREDENTIAL_TIME_STEP, credentialTimeInput } from "@/lib/credential-time";
@@ -54,6 +55,8 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   const [busy, setBusy] = useState(false);
   const createCredential = useServerFn(createCredentialForOrder);
   const loadRenewalAccounts = useServerFn(getOrderRenewalAccounts);
+  const setupOnPanel = useServerFn(providerSetupLine);
+  const [panelBusy, setPanelBusy] = useState(false);
   const [renewAccounts, setRenewAccounts] = useState<CredentialCandidate[] | null>(null);
   const [renewAccountId, setRenewAccountId] = useState("");
   const [renewMonths, setRenewMonths] = useState(0);
@@ -237,6 +240,27 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
   if (!link) return <p className="text-sm text-muted-foreground">This order has no secure checkout page (it was added before secure pages existed).</p>;
   const url = secureCheckoutUrl(link.token);
   const renewal = link.customer_kind === "existing";
+  const runPanel = async () => {
+    if (!canComplete) return;
+    const username = renewal ? (manualRenewal ? loginName.trim() : (renewAccounts?.find((a) => a.id === renewAccountId)?.app_login_name ?? "")) : undefined;
+    if (renewal && !username) return toast.error("Pick the customer's login to renew first");
+    if (!confirm(renewal ? `Renew ${username} on the provider panel now? This uses panel credits.` : "Create a new line on the provider panel now? This uses panel credits.")) return;
+    setPanelBusy(true);
+    try {
+      const r = await setupOnPanel({ data: { orderId, kind: renewal ? "renew" : "create", username } });
+      if (!r.ok) return void toast.error(r.error);
+      if (!renewal) { setLoginName(r.username); setAccountPassword(r.password); }
+      if (r.exp) setExpiryLocal(toLocal(new Date(`${r.exp.slice(0, 10)}T23:59`)));
+      toast.success(r.again ? "Already done on the panel — details filled in" : renewal ? `Renewed on the panel until ${r.exp}` : "Line created on the panel — check the details, then save and send");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Provider panel error");
+    } finally { setPanelBusy(false); }
+  };
+  const panelButton = canComplete && orderPaid && !link.account_setup_at ? (
+    <button type="button" disabled={panelBusy || busy} onClick={runPanel} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg border border-primary/50 text-primary text-xs font-semibold disabled:opacity-50">
+      {panelBusy ? <Loader2 className="size-4 animate-spin" /> : <Link2 className="size-4" />} {renewal ? "Renew on provider panel" : "Create on provider panel"}
+    </button>
+  ) : null;
   const sendCredentials = async () => {
     if (!canComplete) return;
     if (!loginName.trim() || !accountPassword.trim()) return toast.error("Username and password are required");
@@ -344,6 +368,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       {orderPaid && <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
         <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> {renewal ? "Subscription extended (renewal)" : "Account set up"}</div>
         <p className="text-xs text-muted-foreground">{link.account_setup_at ? `Confirmed ${new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. The sale can now be completed.` : renewal ? "Confirm the customer's subscription has been extended. The sale can't be completed until you do." : "Confirm the customer's new account is set up. The sale can't be completed until you do."}</p>
+        {renewal && !manualRenewal && panelButton}
         {canComplete && <button type="button" disabled={busy || ((!renewal || manualRenewal) && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : (renewal ? "Confirm extension is done" : "Confirm account is set up")}
         </button>}
@@ -381,6 +406,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
             </DialogHeader>
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">Enter the service login details. Saving them records the customer's login and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
+              {panelButton}
               {loginFields}
               <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim() || (manualRenewal && !expiryLocal)} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
             </div>

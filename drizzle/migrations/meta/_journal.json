@@ -2710,6 +2710,13 @@
       "when": 1795006118390,
       "tag": "0386_vpn_order_chat_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 387,
+      "version": "7",
+      "when": 1795095662772,
+      "tag": "0387_order_provisioning",
+      "breakpoints": true
     }
   ]
 }

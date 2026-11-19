@@ -5538,6 +5538,51 @@ export type Database = {
           },
         ]
       }
+      order_provisioning: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          error: string | null
+          exp_date: string | null
+          kind: string
+          order_id: string
+          package_id: string | null
+          panel_line_id: string | null
+          panel_password: string | null
+          panel_username: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          exp_date?: string | null
+          kind: string
+          order_id: string
+          package_id?: string | null
+          panel_line_id?: string | null
+          panel_password?: string | null
+          panel_username?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          error?: string | null
+          exp_date?: string | null
+          kind?: string
+          order_id?: string
+          package_id?: string | null
+          panel_line_id?: string | null
+          panel_password?: string | null
+          panel_username?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_referrals: {
         Row: {
           captured_at: string
