@@ -36,6 +36,13 @@ export const vpnOverview = createServerFn({ method: "GET" }).middleware([require
   };
 });
 
+/** VPNresellers account credit balance for the admin dashboard header. */
+export const vpnCredits = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
+  await staffOnly(context);
+  const { vpnBalance } = await import("./vpnresellers.server");
+  return { balance: await vpnBalance() };
+});
+
 export const vpnServerList = createServerFn({ method: "GET" }).middleware([requireSupabaseAuth]).handler(async ({ context }) => {
   await staffOnly(context);
   const { vpnServers } = await import("./vpnresellers.server");

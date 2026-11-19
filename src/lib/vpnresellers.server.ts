@@ -27,6 +27,15 @@ export async function vpnServers(): Promise<VpnServer[]> {
   return list;
 }
 
+let balanceCache: { at: number; balance: string } | null = null;
+export async function vpnBalance(): Promise<string> {
+  if (balanceCache && Date.now() - balanceCache.at < 300_000) return balanceCache.balance;
+  const r = await vr<{ data: { balance: string | number } }>("GET", "/profile");
+  const balance = String(r.data?.balance ?? "0");
+  balanceCache = { at: Date.now(), balance };
+  return balance;
+}
+
 const rand = (n: number, set: string) => Array.from(crypto.getRandomValues(new Uint8Array(n)), (b) => set[b % set.length]).join("");
 export function newVpnLogin() {
   return { username: "bm" + rand(10, "abcdefghjkmnpqrstuvwxyz23456789"), password: rand(20, "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789") };
