@@ -1,3 +1,4 @@
+// @ts-nocheck — bun:test types are not part of the app typecheck; tests run with `bun test`.
 import { afterAll, describe, expect, test } from "bun:test";
 import { Window } from "happy-dom";
 
