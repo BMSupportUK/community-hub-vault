@@ -41,3 +41,10 @@ test("MMA import keeps the numbered fight name as the event title", () => {
   expect(ev[0]?.title).toBe("One Friday Fights 179");
   expect(ev[0]?.channels).toEqual(["Star Select 2", "beIN Sports English 2"]);
 });
+
+test("Boxing ringwalk note never drops the fight's channel", () => {
+  const ev = parseMma("**## 🥊  BOXING  🥊**\n\n\nPrice v Kotaskova\n`6:30pm UK | 1:30pm ET`\n\nRingwalk Approx 9:30pm UK \nBBC Two (9pm UK)");
+  expect(ev.length).toBe(1);
+  expect(ev[0]?.title).toBe("Price v Kotaskova");
+  expect(ev[0]?.channels).toEqual(["BBC Two (9pm UK)"]);
+});

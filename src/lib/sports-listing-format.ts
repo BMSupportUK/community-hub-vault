@@ -1262,6 +1262,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       const month = ["January","February","March","April","May","June","July","August","September","October","November","December"][Number(m) - 1];
       return month && Number(d) >= 1 && Number(d) <= 31 ? `${Number(d)} ${month}\n${row}` : all;
     });
+  // Boxing "Ringwalk Approx 9:30pm UK" is a note, not a second event —
+  // its clock must never split the fight from its channels.
+  raw = raw.replace(/^[ \t*`_]*(?:main\s+event\s+)?ring\s*-?\s*walks?\b[^\n]*$/gim, "");
   raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(insertMissingChannelPipe(joinWrappedSlotDates(raw))))));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
