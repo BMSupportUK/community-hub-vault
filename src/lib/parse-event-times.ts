@@ -562,6 +562,19 @@ function parseLeadingGuideDate(text: string): { dateStr: string; sourceDateLabel
   };
 }
 
+/**
+ * A time written in brackets after a channel or title, e.g. "BBC Two (9pm UK)"
+ * or "(from 21:00)", is a note about that line, never the start of a new event.
+ */
+function isBracketedTimeNote(text: string, m: { start: number; end: number }): boolean {
+  const before = text.slice(0, m.start);
+  const after = text.slice(m.end);
+  return (
+    /\(\s*(?:from|approx\.?|approximately|around|at|on|ko|kick[- ]?off)?\s*$/i.test(before) &&
+    /^\s*(?:[A-Za-z]{2,4}\s*)?\)/.test(after)
+  );
+}
+
 function startsWithScheduleTime(
   text: string,
   viewerTz: string,
@@ -569,7 +582,8 @@ function startsWithScheduleTime(
   sourceDateStr?: string,
   sourceDateLabel?: string,
 ): boolean {
-  const matches = parseMatches(text, viewerTz, defaultZone, sourceDateStr, sourceDateLabel);
+  const matches = parseMatches(text, viewerTz, defaultZone, sourceDateStr, sourceDateLabel)
+    .filter((m) => !isBracketedTimeNote(text, m));
   if (!matches.length) return false;
   if (parseLeadingGuideDate(text)) return true;
   const first = matches[0];
@@ -742,7 +756,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       defaultZone,
       rowSourceDate ?? undefined,
       rowSourceDateLabel ?? undefined,
-    );
+    ).filter((m) => !isBracketedTimeNote(text, m));
     if (!matches.length) {
       // Hide standalone date headings like "Saturday 23-05-26" or
       // "Saturday, 23 May 2026" — the per-row pills already show the date.

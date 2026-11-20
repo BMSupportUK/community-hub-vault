@@ -128,6 +128,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
+    "happy-dom": "^21.0.4",
     "hls.js": "^1.7.4",
     "mpegts.js": "^1.8.2",
     "postgres": "^3.4.9",
