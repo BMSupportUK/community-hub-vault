@@ -2285,7 +2285,10 @@ export function cardRawForEplEvent(e: { date?: string | null; time?: string | nu
  * Whole words only, so Scotland internationals, the Scottish Cup or Royal Ascot keep their real broadcasters.
  */
 export function isClubChannelGuide(guideTitle: string | null | undefined): boolean {
-  return /\bi\s*-?\s*follow\b|\bspfl\b|\bscot(?:land|tish)\s+(?:premier\w*|championship|league)\b/i.test(guideTitle ?? "");
+  const title = guideTitle ?? "";
+  // Championship uses named streams, even when the guide also says SPFL.
+  if (/\b(?:scot(?:land|tish)|spfl)\b.*\bchampionship\b|\bchampionship\b.*\b(?:scot(?:land|tish)|spfl)\b/i.test(title)) return false;
+  return /\bi\s*-?\s*follow\b|\bspfl\b|\bscot(?:land|tish)\s+(?:premier\w*|league)\b/i.test(title);
 }
 
 /** "Dundee United v Rangers" → ["Dundee United", "Rangers"]. */
