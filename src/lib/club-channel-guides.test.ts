@@ -34,3 +34,10 @@ describe("club channel guides", () => {
     }
   });
 });
+
+import { parseSportsListingBlock as parseMma } from "./sports-listing-format";
+test("MMA import keeps the numbered fight name as the event title", () => {
+  const ev = parseMma("ONE CHAMPIONSHIP\n\n\nOne Friday Fights 179\n1:30pm UK | 8:30am ET\n\nStar Select 2\nbeIN Sports English 2");
+  expect(ev[0]?.title).toBe("One Friday Fights 179");
+  expect(ev[0]?.channels).toEqual(["Star Select 2", "beIN Sports English 2"]);
+});

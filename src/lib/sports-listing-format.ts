@@ -505,7 +505,7 @@ export function isLikelyChannelLabel(value: string): boolean {
   // labels so titles such as "Formula 1" can still sit above their start time.
   if (
     /^(?:[A-Za-z][A-Za-z0-9+.'-]*\s+){1,3}\d{1,3}$/i.test(text) &&
-    !/\b(?:formula|round|race|practice|qualifying|session|stage|day|match|game)\b/i.test(text)
+    !/\b(?:formula|round|race|practice|qualifying|session|stage|day|match|game|fights|fight\s+night|bellator|cage\s+warriors)\b/i.test(text)
   ) return true;
   if (/^(?:EFL)\s*\d{1,3}\b/i.test(text)) return true;
   if (/^(?:MLB|NHL|MLS|WNBA|NBA|NFL)\s*\d{1,3}\b/i.test(text)) return true;
