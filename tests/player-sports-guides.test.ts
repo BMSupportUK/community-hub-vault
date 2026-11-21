@@ -6,10 +6,10 @@ test("real Scottish listing strips competition text from club channels", () => {
   expect(events[0].channels).toEqual(["HIBERNIAN", "ABERDEEN"]);
 });
 
-test("Scottish club feeds offer both teams and retain real TV names", () => {
+test("televised Scottish games retain only real TV names, even in older club-feed guides", () => {
   const events = playerSportsEvents([{ title: "Scotland Premier League Streams", category: "Sports Passes", body: "Saturday, 7th November\n15:00 GMT\nDundee United v Rangers\nSky Sports Football\nUnder Team Channels" }], Date.UTC(2026, 10, 7, 14));
-  expect(events[0].channels).toEqual(["Sky Sports Football", "Dundee United", "Rangers"]);
-  expect(events[0].teamChannels).toBe(true);
+  expect(events[0]?.channels).toEqual(["Sky Sports Football"]);
+  expect(events[0]?.teamChannels).toBeUndefined();
 });
 
 test("ordinary TV guides retain broadcasters without invented team channels", () => {

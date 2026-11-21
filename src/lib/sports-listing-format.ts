@@ -497,7 +497,13 @@ export function isLikelyChannelLabel(value: string): boolean {
   // "Ireland: Virgin One", "India: Star Sports 1", "Australia: Fox Cricket 501 (12pm UK)".
   // A country followed by a colon is always a channel row, never an event,
   // otherwise the channel is read as the next event's title on re-save.
-  if (BROADCAST_REGION_ROW_RE.test(text)) return true;
+  if (BROADCAST_REGION_ROW_RE.test(text)) {
+    // Race venues can also be country names: "Portugal : MotoGP Qualifying"
+    // is the session above its clock, not a Portuguese broadcaster.
+    const subject = text.slice(text.indexOf(":") + 1).trim();
+    if (/^(?:moto\s*gp|moto[23]|(?:free\s+)?practice|qualifying|(?:sprint\s+)?race|grand\s+prix)\b/i.test(subject)) return false;
+    return true;
+  }
   if (/\b(?:league|cup|trophy|championship|premier|serie|liga|bundesliga)\b/i.test(text) && !/\d/.test(text)) return false;
   // Provider feeds frequently use an unfamiliar name followed by a channel
   // number ("Coupang 1", "MonoMax 7", "Ten 2"). Treat that compact shape as
@@ -1594,7 +1600,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       // "@" covers NBA "WARRIORS @ TRAIL BLAZERS" below a time-first slot.
       const MATCHUP_RE = /\s(?:&|v|vs|v\.|x|-|@)\s/i;
       const below = lines[li + 1] ?? "";
-      const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && (
+      const belowIsTitle = Boolean(below) && !isLikelyChannelLabel(below) && !detectEvent(below, currentDate) && (
         MATCHUP_RE.test(below) || isLikelyChannelLabel(lines[li + 2] ?? "")
       );
       const aboveIsTitle = Boolean(above) && MATCHUP_RE.test(above ?? "");

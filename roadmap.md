@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Repair today's published MotoGP guide from the original post: four correctly timed sessions with separate broadcaster lists; parser and saved read-back verified.
 - [x] Reviewed twelve saved security findings: five hardened, seven dismissed after verifying existing protection/public reference data; fourteen focused security tests pass. Real signed-in reads return 33 member-role rows, 34 profiles and three staff records.
 - [ ] Confirm member/staff page rendering after two-factor authentication; restored owner session stops at the two-factor challenge, which must not be bypassed.
 - [ ] Review the new deep security scan when its background result arrives; the quick scan still raises additional policy flags outside the twelve saved findings.
