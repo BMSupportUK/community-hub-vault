@@ -130,6 +130,8 @@ export const requestPortalPinReset = createServerFn({ method: "POST" })
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(context.userId);
     const email = user.user?.email?.trim().toLowerCase();
     if (!email) throw new Error("Your account has no email saved. Please contact support.");
+    // The PIN row is matched by email, so only a proven (confirmed) address may reset it.
+    if (!user.user?.email_confirmed_at) throw new Error("Please confirm your email address before resetting your PIN.");
     const key = await hash(email);
     const { data: cleared } = await supabaseAdmin
       .from("manual_credential_access")

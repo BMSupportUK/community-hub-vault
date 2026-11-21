@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import { useEffect, useRef, useState } from "react";
 import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus, Film, Image as ImageIcon, Loader2, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -176,7 +177,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
       return;
     }
     if (ref.current.innerHTML !== next) {
-      ref.current.innerHTML = next;
+      ref.current.innerHTML = DOMPurify.sanitize(next);
     }
   }, [value]);
 

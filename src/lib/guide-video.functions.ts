@@ -38,14 +38,38 @@ export const getGuideVideoUrl = createServerFn({ method: "POST" })
 
     const safePath = (path: string) => !!path && !path.includes("..") && !path.startsWith("/");
 
+    // Shared member tutorials are open to every signed-in user; any other
+    // private video needs staff access or a guide the caller can see that
+    // really points at this exact file.
+    const SHARED_PREFIXES = ["install-tutorials/", "how-to/", "remote-help/"];
+    const mayWatch = async (path: string) => {
+      if (SHARED_PREFIXES.some((p) => path.startsWith(p))) return true;
+      const { data: staff } = await context.supabase.rpc("has_any_role", {
+        _user_id: context.userId,
+        _roles: ["admin", "management", "staff", "moderator"],
+      } as never);
+      if (staff) return true;
+      if (!data.blogId) return false;
+      const { data: blog } = await context.supabase
+        .from("install_blogs")
+        .select("video_url, video_steps")
+        .eq("id", data.blogId)
+        .maybeSingle();
+      if (!blog) return false;
+      const steps = JSON.stringify(blog.video_steps ?? []);
+      return blog.video_url === ref || steps.includes(path);
+    };
+    const signIfAllowed = async (path: string) =>
+      safePath(path) && (await mayWatch(path)) ? await sign(path) : null;
+
     if (ref.startsWith(SECURE_PREFIX)) {
       const path = ref.slice(SECURE_PREFIX.length);
-      return { url: safePath(path) ? await sign(path) : null };
+      return { url: await signIfAllowed(path) };
     }
 
     const parsed = parseStorageUrl(ref);
     if (parsed) {
-      if (parsed.bucket === SECURE_BUCKET) return { url: safePath(parsed.path) ? await sign(parsed.path) : null };
+      if (parsed.bucket === SECURE_BUCKET) return { url: await signIfAllowed(parsed.path) };
 
       // Moving a legacy file is only allowed for a guide the caller can see
       // (checked under their own access rules) that really points at this file.

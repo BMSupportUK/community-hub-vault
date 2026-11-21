@@ -16,6 +16,11 @@ export const Route = createFileRoute("/api/public/a/$token")({
         const token = (params.token ?? "").toUpperCase();
         if (!isSafeToken(token)) return new Response("Not found", { status: 404 });
 
+        const { tooManyWrongCodes, recordWrongCode } = await import("@/lib/download-guess-limit.server");
+        const guessIp = clientIpFromHeaders(request.headers);
+        if (await tooManyWrongCodes(supabaseAdmin as never, "app", guessIp)) {
+          return new Response("Too many attempts. Try again later.", { status: 429 });
+        }
         const nowIso = new Date().toISOString();
         const { data: transfer } = await supabaseAdmin
           .from("app_transfers")
@@ -23,6 +28,7 @@ export const Route = createFileRoute("/api/public/a/$token")({
           .eq("token", token)
           .maybeSingle();
         if (!transfer || !isTransferLive(transfer.expires_at as string, nowIso)) {
+          await recordWrongCode(supabaseAdmin as never, "app", guessIp);
           return new Response("Not found", { status: 404 });
         }
 

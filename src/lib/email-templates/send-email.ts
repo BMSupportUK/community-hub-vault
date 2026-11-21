@@ -67,7 +67,7 @@ export async function sendTemplateEmail(
 
   // Admin-editable wording (admin dashboard -> Automated messages & emails).
   try {
-    const { getEmailOverride, fillPlaceholders, renderOverrideEmail } = await import(
+    const { getEmailOverride, fillPlaceholders, renderOverrideEmail, looksLikeHtml } = await import(
       '@/lib/automated-messages.server'
     )
     const stringData: Record<string, string> = {}
@@ -75,7 +75,7 @@ export async function sendTemplateEmail(
     const override = await getEmailOverride(templateName)
     if (override.subject) subject = fillPlaceholders(override.subject, stringData)
     if (override.body) {
-      const rendered = renderOverrideEmail(fillPlaceholders(override.body, stringData))
+      const rendered = renderOverrideEmail(fillPlaceholders(override.body, looksLikeHtml(override.body) ? escapeHtmlValues(stringData) : stripTags(stringData)))
       html = rendered.html
       text = rendered.text
     }
@@ -107,4 +107,21 @@ export async function sendTemplateEmail(
   }
 
   return { sent: true }
+}
+
+
+/** Values typed by visitors must never become live formatting in an email body. */
+function escapeHtmlValues(values: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(values)) {
+    out[k] = v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  }
+  return out
+}
+
+/** Plain-text bodies are escaped later; just stop values from switching the body into HTML. */
+function stripTags(values: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [k, v] of Object.entries(values)) out[k] = v.replace(/</g, '‹').replace(/>/g, '›')
+  return out
 }

@@ -2752,6 +2752,20 @@
       "when": 1795251951941,
       "tag": "0392_secure_remaining_directory_lookups",
       "breakpoints": true
+    },
+    {
+      "idx": 393,
+      "version": "7",
+      "when": 1795254481153,
+      "tag": "0393_orders_owner_cannot_self_pay",
+      "breakpoints": true
+    },
+    {
+      "idx": 394,
+      "version": "7",
+      "when": 1795254543069,
+      "tag": "0394_only_admins_grant_admin_role",
+      "breakpoints": true
     }
   ]
 }

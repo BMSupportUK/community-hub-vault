@@ -185,11 +185,22 @@ export const switchCheckoutPayMethod = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Payment completion may only return to BM Support's own pages. */
+export function isOwnReturnUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.protocol !== "https:" && !(u.protocol === "http:" && u.hostname === "localhost")) return false;
+    const h = u.hostname.toLowerCase();
+    return h === "bmsupport.uk" || h === "www.bmsupport.uk" || h === "localhost" || h.endsWith(".lovable.app");
+  } catch { return false; }
+}
+
 export const checkoutStripeSession = createServerFn({ method: "POST" })
   .inputValidator((d) => creds.extend({ environment: z.enum(["sandbox", "live"]), returnUrl: z.string().url(), bank: z.boolean().optional() }).parse(d))
   .handler(async ({ data }): Promise<{ clientSecret: string } | { error: string }> => {
     const { createStripeClient, getStripeErrorMessage } = await import("@/lib/stripe.server");
     try {
+      if (!isOwnReturnUrl(data.returnUrl)) throw new Error("Invalid return address");
       const u = await unlock(data.token, data.password);
       if (!u) throw new Error("Not authorized");
       const { supabaseAdmin, link } = u;

@@ -49,6 +49,16 @@ export const saveSubscription = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    // An endpoint already registered to someone else may only move to this
+    // account when the caller also holds that browser's own encryption keys.
+    const { data: existing } = await supabaseAdmin
+      .from("push_subscriptions")
+      .select("user_id, p256dh, auth")
+      .eq("endpoint", data.endpoint)
+      .maybeSingle();
+    if (existing && existing.user_id !== userId && (existing.p256dh !== data.p256dh || existing.auth !== data.auth)) {
+      throw new Error("This notification sign-up belongs to another browser.");
+    }
     const { error } = await supabaseAdmin
       .from("push_subscriptions")
       .upsert(

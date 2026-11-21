@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { fetchPublicUrl, isSafePublicUrl } from "@/lib/safe-public-url";
 
 export const Route = createFileRoute("/api/public/link-preview")({
   server: {
@@ -11,16 +12,15 @@ export const Route = createFileRoute("/api/public/link-preview")({
         } catch {
           return json({ error: "Invalid url" }, 400);
         }
-        if (!/^https?:$/i.test(target.protocol)) {
-          return json({ error: "Unsupported protocol" }, 400);
+        if (!isSafePublicUrl(target)) {
+          return json({ error: "Unsupported address" }, 400);
         }
 
         try {
           // Facebook redirects generic fetchers to a login page (no og tags),
           // but serves full Open Graph metadata to known crawler UAs.
           const isFacebook = /(?:^|\.)(?:facebook\.com|fb\.watch|fb\.com)$/i.test(target.hostname);
-          const res = await fetch(target.toString(), {
-            redirect: "follow",
+          const res = await fetchPublicUrl(target, {
             headers: {
               "user-agent": isFacebook
                 ? "Twitterbot/1.0"
@@ -29,6 +29,9 @@ export const Route = createFileRoute("/api/public/link-preview")({
             },
             signal: AbortSignal.timeout(6000),
           });
+          if (!res) {
+            return json({ host: target.hostname.replace(/^www\./, ""), title: null, description: null, image: null }, 200, true);
+          }
           const ct = res.headers.get("content-type") ?? "";
           if (!res.ok || !ct.includes("text/html")) {
             return json(
