@@ -24,6 +24,7 @@ public final class PlayerApplication extends Application implements Application.
     private final InactivityWatchdog inactivityExit = new InactivityWatchdog();
     private long lastInput = SystemClock.elapsedRealtime(), promptedAt = -1;
     private boolean exiting;
+    private boolean inactivityStarted;
     // Admin announcement shown along the bottom of whichever screen is open, refreshed every 15s.
     private final java.util.concurrent.ExecutorService annIo = java.util.concurrent.Executors.newSingleThreadExecutor();
     private String annId, annMsg;
@@ -43,7 +44,12 @@ public final class PlayerApplication extends Application implements Application.
     static final int MAJOR_ICON_SLOT_DP = 64;
     static void interaction(Activity activity) {
         PlayerApplication app = (PlayerApplication) activity.getApplication();
-        if (app.promptedAt < 0 && !app.exiting) app.lastInput = SystemClock.elapsedRealtime();
+        // The wake-up key is not Continue viewing and cannot erase time spent asleep.
+        app.tick();
+        if (app.promptedAt < 0 && !app.exiting) {
+            app.lastInput = SystemClock.elapsedRealtime();
+            InactivityAlarm.arm(app, InactivityPolicy.closeAt(app.lastInput));
+        }
     }
     @Override public void onCreate() {
         super.onCreate(); registerActivityLifecycleCallbacks(this);
@@ -62,9 +68,11 @@ public final class PlayerApplication extends Application implements Application.
         });
     }
     private void tick() {
+        if (exiting) return;
         long now = SystemClock.elapsedRealtime();
         // The deadline belongs to the app, not a dialog/activity that Fire OS can destroy.
-        if (promptedAt >= 0 && InactivityPolicy.exit(promptedAt, now)) { exitToHome(); return; }
+        if (InactivityPolicy.overdue(lastInput, now)
+                || (promptedAt >= 0 && InactivityPolicy.exit(promptedAt, now))) { exitToHome(); return; }
         if (prompt != null) {
             prompt.setMessage("No activity for 3 hours. Continue viewing?\n\nThe app will close in "
                     + Math.max(0, (InactivityPolicy.RESPONSE_MS - (now - promptedAt) + 999) / 1000) + " seconds.");
@@ -76,8 +84,8 @@ public final class PlayerApplication extends Application implements Application.
         // A screensaver or locked phone pauses every screen, so nobody can answer: count down anyway.
         if (!visible && (promptedAt >= 0 || activities.isEmpty() || (activities.size() == 1 && activities.get(0) instanceof IntroActivity))) return;
         if (promptedAt < 0) {
-            promptedAt = now;
-            inactivityExit.arm(InactivityPolicy.RESPONSE_MS,
+            promptedAt = InactivityPolicy.promptAt(lastInput);
+            inactivityExit.arm(Math.max(0, promptedAt + InactivityPolicy.RESPONSE_MS - now),
                     () -> ui.post(this::exitToHome),
                     this::hardStop);
         }
@@ -89,6 +97,7 @@ public final class PlayerApplication extends Application implements Application.
                     long answeredAt = SystemClock.elapsedRealtime();
                     if (exiting || InactivityPolicy.exit(promptedAt, answeredAt)) { exitToHome(); return; }
                     inactivityExit.cancel(); prompt = null; promptOwner = null; promptedAt = -1; lastInput = answeredAt;
+                    InactivityAlarm.arm(this, InactivityPolicy.closeAt(lastInput));
                 })
                 .setNegativeButton("Close app", (d, w) -> exitToHome())
                 .setCancelable(false).create();
@@ -333,9 +342,10 @@ public final class PlayerApplication extends Application implements Application.
         getSharedPreferences("bmplayer", MODE_PRIVATE).edit().putLong("self_close_at", System.currentTimeMillis()).commit();
         android.os.Process.killProcess(android.os.Process.myPid());
     }
-    private void exitToHome() {
+    void exitToHome() {
         if (exiting) return;
         exiting = true;
+        InactivityAlarm.cancel(this);
         // Arm before touching activities: native video cleanup can block the main thread.
         inactivityExit.cancel();
         inactivityExit.arm(0, () -> {}, this::hardStop);
@@ -347,8 +357,21 @@ public final class PlayerApplication extends Application implements Application.
         try { startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); }
         catch (Exception ignored) {}
     }
-    @Override public void onActivityCreated(Activity a, Bundle b) { if (exiting) { a.finishAndRemoveTask(); return; } activities.add(a); if (!(a instanceof IntroActivity)) FrameRateMatch.prefer50(a); }
-    @Override public void onActivityResumed(Activity a) { foreground = a; showAnnouncement(); showMajorIcon(); }
+    @Override public void onActivityCreated(Activity a, Bundle b) {
+        if (exiting) { a.finishAndRemoveTask(); return; }
+        if (!inactivityStarted) {
+            inactivityStarted = true;
+            InactivityAlarm.arm(this, InactivityPolicy.closeAt(lastInput));
+        }
+        activities.add(a);
+        if (!(a instanceof IntroActivity)) FrameRateMatch.prefer50(a);
+    }
+    @Override public void onActivityResumed(Activity a) {
+        foreground = a;
+        tick();
+        if (exiting) return;
+        showAnnouncement(); showMajorIcon();
+    }
     @Override public void onActivityPaused(Activity a) { if (foreground == a) foreground = null; }
     /** Android may already have removed a finishing activity's dialog window. */
     private void dismissPrompt() {

@@ -65,4 +65,50 @@ public class InactivityDialogTest {
             }
         }
     }
+
+    @Test public void wakingAfterFourHoursClosesInsteadOfStartingAnotherMinute() {
+        try (var controller = Robolectric.buildActivity(Activity.class).setup()) {
+            PlayerApplication app = (PlayerApplication) controller.get().getApplication();
+            controller.pause();
+            ReflectionHelpers.setField(app, "lastInput", android.os.SystemClock.elapsedRealtime() - 14_400_000L);
+            try {
+                controller.resume();
+                assertTrue(ReflectionHelpers.getField(app, "exiting"));
+                assertTrue(controller.get().isFinishing());
+            } finally {
+                ((InactivityWatchdog) ReflectionHelpers.getField(app, "inactivityExit")).cancel();
+            }
+        }
+    }
+
+    @Test public void wakeUpKeyCannotResetAnExpiredViewingSession() {
+        try (var controller = Robolectric.buildActivity(Activity.class).setup()) {
+            PlayerApplication app = (PlayerApplication) controller.get().getApplication();
+            long lastInput = android.os.SystemClock.elapsedRealtime() - 10_860_000L;
+            ReflectionHelpers.setField(app, "lastInput", lastInput);
+            try {
+                PlayerApplication.interaction(controller.get());
+                assertTrue(ReflectionHelpers.getField(app, "exiting"));
+                assertEquals(Long.valueOf(lastInput), ReflectionHelpers.getField(app, "lastInput"));
+            } finally {
+                ((InactivityWatchdog) ReflectionHelpers.getField(app, "inactivityExit")).cancel();
+            }
+        }
+    }
+
+    @Test public void standbyWarningKeepsOnlyTheRemainingResponseTime() {
+        try (var controller = Robolectric.buildActivity(Activity.class).setup()) {
+            PlayerApplication app = (PlayerApplication) controller.get().getApplication();
+            controller.pause();
+            long lastInput = android.os.SystemClock.elapsedRealtime() - 10_830_000L;
+            ReflectionHelpers.setField(app, "lastInput", lastInput);
+            try {
+                ReflectionHelpers.callInstanceMethod(app, "tick");
+                assertEquals(Long.valueOf(lastInput + 10_800_000L), ReflectionHelpers.getField(app, "promptedAt"));
+                assertFalse(ReflectionHelpers.getField(app, "exiting"));
+            } finally {
+                ((InactivityWatchdog) ReflectionHelpers.getField(app, "inactivityExit")).cancel();
+            }
+        }
+    }
 }
