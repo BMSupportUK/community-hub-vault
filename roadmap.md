@@ -1,4 +1,7 @@
 # Roadmap
+- [x] Reviewed twelve saved security findings: five hardened, seven dismissed after verifying existing protection/public reference data; fourteen focused security tests pass. Real signed-in reads return 33 member-role rows, 34 profiles and three staff records.
+- [ ] Confirm member/staff page rendering after two-factor authentication; restored owner session stops at the two-factor challenge, which must not be bypassed.
+- [ ] Review the new deep security scan when its background result arrives; the quick scan still raises additional policy flags outside the twelve saved findings.
 - [x] Published shared VPN purchase fixes: live device quote and buy succeed, signed-out live payment page displays £25.30 through 7 December 2027 and Square card fields on desktop/phone. Eight website and twelve desktop checks pass. Existing Windows 0.4.115, Mac 0.1.116 and box/phone 6.11 use these endpoints without rebuilding.
 - [ ] Verify a real paid VPN purchase and native screens on physical Windows/Mac/box/phone devices; no connected devices/payment credentials available. Android focused test could not run because Java is absent.
 
