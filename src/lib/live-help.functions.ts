@@ -279,66 +279,6 @@ export const endLiveHelpStaff = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/** Staff: send the customer a WhatsApp invite with their secure order link. */
-export const sendLiveHelpWhatsAppInvite = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d) =>
-    z
-      .object({
-        orderId: z.string().uuid(),
-        phone: z.string().regex(/^\d{7,15}$/, "Enter the number in international format, digits only"),
-      })
-      .parse(d),
-  )
-  .handler(async ({ data, context }) => {
-    await requireStaff(context);
-    const LOVABLE_API_KEY = process.env.LOVABLE_API_KEY;
-    const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY;
-    if (!LOVABLE_API_KEY || !WHATSAPP_API_KEY) {
-      throw new Error("WhatsApp isn't connected to BM Support yet — connect it first, or send the customer their secure page link another way.");
-    }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Only message customers who have an open live-help request on this order.
-    const { data: open } = await supabaseAdmin
-      .from("order_support_sessions")
-      .select("id")
-      .eq("order_id", data.orderId)
-      .in("status", ["waiting", "live"])
-      .gte("requested_at", new Date(Date.now() - SESSION_TTL_MS).toISOString())
-      .limit(1);
-    if (!open?.length) throw new Error("This customer hasn't asked for live help on this order");
-    const { data: link } = await supabaseAdmin
-      .from("order_checkout_links")
-      .select("token")
-      .eq("order_id", data.orderId)
-      .maybeSingle();
-    if (!link?.token) throw new Error("This order has no secure page link yet");
-    const url = `https://bmsupport.uk/pay/${link.token}`;
-    const response = await fetch("https://connector-gateway.lovable.dev/whatsapp/messages", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "X-Connection-Api-Key": WHATSAPP_API_KEY,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: data.phone,
-        type: "text",
-        text: {
-          body: `BM Support: we're ready to help you live. Tap this link to open your secure order page, press "Get Live Help", and point your phone camera at your device so we can see what's happening: ${url}`,
-        },
-      }),
-    });
-    const body = await response.text();
-    if (!response.ok) throw new Error(`WhatsApp send failed (${response.status}): ${body}`);
-    let providerId: string | null = null;
-    try {
-      providerId = JSON.parse(body)?.messages?.[0]?.id ?? null;
-    } catch { /* ignore */ }
-    return { ok: true as const, providerId };
-  });
-
 /** Staff: every open video-help request across all orders (Talk video help box). */
 export const listOpenLiveHelpAll = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

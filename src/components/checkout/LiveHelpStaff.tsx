@@ -1,7 +1,7 @@
 import { getVideoIceServers } from "@/lib/video-call.functions";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Video, Send, PhoneOff, MessageSquareText } from "lucide-react";
+import { Loader2, Video, Send, PhoneOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   endLiveHelpStaff,
@@ -9,7 +9,6 @@ import {
   joinLiveHelp,
   listOrderLiveHelp,
   sendLiveHelpChatStaff,
-  sendLiveHelpWhatsAppInvite,
 } from "@/lib/live-help.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -43,7 +42,6 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
   const poll = useServerFn(getLiveHelpStaff);
   const sendChat = useServerFn(sendLiveHelpChatStaff);
   const endFn = useServerFn(endLiveHelpStaff);
-  const whatsappInvite = useServerFn(sendLiveHelpWhatsAppInvite);
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [active, setActive] = useState<Session | null>(null);
@@ -51,8 +49,6 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
-  const [waPhone, setWaPhone] = useState("");
-  const [waOpen, setWaOpen] = useState(false);
   const [connected, setConnected] = useState(false);
   const [audioOn, setAudioOn] = useState(false);
   const [ratio, setRatio] = useState<number>(16 / 9);
@@ -234,20 +230,6 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
     if (r) setMessages(r.messages);
   };
 
-  const inviteWhatsApp = async () => {
-    setBusy(true);
-    try {
-      await whatsappInvite({ data: { orderId, phone: waPhone.trim() } });
-      toast.success("WhatsApp invite sent");
-      setWaOpen(false);
-      setWaPhone("");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't send the WhatsApp invite");
-    } finally {
-      setBusy(false);
-    }
-  };
-
   // Tap the video to drop a pointer the customer sees.
   const dropPointer = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -266,30 +248,7 @@ export function LiveHelpStaff({ orderId }: { orderId: string }) {
         <h2 className="font-display text-lg font-semibold flex items-center gap-2">
           <Video className="size-5 text-primary" /> Live Help
         </h2>
-        <Button size="sm" variant="secondary" onClick={() => setWaOpen((v) => !v)}>
-          <MessageSquareText className="size-4" /> Invite via WhatsApp
-        </Button>
       </div>
-
-      {waOpen && (
-        <div className="rounded-lg border border-border bg-background p-3 space-y-2">
-          <p className="text-xs text-muted-foreground">
-            Send the customer a WhatsApp message with their secure page link. Enter their number in
-            international format, digits only (e.g. 447700900123).
-          </p>
-          <div className="flex gap-2">
-            <input
-              value={waPhone}
-              onChange={(e) => setWaPhone(e.target.value.replace(/[^\d]/g, ""))}
-              placeholder="447700900123"
-              className="h-9 flex-1 rounded-lg border border-border bg-background px-3 text-sm font-mono"
-            />
-            <Button size="sm" onClick={inviteWhatsApp} disabled={busy || waPhone.length < 7}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : "Send"}
-            </Button>
-          </div>
-        </div>
-      )}
 
       {!active && waiting && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-400/40 bg-amber-500/10 p-3">
