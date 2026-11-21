@@ -140,6 +140,7 @@ export function playerSportsEvents(
       const catList = links.category ? categoryChannels?.get(links.category.toLowerCase()) : undefined;
       // Older stored club guides may still carry only the placeholder. Add club names
       // on read as well as save, retaining actual broadcasters for the same fixture.
+      let clubTelevised = false;
       const sourceChannels = [...e.channels.filter((c) => !clubGuide || !/^under team channels$/i.test(c))];
       if (clubGuide) {
         const teams = clubNames(cardTitle(e.title));
@@ -147,7 +148,11 @@ export function playerSportsEvents(
           const c = sourceChannels[i];
           if (c.includes(":") && teams.some((t) => t.toLowerCase() === c.slice(c.lastIndexOf(":") + 1).trim().toLowerCase())) sourceChannels.splice(i, 1);
         }
-        if (teams.length === 2) for (const team of teams) if (!sourceChannels.some((c) => c.toLowerCase() === team.toLowerCase())) sourceChannels.push(team);
+        // Televised games keep only their real TV channel; team channels are for untelevised games.
+        const televised = sourceChannels.some((c) => !teams.some((t) => t.toLowerCase() === c.toLowerCase()));
+        if (televised) { for (let i = sourceChannels.length - 1; i >= 0; i--) if (teams.some((t) => t.toLowerCase() === sourceChannels[i].toLowerCase())) sourceChannels.splice(i, 1); }
+        else if (teams.length === 2) for (const team of teams) if (!sourceChannels.some((c) => c.toLowerCase() === team.toLowerCase())) sourceChannels.push(team);
+        clubTelevised = televised;
       }
       const onboard = /^on[- ]board\s*\d*$/i.test(e.title.trim());
       const onboardIdentity = onboard ? `${e.title} ${sourceChannels.join(" ")}` : e.title;
@@ -168,7 +173,7 @@ export function playerSportsEvents(
       const prevKey = existing?.seriesKey ?? null;
       if (!pass) for (const c of channels) target.mainSet.add(c.toLowerCase());
       // Club-feed guides (iFollow, Scottish) list the two clubs; apps then find each club's own channels.
-      const club = clubGuide || !!target.teamChannels;
+      const club = (clubGuide && !clubTelevised) || !!target.teamChannels;
       let merged: string[];
       if (existing && existing.pass && !pass) {
         // A proper competition guide beats a sports-pass listing for the card's name and time.

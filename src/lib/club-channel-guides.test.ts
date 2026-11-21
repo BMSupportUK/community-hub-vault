@@ -9,9 +9,16 @@ describe("club channel guides", () => {
   test("splits fixture into both clubs", () => {
     expect(fixtureTeams("Dundee United v Rangers")).toEqual(["Dundee United", "Rangers"]);
   });
-  test("Scottish guide lists the fixture under each club", () => {
+  test("televised Scottish Premiership game keeps only its TV channel, no team channels", () => {
     const out = clubChannelListingHtml(html, "Scotland Premier League Channels");
-    expect(parseSportsListingBlock(out ?? html)[0].channels).toEqual(["Sky Sports Football", "Dundee United", "Rangers"]);
+    expect(parseSportsListingBlock(out ?? html)[0]?.channels).toEqual(["Sky Sports Football"]);
+    const event = playerSportsEvents([{ title: "Scotland Premier League Channels", body: html, category: "Scotland" }], Date.UTC(2026, 10, 20, 0))[0];
+    if (event) { expect(event.channels).toEqual(["Sky Sports Football"]); expect(event.teamChannels).toBeUndefined(); }
+  });
+  test("untelevised Scottish Premiership game is listed under each club", () => {
+    const bare = html.replace(/<div>Sky Sports Football<\/div>/, "");
+    const out = clubChannelListingHtml(bare, "Scotland Premier League Channels");
+    expect(parseSportsListingBlock(out ?? bare)[0]?.channels).toEqual(["Dundee United", "Rangers"]);
   });
   test("iFollow guide renamed too", () => {
     expect(clubChannelListingHtml(html, "iFollow | League One")).not.toBeNull();

@@ -1912,7 +1912,8 @@ export function formatSportsListingEvents(events: SportsListingEvent[], input: L
     // These fixtures are found under the team's own channel rather than a
     // numbered feed. Keep the same label on imports, merges and guide saves.
     if (/^iFollow\b|^(?:Scotland|Scottish)\s+(?:Premier League|Premiership)\s+Streams$/i.test(input.guideTitle?.trim() ?? "")) {
-      if (!channels.some((channel) => channel.toLowerCase() === "under team channels")) channels.push("Under Team Channels");
+      // A game shown on a real TV channel (e.g. Sky Sports) is not on the team channels.
+      if (!channels.length) channels.push("Under Team Channels");
     }
     // Scottish Cup posts list each regional feed on its own line
     // ("Premier Sports 1 UK" / "Premier Sports 1 IRE"). Keep that channel
@@ -2309,6 +2310,8 @@ export function clubChannelListingHtml(html: string | null | undefined, guideTit
     const teams = fixtureTeams(e.title);
     if (teams.length !== 2) return e;
     const channels = e.channels.filter((c) => !/^under team channels$/i.test(c) && !(c.includes(":") && teams.some((t) => t.toLowerCase() === c.slice(c.lastIndexOf(":") + 1).trim().toLowerCase())));
+    // Televised games (real broadcaster supplied) stay on that channel only — no team channels.
+    if (channels.some((c) => !teams.some((t) => t.toLowerCase() === c.toLowerCase()))) return { ...e, channels: channels.filter((c) => !teams.some((t) => t.toLowerCase() === c.toLowerCase())) };
     for (const team of teams) if (!channels.some((c) => c.toLowerCase() === team.toLowerCase())) channels.push(team);
     return { ...e, channels };
   });
