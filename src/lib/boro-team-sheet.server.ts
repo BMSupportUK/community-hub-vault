@@ -680,7 +680,24 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
     .from("boro_team_sheets")
     .select("side")
     .eq("fixture_id", fx.id);
-  const boroAlreadyPosted = (priorSheets ?? []).some((r) => (r.side ?? "boro") === "boro");
+  let boroAlreadyPosted = (priorSheets ?? []).some((r) => (r.side ?? "boro") === "boro");
+  const opponentAlreadyPosted = (priorSheets ?? []).some((r) => r.side === "opponent");
+
+  // X rate-limits our reads (HTTP 429) for long stretches. When neither the
+  // club graphic nor any mirror is readable, post the confirmed XI from the
+  // official match-centre feed instead, so the thread never goes without teams.
+  if ((boroHits.length === 0 && !boroAlreadyPosted) || (opponentHits.length === 0 && !opponentAlreadyPosted)) {
+    const feedPosted = await postFeedLineups(supabaseAdmin, fx, topic, {
+      boro: boroHits.length === 0 && !boroAlreadyPosted,
+      opponent: opponentHits.length === 0 && !opponentAlreadyPosted,
+      boroAlreadyPosted,
+    }, skipped);
+    if (feedPosted.boro) boroAlreadyPosted = true;
+    if (feedPosted.count > 0 && boroHits.length === 0 && opponentHits.length === 0) {
+      await runFantasySwaps(skipped);
+      return { ok: true, fixture: label, topic: topic.title, posted: feedPosted.count, skipped };
+    }
+  }
   if (boroHits.length === 0 && !boroAlreadyPosted && opponentHits.length > 0) {
     // Fantasy swaps do not depend on the graphic being captured — the match
     // feed's confirmed XI is enough — so they must still run here.
@@ -767,6 +784,90 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
   await runFantasySwaps(skipped);
 
   return { ok: true, fixture: label, topic: topic.title, posted, skipped };
+}
+
+/** Text team sheet from the match-centre feed's confirmed line-up. */
+export function buildFeedLineupBody(opts: {
+  teamLabel: string;
+  formation: string | null;
+  starters: Array<{ name: string; jersey: string | null }>;
+  subs: Array<{ name: string; jersey: string | null }>;
+}): string {
+  const line = (p: { name: string; jersey: string | null }) =>
+    `${p.jersey ? `${escapeHtml(p.jersey)}. ` : ""}${escapeHtml(p.name)}`;
+  const parts = [
+    `<p><strong>Team news — ${escapeHtml(opts.teamLabel)} line-up${opts.formation ? ` (${escapeHtml(opts.formation)})` : ""}</strong></p>`,
+    `<p><strong>Starting XI</strong><br />${opts.starters.map(line).join("<br />")}</p>`,
+  ];
+  if (opts.subs.length > 0) parts.push(`<p><strong>Subs</strong><br />${opts.subs.map(line).join("<br />")}</p>`);
+  parts.push(`<p><em>Confirmed line-up from the official match centre.</em></p>`);
+  return parts.join("\n");
+}
+
+async function postFeedLineups(
+  admin: any,
+  fx: FixtureLite,
+  topic: { id: string; author_id: string },
+  want: { boro: boolean; opponent: boolean; boroAlreadyPosted: boolean },
+  skipped: string[],
+): Promise<{ count: number; boro: boolean }> {
+  const result = { count: 0, boro: false };
+  try {
+    const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
+    const summary = await fetchFotmobSummary({ home: fx.home_team, away: fx.away_team, kickoff: fx.kickoff_at });
+    if (!summary || summary._lineupsConfirmed === false) {
+      skipped.push("match feed line-ups not confirmed yet");
+      return result;
+    }
+    const rosters: any[] = Array.isArray(summary.rosters) ? summary.rosters : [];
+    const opponent = opponentOf(fx);
+    const isBoro = (r: any) => /middlesbrough/i.test(String(r?.team?.displayName ?? ""));
+    const sides: Array<{ side: "boro" | "opponent"; roster: any; label: string }> = [];
+    const boroRoster = rosters.find(isBoro);
+    const oppRoster = rosters.find((r) => !isBoro(r));
+    if (want.boro && boroRoster) sides.push({ side: "boro", roster: boroRoster, label: "Boro" });
+    if (want.opponent && oppRoster) sides.push({ side: "opponent", roster: oppRoster, label: opponent });
+    const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
+    for (const item of sides) {
+      // Boro's XI always goes in first.
+      if (item.side === "opponent" && !want.boroAlreadyPosted && !result.boro) continue;
+      const entries: any[] = item.roster?.roster ?? [];
+      const map = (e: any) => ({ name: String(e?.athlete?.displayName ?? "").trim(), jersey: e?.jersey ?? null });
+      const starters = entries.filter((e) => e?.starter === true).map(map).filter((p) => p.name);
+      const subs = entries.filter((e) => e?.starter !== true).map(map).filter((p) => p.name);
+      if (starters.length !== 11) {
+        skipped.push(`match feed ${item.side} XI incomplete (${starters.length})`);
+        continue;
+      }
+      const body = buildFeedLineupBody({ teamLabel: item.label, formation: item.roster?.formation ?? null, starters, subs });
+      const { data: post, error } = await admin
+        .from("forum_posts")
+        .insert({ topic_id: topic.id, author_id: (await getMatchDayAuthorId()) ?? topic.author_id, body })
+        .select("id")
+        .single();
+      if (error) {
+        skipped.push(`feed post failed: ${error.message}`);
+        continue;
+      }
+      await admin.from("boro_team_sheets").insert({
+        fixture_id: fx.id,
+        topic_id: topic.id,
+        post_id: post.id,
+        tweet_id: `feed-${item.side}-${fx.id}`,
+        image_url: `feed:${item.side}:${fx.id}`,
+        caption: `${item.label} line-up (match centre)`,
+        source_url: null,
+        is_update: false,
+        side: item.side,
+        status: "posted",
+      });
+      result.count += 1;
+      if (item.side === "boro") result.boro = true;
+    }
+  } catch (error) {
+    skipped.push(`match feed line-up failed: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  return result;
 }
 
 export async function postManualTeamSheet(input: {
