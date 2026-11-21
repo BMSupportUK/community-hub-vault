@@ -67,4 +67,16 @@ public class LiveReconnectTest {
         LiveReconnect r = new LiveReconnect();
         for (long t = 0; t <= 60000; t += 1000) assertFalse(r.noData(0, t));
     }
+
+    @org.junit.Test public void frozenByteCounterWithMovingPictureNeverRestarts() {
+        LiveReconnect r = new LiveReconnect(); r.opened(0);
+        r.noData(100, 0, 0); r.noData(500, 10, 1000); // counter moves once at start, then freezes
+        for (long t = 2000; t <= 120000; t += 1000) assertFalse(r.noData(500, t / 40, t));
+    }
+    @org.junit.Test public void frozenCounterAndFrozenPictureStillRestarts() {
+        LiveReconnect r = new LiveReconnect(); r.opened(0);
+        r.noData(100, 0, 0); r.noData(500, 10, 1000);
+        boolean hit = false; for (long t = 2000; t <= 25000; t += 1000) hit |= r.noData(500, 10, t);
+        assertTrue(hit);
+    }
 }

@@ -20,7 +20,7 @@ final class LiveReconnect {
         lastPictures = pictures; lastAudio = audio;
         return progressAt >= 0 && now - progressAt >= stallMs;
     }
-    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; bytesCounted = false; soundSeen = false; muteAudio = -1; muteAt = -1; lastLost = -1; blockySince = -1; }
+    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; bytesCounted = false; bytesPictures = -1; soundSeen = false; muteAudio = -1; muteAt = -1; lastLost = -1; blockySince = -1; }
 
     static final long SILENT_MS = 5000;
     static final int MAX_SILENT_REOPENS = 3;
@@ -40,7 +40,11 @@ final class LiveReconnect {
     private long lastBytes = -1, bytesAt = -1; private boolean bytesCounted;
     static final long NO_DATA_MS = 20000;
     /** The server stopped sending: no new bytes for 20s (patient mode, like other IPTV apps) means the feed dropped even if VLC still reports Playing. */
-    boolean noData(long readBytes, long now) {
+    boolean noData(long readBytes, long now) { return noData(readBytes, -1, now); }
+    private long bytesPictures = -1;
+    /** pictures: frames shown so far (-1 unknown). New pictures on screen prove data is arriving even when the byte counter has frozen (Coupang event feeds), so they reset the clock. */
+    boolean noData(long readBytes, long pictures, long now) {
+        if (pictures >= 0) { if (bytesPictures >= 0 && pictures > bytesPictures) bytesAt = now; bytesPictures = pictures; }
         if (lastBytes >= 0 && readBytes > lastBytes) bytesCounted = true;
         if (lastBytes < 0 || readBytes > lastBytes) bytesAt = now;
         lastBytes = readBytes;
