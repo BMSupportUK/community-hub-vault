@@ -10612,6 +10612,8 @@ export type Database = {
       bm_inbox_set_privacy: { Args: { _value: string }; Returns: string }
       bm_inbox_state: { Args: { _thread?: string }; Returns: Json }
       boro_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
+      caller_is_approved_member_or_staff: { Args: never; Returns: boolean }
+      caller_is_staff_or_fan_zone: { Args: never; Returns: boolean }
       can_in_channel: {
         Args: { _action: string; _channel: string; _user: string }
         Returns: boolean

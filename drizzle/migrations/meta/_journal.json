@@ -2738,6 +2738,13 @@
       "when": 1795100840767,
       "tag": "0390_vpn_purchase_connections",
       "breakpoints": true
+    },
+    {
+      "idx": 391,
+      "version": "7",
+      "when": 1795250892206,
+      "tag": "0391_restrict_definer_functions_callers",
+      "breakpoints": true
     }
   ]
 }
