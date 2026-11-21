@@ -61,4 +61,10 @@ public class LiveReconnectTest {
         for (int i = 0; i <= 60; i++) if (r.soundLost(i * 10L, 0, i * 1000L, true)) hits++;
         assertEquals(3, hits);
     }
+
+    @org.junit.Test
+    public void counterThatNeverMovesIsNotADrop() {
+        LiveReconnect r = new LiveReconnect();
+        for (long t = 0; t <= 60000; t += 1000) assertFalse(r.noData(0, t));
+    }
 }

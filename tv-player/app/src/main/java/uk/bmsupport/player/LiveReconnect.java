@@ -20,7 +20,7 @@ final class LiveReconnect {
         lastPictures = pictures; lastAudio = audio;
         return progressAt >= 0 && now - progressAt >= stallMs;
     }
-    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; soundSeen = false; muteAudio = -1; muteAt = -1; lastLost = -1; blockySince = -1; }
+    void opened(long now) { lastPictures = -1; lastAudio = -1; progressAt = now; lastBytes = -1; bytesAt = now; bytesCounted = false; soundSeen = false; muteAudio = -1; muteAt = -1; lastLost = -1; blockySince = -1; }
 
     static final long SILENT_MS = 5000;
     static final int MAX_SILENT_REOPENS = 3;
@@ -37,13 +37,15 @@ final class LiveReconnect {
         return false;
     }
 
-    private long lastBytes = -1, bytesAt = -1;
+    private long lastBytes = -1, bytesAt = -1; private boolean bytesCounted;
     static final long NO_DATA_MS = 20000;
     /** The server stopped sending: no new bytes for 20s (patient mode, like other IPTV apps) means the feed dropped even if VLC still reports Playing. */
     boolean noData(long readBytes, long now) {
+        if (lastBytes >= 0 && readBytes > lastBytes) bytesCounted = true;
         if (lastBytes < 0 || readBytes > lastBytes) bytesAt = now;
         lastBytes = readBytes;
-        return bytesAt >= 0 && now - bytesAt >= noDataMs;
+        // Some feeds never report a byte count while playing fine; only trust the counter once it has moved (frozen pictures are still caught by stalled()).
+        return bytesCounted && bytesAt >= 0 && now - bytesAt >= noDataMs;
     }
 
     /** Records one failure; returns the wait before the next reopen, or -1 once the two-minute window is used up. */
