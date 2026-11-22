@@ -28,7 +28,6 @@
 - Live subtitle survey: PlayerActivity sends one `subtitle_check` (track count + languages) per live play once video tracks are known; the website tallies it in service-role-only player_channel_subtitles. Nothing is shown to viewers.
 - Leaving the app in the background never resets the linked-device pass (pinPassed); only a real exit or process end shows the family link check again. Home shows Multi-screen straight from the saved account-info max_connections (also saved by Settings › Account info), so a slow or failed check never hides it.
 - Multi-screen panes play in libVLC (VlcPreview inserted under the pane label, mute follows the highlighted pane) like full-screen live TV; the per-pane Media3 players stay idle.
-- Announcement icon and bottom bar appear only via MainActivity.signedInScreen(): signed in, unlocked and past today's 2FA; never on link/account-number/2FA/expired/maintenance screens.
 - Stuck video chip guard: every Live TV preview channel change drops the stage SurfaceView for a fresh one; a preview whose rendered-frame count stops for 3s while READY restarts itself (max 3 per channel) and a frozen preview is never carried to full screen.
 - Live-connection, VPN-check and home-screen theme rules live in `tv-player/app/src/main/AGENTS.md`.
-- Private DNS is a free home-screen header switch (on by default, hidden while the VPN is connected; the VPN pill sits beside the signed-in details), never in Settings, on Android and desktop; it covers channel lists/guide lookups only (Android Net.java, desktop provider() sends X-BM-DNS to the Go helper), never channel streams, which were removed from it after causing playback trouble.
+- Announcement-icon gating and Private DNS rules also live in `tv-player/app/src/main/AGENTS.md`.

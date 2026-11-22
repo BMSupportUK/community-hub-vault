@@ -5,3 +5,5 @@
 - Saved-list tabs select both the media filter and its renderer; favourite controls use one shared toggle for previews, playback, item dialogs and parent series so saved channels never render as film posters.
 - Live TV (non-saved lists) renders renderer/live-guide.jsx, mirroring the Android/Amazon box layout: preview + programme info, 24h/Now/Category pills, lazily loaded guide grid; 1st channel click previews, 2nd opens the play menu.
 - Live feed pill also shows "Loading channel…" until the first picture is displayed (frame counter or video size), then clears; later stalls use Buffering… so the last picture stays visible.
+- EPG listings and single-flight reads live in the signed-in App cache without a channel-count eviction limit; startup/manual refresh load every channel, and scrolling or elapsed time never fetches rows, including empty/failed ones. Login changes clear it; manual invalidation retains old rows until replacement.
+- Startup/refresh 'catalogues' events copy all three playlists into the renderer's catalogs cache (preloaded), so opening Live TV/Films/Series never re-requests or shows Loading playlist after startup.

@@ -11,3 +11,12 @@
 - Ticket setup stages are presentation-only, derived from scoped ticket checks and available website codes; code creation advances instructions but never proves redemption or TV readiness.
 - Staff Remote setup progress includes persisted completion after Connect consumes the check; keep this presentation helper separate from connection eligibility so successful sharing never unticks setup or permits reuse.
 - Install Guides self-install uses the shared selfInstallHandoff payload; staff-help choices open pending ticket remote setup instead, keeping installation and sharing handoffs separate.
+- Customers staff-detail forms reuse member username/email updates; handlers read target roles and require admin for staff targets while preserving management edits for non-staff customers.
+- Customer-card credential dialogs read through the admin/management/staff (staff read-only) admin_customer_card_credentials RPC and reload on open; ordinary profile-scoped credential reads stay unchanged.
+- Customer-card credential deletion uses an admin/management-only owner-and-credential RPC with a confirmed affected row and profile change event; profile-filtered views must never silently skip deletion or report false success.
+- Service Credentials uses the bearer-bound active_profile_credential and owner-only saved-login RPC after PIN verification or a server-verified, unexpired admin switch for that customer with current admin privileges, never email/order aggregation; remount on user/profile change so revealed details cannot survive a switch.
+- Member email editors validate the full address before sending and show inline errors; never silently strip extra words into a different address.
+- Direct Install starts a fresh progress row for either setup path; website reads are scoped to that run, and already-installed runs have no download capability, so history cannot advance a new wizard.
+- Staff display role refreshes retain the last successful map until replacement succeeds; one ref-counted focus listener prevents app-return colour/order flicker.
+- Order staff-help tickets start pending remote setup; their existing ticket layout notifies staff after confirmation, while self-install links retain paid-order guide access.
+- Accounts with multiple saved logins expose the shared profile chooser and switch pill; selection uses the existing authenticated profile scope so each login retains separate details and returning to staff requires password verification.
