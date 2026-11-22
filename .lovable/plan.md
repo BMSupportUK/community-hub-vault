@@ -10,7 +10,7 @@ It can help some customers, but it can't replace the VPN.
 So the best setup is: DNS on by default for everyone, and the VPN as the paid upgrade when DNS isn't enough.
 
 ## What gets built
-1. A "Private DNS" setting in BM Player Settings (on by default), with a choice of Cloudflare, Google or Quad9.
+1. A "DNS" switch on the home screen beside the VPN switch, styled like it (coloured dot, "DNS: On · Cloudflare"), on by default. Pressing it turns it on/off or picks Cloudflare, Google or Quad9. Nothing goes in Settings.
 2. All BM Player traffic (logins, playlists, guide, channels in both players) finds servers through private, encrypted DNS instead of the broadband provider's.
 3. When the VPN is on, the VPN handles everything and the DNS setting stays out of the way.
 4. If a channel still won't open with DNS on, a short message suggests turning on the VPN (with a Get VPN link).
