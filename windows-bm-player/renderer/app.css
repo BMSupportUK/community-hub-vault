@@ -25,6 +25,7 @@
 .lg{display:flex;flex-direction:column;flex:1;min-height:0}
 .lg-top{display:flex;gap:18px;align-items:flex-start}
 .lg-preview{position:relative;overflow:hidden;width:min(30vw,calc(32vh*16/9));aspect-ratio:16/9;flex:0 0 auto;background:#000;border-radius:8px;cursor:pointer}
+.lg-full{position:absolute;right:8px;bottom:8px;z-index:3;display:flex;align-items:center;justify-content:center;width:34px;height:30px;padding:0;background:var(--raised);border:1px solid var(--border);border-radius:6px;color:var(--foreground)}
 .lg-preview .video-surface{position:absolute;inset:0}
 .lg-info{flex:1;min-width:0;display:flex;flex-direction:column}
 .lg-pills{display:flex;justify-content:flex-end;align-items:center;gap:16px;margin-bottom:14px;padding-right:96px}

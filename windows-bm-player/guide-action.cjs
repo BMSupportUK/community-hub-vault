@@ -6,4 +6,6 @@ function guideAction(channel,programme,selected,now){
  if(programme&&programme.end<=now)return 'ended';
  return 'choose';
 }
-module.exports={reminderEligible,guideAction};
+// The ⛶ on the preview box opens the channel that preview is showing; nothing shows until a preview is up.
+function previewFullScreen(playing){return playing&&playing.length>0?playing[0].item:null;}
+module.exports={reminderEligible,guideAction,previewFullScreen};

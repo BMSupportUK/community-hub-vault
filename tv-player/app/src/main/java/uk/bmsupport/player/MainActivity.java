@@ -1812,6 +1812,9 @@ public class MainActivity extends Activity {
     private Button boxCatPill; // TV box Live TV: category pill after the day jumps
     private Button previewMenuButton; // phone Live TV: the button under the selected category
     private boolean previewPlaying;
+    private android.widget.PopupWindow previewIcon; // the ⛶ over the preview box, in its own window
+    private View previewIconBox;
+    private final View.OnLayoutChangeListener previewIconFollow = (v, l, t, r, b, ol, ot, or, ob) -> placePreviewIcon();
 
     /**
      * Phone Live TV: once a preview kicks in, the preview box and the button beneath the category
@@ -1821,12 +1824,14 @@ public class MainActivity extends Activity {
         previewPlaying = true;
         updateKeepScreenOn();
         if (previewMenuButton != null) previewMenuButton.setText("▶ Play menu");
+        updatePreviewFullIcon();
     }
 
     void previewStopped() {
         previewPlaying = false;
         updateKeepScreenOn();
         if (previewMenuButton != null) previewMenuButton.setText("▶ Preview channel");
+        updatePreviewFullIcon();
     }
 
     /** Starts the small preview a moment after the highlight settles, so scrolling stays smooth. */
@@ -1840,6 +1845,68 @@ public class MainActivity extends Activity {
         Item cur = previewItem;
         if (cur == null) { Toast.makeText(this, "Highlight a channel first", Toast.LENGTH_SHORT).show(); return; }
         play(cur, defaultVlc()); // full screen carries the playing preview over
+    }
+
+    /**
+     * The ⛶ drawn on the preview box: press it to open the previewing channel full screen. It gets
+     * its own little window because TV boxes draw the preview picture on a surface that punches a
+     * hole through this screen, and anything drawn here at that spot vanishes with it. It stays
+     * hidden until a preview is actually playing.
+     */
+    private void addPreviewFullIcon(FrameLayout box, Runnable open) {
+        if (previewIcon != null && previewIcon.isShowing()) previewIcon.dismiss();
+        if (previewIconBox != null) previewIconBox.removeOnLayoutChangeListener(previewIconFollow);
+        FrameLayout b = new FrameLayout(this);
+        FrameLayout.LayoutParams gl = new FrameLayout.LayoutParams(dp(20), dp(20));
+        gl.gravity = Gravity.CENTER;
+        b.addView(new FullScreenGlyphView(this, TEXT), gl);
+        b.setBackground(focusBg(8));
+        b.setContentDescription("Full screen");
+        // The remote's OK already opens full screen from the preview box itself, so the icon must
+        // not become a focus stop of its own: it only answers touch and mouse.
+        b.setFocusable(false);
+        b.setClickable(true);
+        b.setOnClickListener(v -> open.run());
+        android.widget.PopupWindow p = new android.widget.PopupWindow(b, dp(40), dp(36), false);
+        p.setOutsideTouchable(false);
+        previewIcon = p;
+        previewIconBox = box;
+        box.addOnLayoutChangeListener(previewIconFollow);
+        updatePreviewFullIcon();
+    }
+
+    /** Lines the ⛶ up with the bottom-right corner of the preview box. */
+    private void placePreviewIcon() {
+        if (previewIcon == null || !previewIcon.isShowing() || previewIconBox == null) return;
+        int[] at = new int[2];
+        previewIconBox.getLocationInWindow(at);
+        int x = at[0] + previewIconBox.getWidth() - previewIcon.getWidth() - dp(8);
+        int y = at[1] + previewIconBox.getHeight() - previewIcon.getHeight() - dp(8);
+        if (x < 0 || y < 0) return;
+        previewIcon.update(x, y, previewIcon.getWidth(), previewIcon.getHeight());
+    }
+
+    /** The ⛶ shows only while the preview box is playing and nothing is slid over the guide. */
+    private void updatePreviewFullIcon() {
+        if (previewIcon == null || previewIconBox == null || previewIconBox.getParent() == null) return;
+        boolean show = PreviewFullIcon.shows(previewPlaying) && !panelOpen();
+        if (show == previewIcon.isShowing()) { if (show) placePreviewIcon(); return; }
+        if (!show) { previewIcon.dismiss(); return; }
+        int[] at = new int[2];
+        previewIconBox.getLocationInWindow(at);
+        int x = at[0] + previewIconBox.getWidth() - previewIcon.getWidth() - dp(8);
+        int y = at[1] + previewIconBox.getHeight() - previewIcon.getHeight() - dp(8);
+        if (x < 0 || y < 0) return;
+        previewIcon.showAtLocation(previewIconBox, android.view.Gravity.TOP | android.view.Gravity.START, x, y);
+    }
+
+    /** The ⛶ opens the channel the preview is showing; with no preview up it says so. */
+    private void openPreviewFullScreen() {
+        if (!PreviewFullIcon.opens(previewItem == null ? null : previewItem.id, previewPlaying)) {
+            Toast.makeText(this, "Preview a channel first", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        play(previewItem, defaultVlc());
     }
 
 
@@ -4822,6 +4889,7 @@ public class MainActivity extends Activity {
                 pvFrame.setOnFocusChangeListener((v, f) -> { if (f && previewItem != null) Toast.makeText(MainActivity.this, "Press OK for full screen", Toast.LENGTH_SHORT).show(); });
                 boxPreviewFrame = pvFrame;
             }
+            addPreviewFullIcon(pvFrame, this::openPreviewFullScreen);
             pvStatus.setText("OK on a programme that's on now to preview it · OK again for the channel menu");
             pvStatus.setMaxWidth(dp(400));
             if (phoneLive) {
@@ -5203,6 +5271,7 @@ public class MainActivity extends Activity {
             if (panel.getHeight() > 0) h = Math.min(h, panel.getHeight() * 2 / 5);
             if (h > 0 && Math.abs(v.getHeight() - h) > 2) { ViewGroup.LayoutParams vlp = v.getLayoutParams(); vlp.height = h; v.post(() -> v.setLayoutParams(vlp)); }
         });
+        addPreviewFullIcon(spFrame, this::openPreviewFullScreen);
         sportsPreviewStatus = text("Press OK on a channel to preview it · OK again for full screen", 13, MUTED, false);
         sportsPreviewStatus.setSingleLine(true); sportsPreviewStatus.setEllipsize(android.text.TextUtils.TruncateAt.END);
         panel.addView(sportsPreviewStatus);
@@ -6012,6 +6081,7 @@ public class MainActivity extends Activity {
             drawerScrim.animate().alpha(1f).setDuration(200).start();
         }
         if (drawerWrap != null) drawerWrap.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        updatePreviewFullIcon();
     }
 
     /** Slides the panel back out to the left and gives focus back to the screen behind it. */
@@ -6029,6 +6099,7 @@ public class MainActivity extends Activity {
                 .withEndAction(() -> {
                     closingPanel.setVisibility(View.INVISIBLE);
                     if (!drawerShown && drawerPanel == closingPanel && focusTarget != null) focusTarget.requestFocus();
+                    updatePreviewFullIcon();
                 }).start();
     }
 
