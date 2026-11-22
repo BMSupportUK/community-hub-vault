@@ -12,7 +12,7 @@ public class UhdChannelTest {
     }
     @Test public void uhdLiveStartsInBoxEngine() {
         assertFalse(PlayerActivity.backupFirst("live", false, false, "Sky Sports F1 UHD | Test", "Sports"));
-        assertFalse(PlayerActivity.backupFirst("live", false, false, "BBC One | FHD |", "UK | Free to air"));
+        assertTrue(PlayerActivity.backupFirst("live", false, false, "BBC One | FHD |", "UK | Free to air"));
     }
     @Test public void uhdWaitsLongerBeforeCountingADrop() {
         LiveReconnect r = new LiveReconnect(); r.patient(true); r.opened(0);
