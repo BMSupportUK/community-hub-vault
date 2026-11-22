@@ -81,11 +81,11 @@ public class MediaCategoryNavigationTest {
             decor.layout(0, 0, 960, 540);
             Method show = MainActivity.class.getDeclaredMethod("showPanel"); show.setAccessible(true); show.invoke(activity);
             ListView categories = (ListView) panel.getChildAt(1);
-            assertEquals(2, categories.getCount());
-            categories.requestFocus(); categories.setSelection(1);
+            assertEquals("Films/Series have no All row, just the provider category", 1, categories.getCount());
+            categories.requestFocus(); categories.setSelection(0);
             shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300));
             assertTrue((Boolean) field(activity, "drawerShown"));
-            categories.performItemClick(null, 1, 1);
+            categories.performItemClick(null, 0, 0);
             shadowOf(Looper.getMainLooper()).idleFor(Duration.ofMillis(300));
             assertFalse((Boolean) field(activity, "drawerShown"));
             decor.measure(View.MeasureSpec.makeMeasureSpec(960, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(540, View.MeasureSpec.EXACTLY));

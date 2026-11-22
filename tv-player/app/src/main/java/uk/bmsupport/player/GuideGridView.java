@@ -70,6 +70,8 @@ public class GuideGridView extends View {
         if (listener == null || names == null) return;
         for (int r = 0; r < Math.min(names.size(), rows); r++) listener.needEpg(r);
     }
+    /** Ask for one row's listings (phone channel list rows). */
+    public void need(int row) { if (listener != null && names != null && row >= 0 && row < names.size()) listener.needEpg(row); }
     public void setChannels(List<String> n, List<Boolean> cu) { setChannels(n, cu, null); }
     public void setChannels(List<String> n, List<Boolean> cu, List<String> logoUrls) {
         names.clear(); names.addAll(n); catchup.clear(); catchup.addAll(cu);

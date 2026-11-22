@@ -55,51 +55,42 @@ public class LiveGuideHeaderTest {
         return (LinearLayout) grids.get(0).getParent();
     }
 
-    @Test public void viewEpgSitsInTheHeaderRowBeforeSearchTv() throws Exception {
-        MainActivity a = open();
-        openLiveGuide(a);
-        LinearLayout root = rootOf(a);
-        List<View> pills = new ArrayList<>();
-        collect(a.getWindow().getDecorView(), Button.class, pills);
-        boolean found = false;
-        for (View p : pills) if (text(p).equals("View EPG")) {
-            assertFalse("the control must not be a lone button at the foot of the screen",
-                    p.getParent() == root);
-            assertSame("the control must sit in the screen's header row", root.getChildAt(0), p.getParent());
-            found = true;
-        }
-        assertTrue("Live TV on a phone must offer the View EPG control", found);
-        View head = root.getChildAt(0);
-        int epg = -1, search = -1;
-        for (int i = 0; i < ((ViewGroup) head).getChildCount(); i++) {
-            View c = ((ViewGroup) head).getChildAt(i);
-            if (!(c instanceof Button)) continue;
-            String t = text(c);
-            if (t.equals("View EPG")) epg = i;
-            if (t.equals("🔍 Search TV")) search = i;
-        }
-        assertTrue("View EPG must come before Search TV in the header", epg >= 0 && search >= 0 && epg < search);
+    private static Button find(MainActivity a, String label) {
+        List<View> b = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), Button.class, b);
+        for (View v : b) if (text(v).equals(label)) return (Button) v;
+        return null;
     }
 
-    @Test public void theGridStaysHiddenUnderThePreviewUntilViewEpgOpensIt() throws Exception {
+    @Test public void phonesShowChannelsGuideAndFavouritesTabs() throws Exception {
+        MainActivity a = open();
+        openLiveGuide(a);
+        assertNotNull(find(a, "📺 Channels"));
+        assertNotNull(find(a, "📅 Guide"));
+        assertNotNull(find(a, "★ Favourites"));
+        assertNull("View EPG is replaced by the Guide tab", find(a, "View EPG"));
+    }
+
+    @Test public void phoneGuideTabOpensTheGridAndChannelsTabPutsItAway() throws Exception {
         MainActivity a = open();
         openLiveGuide(a);
         List<View> grids = new ArrayList<>();
         collect(a.getWindow().getDecorView(), GuideGridView.class, grids);
-        assertEquals(1, grids.size());
         View grid = grids.get(0);
-        assertEquals("the phone guide must not sit under the preview", View.GONE, grid.getVisibility());
-        List<View> pills = new ArrayList<>();
-        collect(a.getWindow().getDecorView(), Button.class, pills);
-        for (View p : pills) if (text(p).equals("View EPG")) { p.performClick(); break; }
-        assertEquals("View EPG must open the guide full screen", View.VISIBLE, grid.getVisibility());
-        LinearLayout root = (LinearLayout) grid.getParent();
-        assertEquals(View.GONE, root.getChildAt(0).getVisibility());
-        assertEquals(View.GONE, root.getChildAt(1).getVisibility());
-        for (View p : pills) if (text(p).equals("✕ Close")) { p.performClick(); break; }
-        assertEquals("Close must put the guide away again", View.GONE, grid.getVisibility());
-        assertEquals(View.VISIBLE, root.getChildAt(0).getVisibility());
-        assertEquals(View.VISIBLE, root.getChildAt(1).getVisibility());
+        assertEquals(View.GONE, grid.getVisibility());
+        find(a, "📅 Guide").performClick();
+        assertEquals(View.VISIBLE, grid.getVisibility());
+        find(a, "📺 Channels").performClick();
+        assertEquals(View.GONE, grid.getVisibility());
+    }
+
+    @Test public void phoneHeaderKeepsSearchAndAChannelList() throws Exception {
+        MainActivity a = open();
+        openLiveGuide(a);
+        assertNotNull(find(a, "🔍 Search TV"));
+        List<View> lists = new ArrayList<>();
+        collect(a.getWindow().getDecorView(), android.widget.ListView.class, lists);
+        assertTrue("phone Live TV needs its channel list beside the preview", lists.size() >= 2);
     }
 
     @Test public void tvBoxesKeepTheirAlwaysVisibleGuide() throws Exception {
@@ -113,51 +104,6 @@ public class LiveGuideHeaderTest {
         List<View> buttons = new ArrayList<>();
         collect(root, Button.class, buttons);
         for (View b : buttons) assertNotEquals("View EPG", text(b));
-    }
-
-    @Test public void theNowAndDayControlsLiveInsideTheBiggerGuidePopup() throws Exception {
-        MainActivity a = open();
-        openLiveGuide(a);
-        LinearLayout root = rootOf(a);
-        List<View> pills = new ArrayList<>();
-        collect(a.getWindow().getDecorView(), Button.class, pills);
-        View bigBar = null;
-        for (View p : pills) if (text(p).equals("✕ Close")) bigBar = (View) p.getParent();
-        assertNotNull("the bigger-guide pop-up bar must exist", bigBar);
-        assertEquals("the pop-up bar stays hidden until Bigger guide is tapped", View.GONE, bigBar.getVisibility());
-        for (String label : new String[]{"Now", "◀ Day", "Day ▶"}) {
-            int found = 0;
-            for (View p : pills) if (text(p).equals(label)) {
-                found++;
-                View parent = (View) p.getParent();
-                assertTrue("the " + label + " button must sit inside the pop-up bar, not the normal guide",
-                        parent == bigBar || parent.getParent() == bigBar);
-            }
-            assertEquals("exactly one " + label + " button", 1, found);
-        }
-        View head = root.getChildAt(0);
-        List<View> inHead = new ArrayList<>();
-        collect(head, Button.class, inHead);
-        for (View b : inHead) {
-            String t = text(b);
-            assertNotEquals("the Now button must not be in the header", "Now", t);
-            assertNotEquals("the back-a-day button must not be in the header", "◀ Day", t);
-            assertNotEquals("the forward-a-day button must not be in the header", "Day ▶", t);
-        }
-    }
-
-    @Test public void theHeaderKeepsItsSearchPillsAlongsideTheControl() throws Exception {
-        MainActivity a = open();
-        openLiveGuide(a);
-        LinearLayout root = rootOf(a);
-        View head = root.getChildAt(0);
-        List<View> inHead = new ArrayList<>();
-        collect(head, Button.class, inHead);
-        List<String> labels = new ArrayList<>();
-        for (View b : inHead) labels.add(text(b));
-        assertTrue("search must stay in the header: " + labels, labels.contains("🔍 Search TV"));
-        assertTrue("voice search must stay in the header: " + labels, labels.contains("🎤 Voice search"));
-        assertTrue("the View EPG control must join them: " + labels, labels.contains("View EPG"));
     }
 
     @Test public void playChannelIsReachableOnAShortLandscapePhone() throws Exception {

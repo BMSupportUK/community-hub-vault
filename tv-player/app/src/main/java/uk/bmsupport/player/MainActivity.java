@@ -4918,6 +4918,9 @@ public class MainActivity extends Activity {
                 int w = (int) (dm.widthPixels * 0.30f), h = w * 9 / 16, cap = (int) (dm.heightPixels * 0.32f);
                 if (h > cap) { h = cap; w = h * 16 / 9; }
                 side.addView(pvFrame, new LinearLayout.LayoutParams(w, h));
+            } else if (phoneLive) {
+                int w = (int) (getResources().getDisplayMetrics().widthPixels * 0.36f);
+                side.addView(pvFrame, new LinearLayout.LayoutParams(w, w * 9 / 16));
             } else side.addView(pvFrame, new LinearLayout.LayoutParams(dp(400), dp(225)));
             if (boxLive) {
                 // Boxes: the preview is a stop on the remote (Up from the date row); OK opens the previewed channel full screen.
@@ -5000,16 +5003,55 @@ public class MainActivity extends Activity {
         root.addView(bigBar);
         Runnable closeBig = () -> { bigBar.setVisibility(View.GONE); grid.setVisibility(View.GONE); top.setVisibility(View.VISIBLE); head.setVisibility(View.VISIBLE); back = this::showHome; };
         bigBar.addView(headerPill("✕ Close", v -> closeBig.run()));
+        // Phones: category chips + search on top, preview and its programme on the left, a channel
+        // list beside it, and Channels / Guide / Favourites tabs along the bottom.
+        final LinearLayout chips = row();
+        final android.widget.ListView phoneList = phoneLive ? new android.widget.ListView(this) : null;
+        final Runnable[] phoneRefresh = { null }, phoneNotify = { null };
+        final Button[] tabs = new Button[3];
+        final List<Item> shownCh = new ArrayList<>();
         if (phoneLive) {
-            // Phones: no guide grid under the preview — "View EPG" (before Search TV) opens it full screen.
-            head.addView(headerPill("View EPG", v -> {
-                top.setVisibility(View.GONE); head.setVisibility(View.GONE); bigBar.setVisibility(View.VISIBLE);
-                grid.setVisibility(View.VISIBLE);
-                back = closeBig; grid.requestFocus();
-            }), 2);
+            head.removeAllViews();
+            android.widget.HorizontalScrollView hs = new android.widget.HorizontalScrollView(this);
+            hs.setHorizontalScrollBarEnabled(false);
+            chips.setGravity(Gravity.CENTER_VERTICAL);
+            hs.addView(chips);
+            head.addView(hs, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+            head.addView(headerPill("🔍 Search TV", v -> showSearch("live", "")));
+            if (VoiceEntry.available(Build.MANUFACTURER)) head.addView(headerPill("🎤 Voice search", v -> startVoice("live")));
+            top.removeView(info);
+            info.setPadding(0, dp(4), 0, 0);
+            // The chips already show the category; keep the stack short so Preview stays on screen.
+            heading.setVisibility(View.GONE); selectedCategory.setVisibility(View.GONE);
+            progTitle.setTextSize(17); progTitle.setMaxLines(1); progTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            progTime.setTextSize(13); progTime.setMaxLines(2); progTime.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            side.addView(info, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            top.removeView(side);
+            android.widget.ScrollView sideScroll = new android.widget.ScrollView(this);
+            sideScroll.addView(side);
+            top.addView(sideScroll, 0, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            phoneList.setDivider(new android.graphics.drawable.ColorDrawable(0x1FFFFFFF));
+            phoneList.setDividerHeight(1);
+            phoneList.setPadding(dp(12), 0, 0, 0);
+            top.addView(phoneList, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+            top.setBaselineAligned(false);
+            top.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
             grid.setVisibility(View.GONE);
         }
-        root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        root.addView(grid, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, phoneLive ? 0 : 0, 1));
+        if (phoneLive) {
+            grid.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+            LinearLayout tabBar = row();
+            tabBar.setBackgroundColor(CARD);
+            String[] labels = { "📺 Channels", "📅 Guide", "★ Favourites" };
+            for (int i = 0; i < 3; i++) {
+                tabs[i] = button(labels[i], v -> {});
+                tabBar.addView(tabs[i], new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+            }
+            // The preview/play-menu button sits in the bottom bar so it is always on screen.
+            if (previewMenuButton != null) { info.removeView(previewMenuButton); previewMenuButton.setTextColor(ACCENT); tabBar.addView(previewMenuButton, 0, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1)); }
+            root.addView(tabBar, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        }
         // TV boxes: Left on the on-now programme opens categories; on future listings it steps back.
 
         dayBack[0] = () -> grid.shiftDay(-1);
@@ -5021,7 +5063,6 @@ public class MainActivity extends Activity {
         panel.setBackgroundColor(CARD);
         panel.setPadding(dp(18), dp(24), dp(18), dp(16));
         panel.addView(text("Categories", 22, TEXT, true));
-        final List<Item> shownCh = new ArrayList<>();
         previewSelected[0] = () -> {
             int r = grid.selectedRow();
             if (r < 0 || r >= shownCh.size()) { Toast.makeText(this, "Pick a channel from Channels first", Toast.LENGTH_SHORT).show(); return; }
@@ -5062,14 +5103,15 @@ public class MainActivity extends Activity {
             appliedCategory[0] = cat[0];
             shownCh.clear(); requested.clear(); gen[0]++;
             java.util.Set<String> allowed = new java.util.HashSet<>(); for (String[] c : catRows) allowed.add(c[0]);
-            for (Item it : liveChannels) if (allowed.contains(it.category) && (cat[0].equals("*") || cat[0].equals(it.category))) shownCh.add(it);
+            boolean favTab = PhoneLiveRow.FAVOURITES.equals(cat[0]);
+            for (Item it : liveChannels) if (allowed.contains(it.category) && (favTab ? isSaved("fav", it) : (cat[0].equals("*") || cat[0].equals(it.category)))) shownCh.add(it);
             // Stable sort: Womens Football rows sit above FA Player ones; everything else keeps provider order.
             java.util.Collections.sort(shownCh, (a, b) -> ChannelListOrder.compare(a.name, b.name));
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
             if (boxLive && boxCatPill != null) boxCatPill.setText("Category: " + cat[1]);
             selectedCategory.setText("Category: " + cat[1]);
             guideTitle.setText("TV guide · " + cat[1]);
-            if (live) liveCatId = cat[0];
+            if (live && !favTab) liveCatId = cat[0];
             List<String> panelNames = new ArrayList<>();
             for (String[] c : catRows) panelNames.add((c[0].equals(cat[0]) ? "\u2713 " : "") + c[1]);
             catList.setAdapter(adapter(panelNames));
@@ -5081,8 +5123,9 @@ public class MainActivity extends Activity {
             grid.setChannels(names, cu, logos);
             // Phones keep the guide hidden until View EPG, so nothing loaded until it opened; fetch now like boxes do.
             if (phoneLive) grid.post(() -> grid.warm(20));
-            if (shownCh.isEmpty()) { progTitle.setText("No channels in " + cat[1]); progTime.setText(""); }
+            if (shownCh.isEmpty()) { progTitle.setText(favTab ? "No favourite channels yet – tap ☆ on a channel" : "No channels in " + cat[1]); progTime.setText(""); }
             grid.requestFocus();
+            if (phoneRefresh[0] != null) phoneRefresh[0].run();
         };
         catBtn.setOnClickListener(v -> {
             if (panelOpen()) { hidePanel(); return; }
@@ -5110,6 +5153,8 @@ public class MainActivity extends Activity {
                 grid.post(grid::requestFocus);
             }
         });
+        if (phoneLive) wirePhoneLive(chips, phoneList, tabs, phoneRefresh, phoneNotify, shownCh, grid, pv, pvStatus,
+                head, top, bigBar, closeBig, catRows, appliedCategory, applyCat);
         grid.setListener(new GuideGridView.Listener() {
             @Override public void needEpg(int r) {
                 if (r < 0 || r >= shownCh.size()) return;
@@ -5158,7 +5203,7 @@ public class MainActivity extends Activity {
                         guideCoveredTo.put(it.id, Math.max(System.currentTimeMillis() / 1000 + win, viewEnd));
                         if (gotFull) guideFullFetched.add(it.id); else guideFullFetched.remove(it.id);
                         guideCache.put(it.id, got2);
-                        if (g == gen[0] && "tvguide".equals(screen)) grid.setProgs(r, got2);
+                        if (g == gen[0] && "tvguide".equals(screen)) { grid.setProgs(r, got2); if (phoneNotify[0] != null) phoneNotify[0].run(); }
                     });
                 });
             }
@@ -5254,6 +5299,107 @@ public class MainActivity extends Activity {
                 });
             } catch (Exception ex) { ui.post(() -> progTitle.setText("Couldn't load your channels – check your login in Settings")); }
         });
+    }
+
+    /** Phone Live TV: category chips, channel rows (logo, now + progress, next, star) and bottom tabs. */
+    private void wirePhoneLive(LinearLayout chips, android.widget.ListView list, Button[] tabs, Runnable[] refresh, Runnable[] notify,
+                               List<Item> shownCh, GuideGridView grid, androidx.media3.ui.PlayerView pv, TextView pvStatus,
+                               View head, View top, View bigBar, Runnable closeBig, List<String[]> catRows, String[] applied,
+                               java.util.function.Consumer<String[]> applyCat) {
+        final String[] lastRealCat = { null };
+        final int[] tab = { 0 };
+        Runnable paintTabs = () -> { for (int i = 0; i < 3; i++) { tabs[i].setTextColor(i == tab[0] ? ACCENT : TEXT); tabs[i].setSelected(i == tab[0]); } };
+        android.widget.BaseAdapter adapter = new android.widget.BaseAdapter() {
+            @Override public int getCount() { return shownCh.size(); }
+            @Override public Object getItem(int i) { return shownCh.get(i); }
+            @Override public long getItemId(int i) { return i; }
+            @Override public View getView(int i, View cv, ViewGroup parent) {
+                Item ch = shownCh.get(i);
+                LinearLayout r = row(); r.setGravity(Gravity.CENTER_VERTICAL); r.setBaselineAligned(false);
+                r.setMinimumHeight(dp(64)); r.setPadding(dp(8), dp(6), dp(8), dp(6));
+                boolean playing = previewItem != null && ch.id.equals(previewItem.id);
+                if (playing) { GradientDrawable bg = new GradientDrawable(); bg.setColor(0x33E11D48); bg.setCornerRadius(dp(8)); r.setBackground(bg); }
+                android.widget.ImageView logo = new android.widget.ImageView(MainActivity.this);
+                logo.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+                android.graphics.Bitmap bm = GuideLogoLoader.get(MainActivity.this, ch.poster, u -> notifyDataSetChanged());
+                if (bm != null) logo.setImageBitmap(bm);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(52), dp(40)); lp.rightMargin = dp(10);
+                r.addView(logo, lp);
+                LinearLayout col = column();
+                TextView name = text(ch.name, 16, playing ? ACCENT : TEXT, true); name.setSingleLine(true); name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                col.addView(name);
+                List<GuideGridView.Prog> l = guideCache.get(ch.id);
+                if (l == null) grid.need(i);
+                long t = System.currentTimeMillis() / 1000;
+                GuideGridView.Prog[] nn = PhoneLiveRow.nowNext(l, t);
+                TextView now = text(nn[0] != null ? "Now  " + nn[0].title : (l == null ? "Loading…" : "No guide information"), 14, TEXT, false);
+                now.setSingleLine(true); now.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                col.addView(now);
+                int pct = PhoneLiveRow.percent(nn[0], t);
+                if (pct >= 0) {
+                    android.widget.ProgressBar bar = new android.widget.ProgressBar(MainActivity.this, null, android.R.attr.progressBarStyleHorizontal);
+                    bar.setMax(100); bar.setProgress(pct);
+                    bar.setProgressTintList(android.content.res.ColorStateList.valueOf(ACCENT));
+                    LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(dp(140), dp(4)); bp.setMargins(0, dp(3), 0, dp(3));
+                    col.addView(bar, bp);
+                }
+                if (nn[1] != null) {
+                    TextView nx = text("Next " + clock(nn[1].st) + "  " + nn[1].title, 13, MUTED, false);
+                    nx.setSingleLine(true); nx.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    col.addView(nx);
+                }
+                r.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1));
+                TextView star = text(isSaved("fav", ch) ? "★" : "☆", 24, isSaved("fav", ch) ? ACCENT : MUTED, false);
+                star.setPadding(dp(12), dp(8), dp(4), dp(8));
+                star.setContentDescription("Favourite");
+                star.setOnClickListener(v -> { toggleSaved("fav", ch); notifyDataSetChanged(); });
+                r.addView(star);
+                return r;
+            }
+        };
+        list.setAdapter(adapter);
+        list.setOnItemClickListener((p, v, pos, id) -> {
+            if (pos >= shownCh.size()) return;
+            Item ch = shownCh.get(pos);
+            if (previewItem != null && ch.id.equals(previewItem.id) && previewPlaying) { open(ch); return; }
+            grid.selectChannel(pos);
+            schedulePreview(ch, pv, pvStatus);
+            adapter.notifyDataSetChanged();
+        });
+        notify[0] = adapter::notifyDataSetChanged;
+        refresh[0] = () -> {
+            if (applied[0] != null && !PhoneLiveRow.FAVOURITES.equals(applied[0])) lastRealCat[0] = applied[0];
+            chips.removeAllViews();
+            for (String[] c : catRows) {
+                boolean sel = c[0].equals(applied[0]);
+                Button b = button(c[1], v -> { tab[0] = 0; paintTabs.run(); closeBig.run(); applyCat.accept(c); });
+                GradientDrawable bg = new GradientDrawable(); bg.setCornerRadius(dp(18)); bg.setColor(sel ? ACCENT : CARD);
+                b.setBackground(bg); b.setTextColor(TEXT); b.setAllCaps(false); b.setSingleLine(true);
+                b.setPadding(dp(14), dp(6), dp(14), dp(6));
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                lp.setMargins(dp(4), dp(2), dp(4), dp(2));
+                chips.addView(b, lp);
+            }
+            adapter.notifyDataSetChanged();
+            list.setSelection(0);
+        };
+        tabs[0].setOnClickListener(v -> {
+            tab[0] = 0; paintTabs.run(); closeBig.run();
+            if (PhoneLiveRow.FAVOURITES.equals(applied[0]) && lastRealCat[0] != null)
+                for (String[] c : catRows) if (c[0].equals(lastRealCat[0])) { applyCat.accept(c); break; }
+        });
+        tabs[1].setOnClickListener(v -> {
+            tab[0] = 1; paintTabs.run();
+            top.setVisibility(View.GONE); head.setVisibility(View.GONE); bigBar.setVisibility(View.VISIBLE);
+            grid.setVisibility(View.VISIBLE);
+            back = () -> tabs[0].performClick(); grid.requestFocus();
+        });
+        tabs[2].setOnClickListener(v -> {
+            tab[0] = 2; paintTabs.run(); closeBig.run();
+            applied[0] = null;
+            applyCat.accept(new String[]{ PhoneLiveRow.FAVOURITES, "Favourites" });
+        });
+        paintTabs.run();
     }
 
     private ArrayAdapter<String> rowAdapter(List<String> rows) {
