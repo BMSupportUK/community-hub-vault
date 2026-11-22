@@ -1906,6 +1906,7 @@ public class MainActivity extends Activity {
     @Override protected void onPause() { super.onPause(); saveGuide(); stopPreview(); if ("multi".equals(screen)) { stopMulti(); showHome(); } }
 
     private String liveCatId = null;
+    private final CategoryMemory categoryMemory = new CategoryMemory();
 
     private void browse(String kind) {
         // Phones: Live TV is the guide screen (preview, View EPG pop-up). TV boxes keep the original
@@ -1947,10 +1948,7 @@ public class MainActivity extends Activity {
         ListView cats = list();
         final boolean posters = !kind.equals("live");
         final AbsListView items = posters ? posterGrid() : list();
-        final Runnable openCategories = () -> {
-            showPanel();
-            cats.requestFocus();
-        };
+        final Runnable[] openCategories = { null };
         final List<Item> shown = new ArrayList<>();
         final String[] sortKey = { prefs.getString("sort_" + kind, "added") };
         final Runnable[] applySort = new Runnable[1];
@@ -2056,12 +2054,12 @@ public class MainActivity extends Activity {
             LinearLayout content = root;
             if (isPhone()) {
                 content = row(); content.setPadding(0, 0, 0, 0);
-                content.addView(button("☰", v -> openCategories.run()), new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.MATCH_PARENT));
+                content.addView(button("☰", v -> { if (openCategories[0] != null) openCategories[0].run(); }), new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.MATCH_PARENT));
                 content.getChildAt(0).setContentDescription("Categories");
                 content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
             }
             setContentView(sideDrawer(content, panel));
-            MediaCategoryNavigation.bind((android.widget.GridView) items, openCategories);
+            MediaCategoryNavigation.bind((android.widget.GridView) items, () -> { if (openCategories[0] != null) openCategories[0].run(); });
         } else setContentView(root);
 
         // Whole section is loaded once (from the saved list) and split by category locally,
@@ -2073,6 +2071,13 @@ public class MainActivity extends Activity {
         final boolean[] freshTop = { false };
         final int[] livePos = { -1 };
         final boolean[] restoring = { false };
+        // Reopening the categories drawer lands the highlight on the category you are in, not the top.
+        openCategories[0] = () -> {
+            showPanel();
+            int at = CategoryMemory.indexOf(catRows, current[0]);
+            if (at >= 0) { cats.setSelection(at); final int keep = at; cats.post(() -> cats.setSelection(keep)); }
+            cats.requestFocus();
+        };
         // Live TV's inline search box filters the channel list as the customer types.
         applyFilter[0] = () -> {
             String q = liveFilter[0].trim().toLowerCase();
@@ -2094,6 +2099,7 @@ public class MainActivity extends Activity {
             if (c[0].equals(current[0])) { if (focusItems) items.requestFocus(); return; }
             current[0] = c[0];
             if (kind.equals("live")) liveCatId = c[0];
+            else categoryMemory.save(kind, c[0]);
             List<Item> got = c[0].equals("*") ? all : byCat.get(c[0]);
             java.util.function.Consumer<List<Item>> render = list -> {
                 if (!c[0].equals(current[0])) return;
@@ -2171,9 +2177,11 @@ public class MainActivity extends Activity {
                     byCat.clear(); byCat.putAll(groups);
                     all.clear(); all.addAll(everything);
                     cats.setAdapter(adapter(names));
-                    cats.setSelection(0);
-                    showCat.accept(0, false);
-                    if (posters) openCategories.run(); // Films/Series open on the highlighted category sidebar.
+                    // Back into the section reopens the category you were in, not the top of the list.
+                    final int startAt = kind.equals("live") ? 0 : categoryMemory.restoreIndex(kind, catRows);
+                    cats.setSelection(startAt);
+                    showCat.accept(startAt, false);
+                    if (posters) openCategories[0].run(); // Films/Series open on the highlighted category sidebar.
                     else cats.requestFocus();
                 });
             } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
@@ -4937,6 +4945,9 @@ public class MainActivity extends Activity {
             List<String> panelNames = new ArrayList<>();
             for (String[] c : catRows) panelNames.add((c[0].equals(cat[0]) ? "\u2713 " : "") + c[1]);
             catList.setAdapter(adapter(panelNames));
+            // The guide's category panel opens with the highlight on the category you are in.
+            int catAt = CategoryMemory.indexOf(catRows, cat[0]);
+            if (catAt >= 0) { catList.setSelection(catAt); final int keepCat = catAt; catList.post(() -> catList.setSelection(keepCat)); }
             List<String> names = new ArrayList<>(); List<Boolean> cu = new ArrayList<>(); List<String> logos = new ArrayList<>();
             for (Item it : shownCh) { names.add(it.name); cu.add(it.archiveDays > 0); logos.add(it.poster == null ? "" : it.poster); }
             grid.setChannels(names, cu, logos);
