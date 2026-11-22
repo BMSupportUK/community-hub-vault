@@ -8,10 +8,13 @@ function centerIceNumber(channel: string): number | null {
   const hit = /^(?:US\s*:\s*)?NHL\s+(?:(?:Center|Centre)\s+Ice\s+)?(\d{1,3})$/i.exec(label);
   return hit ? Number(hit[1]) : null;
 }
-/** NFL Sunday Ticket feeds only ever carry listed games (no provider programmes worth keeping). */
+/** Sports Pass / event-only feeds only ever carry listed games (no provider programmes worth keeping). */
 export function eventOnlyFeed(channel: string): boolean {
   const n = channel.normalize('NFKD');
-  return /^\s*(?:US\s*:\s*)?NFL\s+Sunday\s+Ticket\b/i.test(n);
+  if (/events?\s*only/i.test(n)) return true;
+  if (/d\s*a\s*z\s*n/i.test(n) && /\bCA\b/.test(n)) return true;
+  const label = n.split('|')[0].trim();
+  return /^(?:(?:US|UK|CA)\s*:\s*)?(?:NFL(?:\s+Sunday\s+Ticket|\s+Game\s+Pass)?|NBA(?:\s+League\s+Pass)?|NHL(?:\s+Cent(?:er|re)\s+Ice)?|MLB|MLS|WNBA|Coupang(?:\s+Play)?|Rugby\s*Pass|Peacock|FA\s+Player|Womens\s+Football|Women's\s+Football|Setanta(?:\s+Sports)?|ESPN\s*(?:\+|Plus)|Flo\s*Sports|Triller(?:\s+TV)?|Fox\s+Sports\s+Pass|Stan(?:\s+Sport)?|(?:Sky|TNT|DAZN|Rugby|Season|Sports?)\s+Pass)\s*\d{1,3}\b/i.test(label);
 }
 /** Website fixture slots only. No country XMLTV reads or downloads. */
 export function sportsFixtureEpg(channel: string, events: FixtureEpgEvent[], now = Date.now()) {

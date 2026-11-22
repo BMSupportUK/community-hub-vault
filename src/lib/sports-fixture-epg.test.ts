@@ -19,14 +19,14 @@ test('main Center Ice 01 gets the website fixture already linked to NHL Set 2 fe
   const main = sportsFixtureEpg('NHL Center Ice 01 | (Events Only)',events,now);
   expect(main.source).toBe('sports');
   expect(main.epg_listings?.find(p => atob(p.title) === 'Panthers @ Bruins')?.start_timestamp).toBe(start/1000);
-  expect(sportsFixtureEpg('NHL Center Ice 02 | (Events Only)',events,now).source).toBe('none');
+  expect(sportsFixtureEpg('NHL Center Ice 02 | (Events Only)',events,now).epg_listings?.map(p => atob(p.title))).toEqual(['No Event Scheduled']);
   expect(sportsFixtureEpg('NHL Network.',events,now).source).toBe('none');
   expect(events[0].channels).toEqual(['NHL 01 | Set 2 (Events Only)']);
 });
 test('Center Ice identity ignores changing programme text after the stable feed label', () => {
   const events = [{title:'Panthers @ Bruins',start:Date.parse('2026-11-08T18:00:00Z'),channels:['NHL Center Ice 01 | (Events Only)']}];
   expect(sportsFixtureEpg('NHL 01 | Set 2 (Events Only) | Old replay title',events,now).source).toBe('sports');
-  expect(sportsFixtureEpg('NBA 01 | (Events Only)',events,now).source).toBe('none');
+  expect(sportsFixtureEpg('NBA 01 | (Events Only)',events,now).epg_listings.map((l:any)=>Buffer.from(l.title,'base64').toString())).toEqual(['No Event Scheduled']);
 });
 import { sportsFixtureEpg as epg2 } from "./sports-fixture-epg";
 test("NFL Sunday Ticket channel with no game gets a No Event Scheduled row, not a blank guide", () => {
@@ -39,4 +39,9 @@ test("gap before a later game names that game and its UK start time", () => {
   const r: any = epg2("NFL Sunday Ticket 06 |", [{ title: "Cardinals @ Chiefs", start: Date.UTC(2026, 10, 22, 18), channels: ["NFL Sunday Ticket 06 |"] }], now);
   const first = r.epg_listings[0];
   expect(Buffer.from(first.description, "base64").toString()).toBe("Next: Cardinals @ Chiefs at 18:00");
+});
+
+test("every sports pass with no game today shows No Event Scheduled, ordinary channels keep provider guide", () => {
+  for (const c of ["Rugby Pass 03", "Coupang Play 16 |", "Peacock 4 | (Events Only)", "ᴰᴬᶻᴺ ¹ 12 (CA | Main)", "NBA League Pass 05 |"]) expect((epg2(c, [], now) as any).source).toBe("sports");
+  expect((epg2("Sky Sports Mix | FHD |", [], now) as any).source).toBe("none");
 });
