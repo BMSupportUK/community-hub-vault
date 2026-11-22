@@ -2011,6 +2011,7 @@ public class MainActivity extends Activity {
         final String[] catLabel = { "" };
         final List<Item> currentList = new ArrayList<>();
         final Runnable[] applyFilter = new Runnable[1];
+        final Runnable[] openCategories = { null };
         LinearLayout root = column();
 
         LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
@@ -2019,8 +2020,9 @@ public class MainActivity extends Activity {
         if (kind.equals("live")) head.addView(headerPill("📅 EPG", v -> showTvGuide(liveCatId)));
         int maxCons = Math.min(3, consPref(1));
         if (kind.equals("live") && maxCons >= 2) head.addView(headerPill("🖥 Multi-screen (" + maxCons + ")", v -> chooseMultiScreens(maxCons)));
-        // Films/Series: no top Category pill — the sliding drawer opens on entry and from row-edge Left.
-        head.addView(headerPill("🔍 Search " + (kind.equals("live") ? "TV" : kind.equals("film") ? "Movies" : "Series"), v -> showSearch(kind, "")));
+        // Films/Series: a top Category pill opens the sliding drawer (also from row-edge Left); it no longer opens on entry.
+        if (!kind.equals("live")) head.addView(headerPill("▦ Category", v -> { if (openCategories[0] != null) openCategories[0].run(); }));
+        head.addView(headerPill(kind.equals("live") ? "🔍 Search TV" : "🔍 Search", v -> showSearch(kind, "")));
         if (VoiceEntry.available(Build.MANUFACTURER)) head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
         // Films/Series: Sort is an icon pill straight after Voice search (no sort row).
         final Runnable[] openSort = new Runnable[1];
@@ -2028,7 +2030,7 @@ public class MainActivity extends Activity {
         head.setPadding(0, 0, dp(PlayerApplication.MAJOR_ICON_SLOT_DP), 0);
 
         root.addView(head);
-        TextView epg = text(kind.equals("live") ? "Pick a category" : "", 15, MUTED, false);
+        TextView epg = text(kind.equals("live") ? "Pick a category" : "◀ Press Left on your remote for the categories", 15, MUTED, false);
         root.addView(epg);
         // Films/Series details panel: the highlighted title's backdrop, rating · year · length · genre, cast, director and plot.
         // Films/Series: posters fill the screen; pressing one opens its details (review, cast, plot) with the play options.
@@ -2038,7 +2040,6 @@ public class MainActivity extends Activity {
         ListView cats = list();
         final boolean posters = !kind.equals("live");
         final AbsListView items = posters ? posterGrid() : list();
-        final Runnable[] openCategories = { null };
         final List<Item> shown = new ArrayList<>();
         final String[] sortKey = { prefs.getString("sort_" + kind, "added") };
         final Runnable[] applySort = new Runnable[1];
@@ -2215,7 +2216,7 @@ public class MainActivity extends Activity {
                     if (focusItems) items.requestFocus();
                 });
                 if (!kind.equals("live")) {
-                    epg.setText(c[1] + " · " + list.size() + " titles");
+                    epg.setText(c[1] + " · " + list.size() + " titles · ◀ Press Left for the categories");
                     gridTitle.setText(c[1].equals("All") ? (kind.equals("film") ? "All movies" : "All series") : c[1]);
                     if (hero != null) hero.show(shown.isEmpty() ? null : shown.get(0));
                 }
@@ -2271,7 +2272,9 @@ public class MainActivity extends Activity {
                     final int startAt = kind.equals("live") ? 0 : categoryMemory.restoreIndex(kind, catRows);
                     cats.setSelection(startAt);
                     showCat.accept(startAt, false);
-                    if (posters) openCategories[0].run(); // Films/Series open on the highlighted category sidebar.
+                    // Films/Series no longer open on the category sidebar: the grid has focus and the
+                    // Category pill (or row-edge Left) opens the drawer when the customer wants it.
+                    if (posters) items.requestFocus();
                     else cats.requestFocus();
                 });
             } catch (Exception ex) { ui.post(() -> epg.setText("Couldn't load " + title + ". Check your login in Settings, or press Refresh on the front screen.")); }
