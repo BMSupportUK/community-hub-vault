@@ -2,10 +2,11 @@
 // Splits the provider's "EPL | Premier League Hub" Live TV category into one category per
 // overseas broadcaster; the rest stay in the original category renamed "... | Other".
 // Mirrors tv-player HubSplit.java — keep in step.
-const GROUPS=[['stan','Stan Sport'],['starhub','Star Hub Premier'],['fubo','Fubo Sports'],['plplus','Premier League+'],['astro','Astro Premier League'],['nowhk','Now HK Sports'],['flowsport','Flowsport'],['monomax','Monomax']];
+const GROUPS=[['stan','Stan Sport'],['starhub','Star Hub Premier'],['fubo','Fubo Sports'],['plplus','Premier League+'],['astro','Astro Premier League'],['nowhk','Now HK Sports'],['flowsport','Flowsport'],['monomax','Monomax'],['coupang','Coupang Play']];
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
 const isHub=name=>norm(name).includes('premier league hub');
 function group(name){const n=norm(name);
+ if(n.includes('coupang'))return 'coupang';
  if(n.startsWith('stan sport'))return 'stan';
  if(n.startsWith('star hub')||n.startsWith('starhub'))return 'starhub';
  if(n.startsWith('fubo'))return 'fubo';

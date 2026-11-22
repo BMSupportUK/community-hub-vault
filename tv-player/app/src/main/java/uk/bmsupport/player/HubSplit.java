@@ -16,7 +16,7 @@ final class HubSplit {
     static final String[][] GROUPS = {
         {"stan", "Stan Sport"}, {"starhub", "Star Hub Premier"}, {"fubo", "Fubo Sports"},
         {"plplus", "Premier League+"}, {"astro", "Astro Premier League"}, {"nowhk", "Now HK Sports"},
-        {"flowsport", "Flowsport"}, {"monomax", "Monomax"},
+        {"flowsport", "Flowsport"}, {"monomax", "Monomax"}, {"coupang", "Coupang Play"},
     };
 
     static boolean isHub(String categoryName) {
@@ -29,6 +29,7 @@ final class HubSplit {
     static String group(String channelName) {
         if (channelName == null) return null;
         String n = channelName.toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", " ").trim();
+        if (n.contains("coupang")) return "coupang";
         if (n.startsWith("stan sport")) return "stan";
         if (n.startsWith("star hub") || n.startsWith("starhub")) return "starhub";
         if (n.startsWith("fubo")) return "fubo";
