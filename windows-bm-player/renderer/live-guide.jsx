@@ -73,7 +73,7 @@ export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,categ
  const handlers=useRef({pick:(c,p)=>live$.current.pick(c,p),focusCh:c=>live$.current.setFocus({channel:c,programme:live$.current.onAt(c.id,Date.now())}),focus:(c,p)=>live$.current.setFocus({channel:c,programme:p}),reminder:(c,p)=>live$.current.onReminder(c,p),catchup:c=>live$.current.onCatchup(c),isSet:(c,p)=>live$.current.reminders.some(r=>r.id===c.id+':'+p.start)}).current;
  return <div className="lg">
   <div className="lg-top">
-   <div className="lg-preview" role="button" title={selected?'Double-click for full screen':undefined} onClick={()=>{if(!selected){toast('Click a channel to preview it');return;}const t=Date.now();if(t-tapAt<500){tapAt=0;onFull(selected);}else tapAt=t;}}>
+   <div className="lg-preview" role="button" title={selected?'Click for full screen':undefined} onClick={()=>{if(!selected){toast('Click a channel to preview it');return;}onFull(selected);}}>
     {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen}/>:<div className="preview-placeholder"><img src="preview_family.jpg" alt="Family on a sofa watching TV, one pointing a remote at the screen"/></div>}
    </div>
    <div className="lg-info">

@@ -1834,15 +1834,8 @@ public class MainActivity extends Activity {
     private View previewPoster;
     private long previewLastTap;
 
-    /** Two presses on the preview (remote OK, or a tap on a phone) open that channel full screen. */
+    /** One press on the preview (remote OK, or a tap on a phone) opens that channel full screen. */
     private void previewDoubleTap() {
-        long now = android.os.SystemClock.uptimeMillis();
-        if (now - previewLastTap > 600) {
-            previewLastTap = now;
-            Toast.makeText(this, "Press OK again for full screen", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        previewLastTap = 0;
         Item cur = previewItem;
         if (cur == null) { Toast.makeText(this, "Highlight a channel first", Toast.LENGTH_SHORT).show(); return; }
         play(cur, defaultVlc()); // full screen carries the playing preview over
