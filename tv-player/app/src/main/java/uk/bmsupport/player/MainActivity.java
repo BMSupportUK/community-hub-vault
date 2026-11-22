@@ -2022,8 +2022,18 @@ public class MainActivity extends Activity {
         if (kind.equals("live") && maxCons >= 2) head.addView(headerPill("🖥 Multi-screen (" + maxCons + ")", v -> chooseMultiScreens(maxCons)));
         // Films/Series: a top Category pill opens the sliding drawer (also from row-edge Left); it no longer opens on entry.
         if (!kind.equals("live")) head.addView(headerPill("▦ Category", v -> { if (openCategories[0] != null) openCategories[0].run(); }));
-        head.addView(headerPill(kind.equals("live") ? "🔍 Search TV" : "🔍 Search", v -> showSearch(kind, "")));
-        if (VoiceEntry.available(Build.MANUFACTURER)) head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
+        if (kind.equals("live")) {
+            head.addView(headerPill("🔍 Search TV", v -> showSearch(kind, "")));
+            if (VoiceEntry.available(Build.MANUFACTURER)) head.addView(headerPill("🎤 Voice search", v -> startVoice(kind)));
+        } else {
+            // Films/Series: one Search pill; it offers typing or voice where voice works.
+            head.addView(headerPill("🔍 Search", v -> {
+                if (!VoiceEntry.available(Build.MANUFACTURER)) { showSearch(kind, ""); return; }
+                new AlertDialog.Builder(this).setTitle("Search")
+                        .setItems(new String[]{"🔍 Type a search", "🎤 Voice search"}, (d, w) -> { if (w == 0) showSearch(kind, ""); else startVoice(kind); })
+                        .setNegativeButton("Cancel", null).show();
+            }));
+        }
         // Films/Series: Sort is an icon pill straight after Voice search (no sort row).
         final Runnable[] openSort = new Runnable[1];
         if (!kind.equals("live")) { Button sp = headerPill("⇅", v -> { if (openSort[0] != null) openSort[0].run(); }); sp.setContentDescription("Sort"); head.addView(sp); }
