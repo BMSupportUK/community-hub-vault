@@ -255,4 +255,4 @@
 
 - [x] Built, signed, uploaded and registered box 6.29 (440), Windows 0.4.121 and universal Mac 0.1.121 with the Favourites resume-position fix; 433 Android and 212 desktop tests pass, public downloads match built hashes. Physical-device hand-off remains unverified (no connected devices).
 
-- [ ] Private DNS home switch built (box, Windows, Mac) — release waits on the user saying "release"
+- [x] Private DNS home switch released (box 6.31, Windows 0.4.123, Mac 0.1.123)
