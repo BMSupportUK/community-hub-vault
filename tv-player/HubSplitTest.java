@@ -9,8 +9,9 @@ public class HubSplitTest {
         check("fubo".equals(HubSplit.group("Fubo Sports | 03 |")), "fubo goes to fubo");
         check("plplus".equals(HubSplit.group("Premier League+ 4")), "premier league+ goes to its own");
         check("astro".equals(HubSplit.group("Astro Premier League 2")), "astro goes to astro");
-        check(HubSplit.group("Monomax 24/7") == null, "monomax goes to other");
-        check(HubSplit.group("Now HK Sports 4K") == null, "now hk goes to other");
+        check("monomax".equals(HubSplit.group("Monomax 24/7")), "monomax gets its own");
+        check("nowhk".equals(HubSplit.group("Now HK Sports 4K")) && "nowhk".equals(HubSplit.group("NowHK Sports 4K")), "now hk gets its own");
+        check("flowsport".equals(HubSplit.group("Flowsport: 24/7")), "flowsport gets its own");
         check(HubSplit.isHub("EPL | Premier League Hub"), "hub category recognised");
         check(!HubSplit.isHub("UK | Sky Sports"), "other categories untouched");
         check(HubSplit.label("EPL | Premier League Hub", "stan").equals("EPL | Premier League Hub | Stan Sport"), "stan label");

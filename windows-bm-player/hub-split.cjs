@@ -2,7 +2,7 @@
 // Splits the provider's "EPL | Premier League Hub" Live TV category into one category per
 // overseas broadcaster; the rest stay in the original category renamed "... | Other".
 // Mirrors tv-player HubSplit.java — keep in step.
-const GROUPS=[['stan','Stan Sport'],['starhub','Star Hub Premier'],['fubo','Fubo Sports'],['plplus','Premier League+'],['astro','Astro Premier League']];
+const GROUPS=[['stan','Stan Sport'],['starhub','Star Hub Premier'],['fubo','Fubo Sports'],['plplus','Premier League+'],['astro','Astro Premier League'],['nowhk','Now HK Sports'],['flowsport','Flowsport'],['monomax','Monomax']];
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
 const isHub=name=>norm(name).includes('premier league hub');
 function group(name){const n=norm(name);
@@ -11,6 +11,9 @@ function group(name){const n=norm(name);
  if(n.startsWith('fubo'))return 'fubo';
  if(n.startsWith('premier league+')||n.startsWith('premier league +'))return 'plplus';
  if(n.startsWith('astro'))return 'astro';
+ if(n.startsWith('now hk')||n.startsWith('nowhk'))return 'nowhk';
+ if(n.startsWith('flowsport'))return 'flowsport';
+ if(n.startsWith('monomax'))return 'monomax';
  return null;}
 function split(cats,items){
  const hubs=new Map(cats.filter(c=>isHub(c.name)).map(c=>[c.id,c.name]));

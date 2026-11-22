@@ -15,7 +15,8 @@ final class HubSplit {
     static final String SEP = "~";
     static final String[][] GROUPS = {
         {"stan", "Stan Sport"}, {"starhub", "Star Hub Premier"}, {"fubo", "Fubo Sports"},
-        {"plplus", "Premier League+"}, {"astro", "Astro Premier League"},
+        {"plplus", "Premier League+"}, {"astro", "Astro Premier League"}, {"nowhk", "Now HK Sports"},
+        {"flowsport", "Flowsport"}, {"monomax", "Monomax"},
     };
 
     static boolean isHub(String categoryName) {
@@ -33,6 +34,9 @@ final class HubSplit {
         if (n.startsWith("fubo")) return "fubo";
         if (n.startsWith("premier league+") || n.startsWith("premier league +")) return "plplus";
         if (n.startsWith("astro")) return "astro";
+        if (n.startsWith("now hk") || n.startsWith("nowhk")) return "nowhk";
+        if (n.startsWith("flowsport")) return "flowsport";
+        if (n.startsWith("monomax")) return "monomax";
         return null;
     }
 
