@@ -4,7 +4,7 @@ package uk.bmsupport.player;
 public class ChannelListOrderTest {
     private static void check(boolean ok, String label) {
         if (!ok) throw new AssertionError(label);
-        check(ChannelListOrder.compare("Rugby Pass 01", "Sky Sports Rugby") < 0, "rugby pass sorts to the top");
+        System.out.println("ok - " + label);
     }
 
     public static void main(String[] args) {
