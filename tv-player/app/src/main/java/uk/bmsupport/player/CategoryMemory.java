@@ -32,12 +32,12 @@ final class CategoryMemory {
         return 0;
     }
 
-    /** Saved category, else the first "Recommended" category, else the top row. */
-    int startIndex(String kind, List<String[]> rows) {
+    /** Saved category, else the first category whose name contains the default word, else the top row. */
+    int startIndex(String kind, List<String[]> rows, String defaultWord) {
         int at = indexOf(rows, saved(kind));
         if (at >= 0) return at;
         for (int i = 0; i < rows.size(); i++) {
-            if (rows.get(i)[1] != null && rows.get(i)[1].toLowerCase().contains("recommend")) return i;
+            if (rows.get(i)[1] != null && rows.get(i)[1].toLowerCase().contains(defaultWord)) return i;
         }
         return 0;
     }
