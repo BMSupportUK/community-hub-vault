@@ -649,6 +649,20 @@ public class MainActivity extends Activity {
             }
             return true;
         }
+        // Films/Series: Left opens the categories whenever nothing sits further left (grid edge, header, details).
+        if ("browse".equals(screen) && openCategories[0] != null && !panelOpen() && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_LEFT) {
+            View f = getCurrentFocus();
+            boolean edge = f == null;
+            if (f instanceof android.widget.GridView) {
+                android.widget.GridView g = (android.widget.GridView) f;
+                int c = Math.max(1, g.getNumColumns()), p = g.getSelectedItemPosition();
+                edge = p < 0 || p % c == 0;
+            } else if (f != null) edge = f.focusSearch(View.FOCUS_LEFT) == null;
+            if (edge) {
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) openCategories[0].run();
+                return true;
+            }
+        }
         if ("sports".equals(screen) && e.getKeyCode() == KeyEvent.KEYCODE_DPAD_RIGHT && sportsList != null && sportsList.hasFocus()) {
             if (e.getAction() == KeyEvent.ACTION_DOWN && sportsChannelList != null) sportsChannelList.requestFocus();
             return true;
@@ -1997,6 +2011,7 @@ public class MainActivity extends Activity {
 
     private String liveCatId = null;
     private final CategoryMemory categoryMemory = new CategoryMemory();
+    private final Runnable[] openCategories = { null };
 
     private void browse(String kind) {
         // Phones: Live TV is the guide screen (preview, View EPG pop-up). TV boxes keep the original
@@ -2011,7 +2026,7 @@ public class MainActivity extends Activity {
         final String[] catLabel = { "" };
         final List<Item> currentList = new ArrayList<>();
         final Runnable[] applyFilter = new Runnable[1];
-        final Runnable[] openCategories = { null };
+        openCategories[0] = null;
         LinearLayout root = column();
 
         LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
