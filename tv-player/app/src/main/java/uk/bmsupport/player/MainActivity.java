@@ -1409,6 +1409,7 @@ public class MainActivity extends Activity {
         LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(-2, -2);
         ilp.leftMargin = (int) (14 * dd);
         top.addView(verPill, ilp);
+        LinearLayout acctRow = row(); acctRow.setGravity(Gravity.CENTER_VERTICAL); // signed-in details, then VPN/DNS pills
         if (BoxVpn.present) {
             // VPN switch: the customer turns it on/off here; switching on picks the lowest-ping server in their own country.
             int col = !BoxVpn.enabled ? 0xFFFF5252 : BoxVpn.on() ? 0xFF69F06E : 0xFFFFC400;
@@ -1424,16 +1425,16 @@ public class MainActivity extends Activity {
             vpnBtn.setContentDescription(!BoxVpn.enabled ? "VPN off, press to switch on" : "VPN " + BoxVpn.homeLabel(state, BoxVpn.on(), BoxVpn.server).toLowerCase() + ", press to switch off");
             LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(-2, -2);
             vlp.leftMargin = (int) (10 * dd);
-            top.addView(vpnBtn, vlp);        } else {
+            acctRow.addView(vpnBtn, vlp);        } else {
             // Not bought yet: the VPN is bought only here in BM Player.
             Button getVpn = headerPill("🔐 Get VPN", v -> buyVpn(this::showHome));
             getVpn.setContentDescription("Get VPN, 2 pounds a month");
             LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(-2, -2);
             vlp.leftMargin = (int) (10 * dd);
-            top.addView(getVpn, vlp);
+            acctRow.addView(getVpn, vlp);
         }
-        {
-            // Private DNS switch: free, on by default; gets round broadband blocks on channel lists and the TV guide.
+        if (!(BoxVpn.present && BoxVpn.on())) {
+            // Private DNS switch (hidden while the VPN is connected: the VPN covers lookups): free, on by default; gets round broadband blocks on channel lists and the TV guide.
             boolean pdnsOn = prefs.getBoolean(PrivateDns.PREF, true);
             boolean viaVpn = BoxVpn.present && BoxVpn.on();
             android.text.SpannableString ds = new android.text.SpannableString("● DNS: " + PrivateDns.homeLabel(pdnsOn, viaVpn));
@@ -1449,7 +1450,7 @@ public class MainActivity extends Activity {
             dnsBtn.setContentDescription(pdnsOn ? "Private DNS on, press to switch off" : "Private DNS off, press to switch on");
             LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(-2, -2);
             dlp.leftMargin = (int) (10 * dd);
-            top.addView(dnsBtn, dlp);
+            acctRow.addView(dnsBtn, dlp);
         }
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (FrameRateMatch.isAndroidTv(this)) {
@@ -1476,7 +1477,9 @@ public class MainActivity extends Activity {
         abg.setColor(0xB3000000); abg.setCornerRadius(dp(12));
         account.setBackground(abg); account.setPadding(dp(12), dp(5), dp(12), dp(5));
         LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        root.addView(account, alp);
+        alp.gravity = Gravity.CENTER_VERTICAL;
+        acctRow.addView(account, 0, alp);
+        root.addView(acctRow);
 
         LinearLayout tiles = row();
         tiles.setPadding(0, dp(20), 0, dp(12));
