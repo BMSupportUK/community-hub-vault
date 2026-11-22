@@ -1954,7 +1954,7 @@ export function mergeSportsListingBlocks(existing: string, incoming: string, inp
 
 /** Guides whose provider posts every event once per channel (Stan Sport). */
 export function guideCombinesChannels(guideTitle: string | null | undefined): boolean {
-  return /\bstan\b/i.test(guideTitle ?? "");
+  return /\bstan\b|^(?:english\s+)?premier league tv channels$/i.test(guideTitle?.trim() ?? "");
 }
 
 /**
@@ -2274,7 +2274,11 @@ export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean
       else cur.push(flat);
     }
     if (cur.length) groups.push(cur);
-    for (const g of groups.length ? groups : [[]]) {
+    // Premier League posts list Sky and Hub Premier/Astro channels as separate
+    // blocks for one fixture; keep them together as a single event. The Team
+    // Channels guide (sdOnly) keeps one entry per team feed.
+    const merged = sdOnly ? groups : [groups.flat()];
+    for (const g of merged.length ? merged : [[]]) {
       out.push(time, title, ...g, "");
     }
   }
