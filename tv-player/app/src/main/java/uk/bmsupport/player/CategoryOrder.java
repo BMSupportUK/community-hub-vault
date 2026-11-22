@@ -35,11 +35,11 @@ final class CategoryOrder {
         });
         return sorted;
     }
-    /** Hub broadcaster categories ("<hubId>~slug") saved before the split take their Hub's place, not the bottom. */
+    /** Hub broadcaster categories ("<hubId>~slug") saved before the split take their Hub's place; brand-new provider categories rank first so they are noticed. */
     static int rankOf(Map<String, Integer> rank, String id) {
         Integer r = rank.get(id);
         if (r == null && id.contains(HubSplit.SEP)) r = rank.get(HubSplit.parentId(id));
-        return r == null ? Integer.MAX_VALUE : r;
+        return r == null ? -1 : r;
     }
     static void save(SharedPreferences prefs, String kind, List<String[]> rows) {
         JSONArray ids = new JSONArray();

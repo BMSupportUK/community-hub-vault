@@ -12,6 +12,7 @@ public class CategoryOrderHubTest {
         assertEquals(0, CategoryOrder.rankOf(rank, "9~stan"));
         assertEquals(0, CategoryOrder.rankOf(rank, "9~coupang"));
         assertEquals(1, CategoryOrder.rankOf(rank, "5"));
-        assertEquals(Integer.MAX_VALUE, CategoryOrder.rankOf(rank, "7"));
+        assertEquals(-1, CategoryOrder.rankOf(rank, "7"));
+        assertEquals(-1, CategoryOrder.rankOf(rank, "6~newhub"));
     }
 }
