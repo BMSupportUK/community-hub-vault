@@ -4,7 +4,7 @@ package uk.bmsupport.player;
 public class ChannelListOrderTest {
     private static void check(boolean ok, String label) {
         if (!ok) throw new AssertionError(label);
-        System.out.println("ok - " + label);
+        check(ChannelListOrder.compare("Rugby Pass 01", "Sky Sports Rugby") < 0, "rugby pass sorts to the top");
     }
 
     public static void main(String[] args) {
@@ -16,6 +16,7 @@ public class ChannelListOrderTest {
         check(ChannelListOrder.compare("FA Player 01", "Womens Football 05") > 0, "fa player sorts below womens football");
         check(ChannelListOrder.compare("FA Player 01", "FA Player 02") == 0, "same family keeps its own order");
         check(ChannelListOrder.compare("Sky Sports Main Event", "Womens Football 01") > 0, "other channels stay below both families");
+        check(ChannelListOrder.compare("Rugby Pass 01", "Sky Sports Rugby") < 0, "rugby pass sorts to the top");
         System.out.println("ChannelListOrderTest: all passed");
     }
 }

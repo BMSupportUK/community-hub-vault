@@ -7,10 +7,11 @@ package uk.bmsupport.player;
 final class ChannelListOrder {
     private ChannelListOrder() {}
 
-    /** Lower ranks list first: Womens Football (0), then FA Player (1), then everything else (2). */
+    /** Lower ranks list first: Rugby Pass and Womens Football (0), then FA Player (1), then everything else (2). */
     static int rank(String name) {
         if (name == null) return 2;
         String n = name.trim().toLowerCase(java.util.Locale.ROOT);
+        if (n.startsWith("rugby pass") || n.startsWith("rugbypass")) return 0;
         if (n.startsWith("womens football") || n.startsWith("women's football")) return 0;
         if (n.startsWith("fa player")) return 1;
         return 2;
