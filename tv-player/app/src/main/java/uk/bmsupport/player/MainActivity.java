@@ -2241,7 +2241,7 @@ public class MainActivity extends Activity {
                 JSONArray a = orderedCategories(kind, new JSONArray(cachedGet(kind, catAction, "")));
                 java.util.Map<String, String> catName = new java.util.HashMap<>();
                 List<String[]> rows = new ArrayList<>();
-                rows.add(new String[]{"*", "All"});
+                if (!kind.equals("series")) rows.add(new String[]{"*", "All"});
                 for (int i = 0; i < a.length(); i++) {
                     JSONObject o = a.getJSONObject(i);
                     String cid = o.optString("category_id"), cn = o.optString("category_name");
@@ -2269,7 +2269,7 @@ public class MainActivity extends Activity {
                     all.clear(); all.addAll(everything);
                     cats.setAdapter(adapter(names));
                     // Back into the section reopens the category you were in, not the top of the list.
-                    final int startAt = kind.equals("live") ? 0 : categoryMemory.restoreIndex(kind, catRows);
+                    final int startAt = kind.equals("live") ? 0 : categoryMemory.startIndex(kind, catRows);
                     cats.setSelection(startAt);
                     showCat.accept(startAt, false);
                     // Films/Series no longer open on the category sidebar: the grid has focus and the

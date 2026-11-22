@@ -32,6 +32,16 @@ final class CategoryMemory {
         return 0;
     }
 
+    /** Saved category, else the first "Recommended" category, else the top row. */
+    int startIndex(String kind, List<String[]> rows) {
+        int at = indexOf(rows, saved(kind));
+        if (at >= 0) return at;
+        for (int i = 0; i < rows.size(); i++) {
+            if (rows.get(i)[1] != null && rows.get(i)[1].toLowerCase().contains("recommend")) return i;
+        }
+        return 0;
+    }
+
     /** Row index of a category id, or -1 when it is not listed. */
     static int indexOf(List<String[]> rows, String categoryId) {
         if (categoryId == null) return -1;
