@@ -2143,12 +2143,7 @@ public class MainActivity extends Activity {
                 return true;
             });
             LinearLayout content = root;
-            if (isPhone()) {
-                content = row(); content.setPadding(0, 0, 0, 0);
-                content.addView(button("☰", v -> { if (openCategories[0] != null) openCategories[0].run(); }), new LinearLayout.LayoutParams(dp(48), ViewGroup.LayoutParams.MATCH_PARENT));
-                content.getChildAt(0).setContentDescription("Categories");
-                content.addView(root, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
-            }
+            // No always-visible category strip: the drawer only slides out from the Category pill (or Left at the row edge).
             setContentView(sideDrawer(content, panel));
             MediaCategoryNavigation.bind((android.widget.GridView) items, () -> { if (openCategories[0] != null) openCategories[0].run(); });
         } else setContentView(root);
