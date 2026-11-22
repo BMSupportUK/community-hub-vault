@@ -230,8 +230,8 @@ function MajorAnnouncements(){
  return <>
   <button className={'major-icon'+(unread?' has-new':'')} aria-label={unread?unread+' new announcements':'Announcements'} onClick={()=>{setItem(null);setOpen(true);}}>📣{unread>0&&<span className="major-count">{unread}</span>}</button>
   {open&&<div className="modal-backdrop" onClick={e=>{if(e.target===e.currentTarget)setOpen(false);}}><div className="modal major-modal">
-   {item?<><h2>{item.title}</h2><p className="major-date">{when(item.created_at)}</p><div className="major-body">{item.body}</div><div className="modal-actions"><button className="primary" autoFocus onClick={()=>setItem(null)}>Back to list</button><button onClick={()=>setOpen(false)}>Close</button></div></>
-   :<><h2>Announcements</h2>{list.length===0?<p>There are no announcements right now.</p>:<ul className="major-list">{list.map((i,n)=><li key={i.id}><button autoFocus={n===0} onClick={()=>view(i)}>{!seen.has(i.id)&&<span className="major-dot"/>}<strong>{i.title}</strong><small>{when(i.created_at)}</small></button></li>)}</ul>}<div className="modal-actions"><button onClick={()=>setOpen(false)}>Close</button></div></>}
+   {item?<><h2>{item.title}</h2><p className="major-date">{when(item.created_at)}</p>{item.image_url&&<img className="major-pic" src={item.image_url} alt=""/>}<div className="major-body">{item.body}</div><div className="modal-actions"><button className="primary" autoFocus onClick={()=>setItem(null)}>Back to list</button><button onClick={()=>setOpen(false)}>Close</button></div></>
+   :<><h2>News & Announcements</h2>{list.length===0?<p>There are no announcements right now.</p>:<ul className="major-grid">{list.map((i,n)=><li key={i.id}><button autoFocus={n===0} onClick={()=>view(i)}><span className="major-thumb">{i.image_url?<img src={i.image_url} alt=""/>:<span>📣</span>}</span><strong>{!seen.has(i.id)&&<span className="major-dot"/>}{i.title}</strong></button></li>)}</ul>}<div className="modal-actions"><button onClick={()=>setOpen(false)}>Close</button></div></>}
   </div></div>}
  </>;
 }

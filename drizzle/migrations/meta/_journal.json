@@ -2766,6 +2766,20 @@
       "when": 1795254543069,
       "tag": "0394_only_admins_grant_admin_role",
       "breakpoints": true
+    },
+    {
+      "idx": 395,
+      "version": "7",
+      "when": 1795361133818,
+      "tag": "0395_major_announcement_pictures",
+      "breakpoints": true
+    },
+    {
+      "idx": 396,
+      "version": "7",
+      "when": 1795361162667,
+      "tag": "0396_announcement_pictures_read",
+      "breakpoints": true
     }
   ]
 }

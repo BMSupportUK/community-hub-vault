@@ -222,22 +222,110 @@ public final class PlayerApplication extends Application implements Application.
         badge.setText(n > 9 ? "9+" : String.valueOf(n));
         badge.setVisibility(n > 0 ? android.view.View.VISIBLE : android.view.View.GONE);
     }
+    private android.app.Dialog majorPage;
+    /** Full-screen "News & Announcements" page: picture cards with the title underneath; a card opens the full text. */
     private void openMajorList() {
         final Activity a = foreground;
         if (a == null) return;
+        if (majorPage != null && majorPage.isShowing()) majorPage.dismiss();
+        float d = a.getResources().getDisplayMetrics().density;
+        android.widget.LinearLayout page = new android.widget.LinearLayout(a);
+        page.setOrientation(android.widget.LinearLayout.VERTICAL);
+        page.setBackgroundColor(0xF20B0F1A);
+        page.setPadding((int) (28 * d), (int) (24 * d), (int) (28 * d), (int) (16 * d));
+        android.widget.LinearLayout head = new android.widget.LinearLayout(a);
+        head.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        android.widget.TextView h = new android.widget.TextView(a);
+        h.setText("News & Announcements"); h.setTextColor(0xFFFFFFFF); h.setTextSize(26); h.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        head.addView(h, new android.widget.LinearLayout.LayoutParams(0, -2, 1));
+        android.widget.Button close = new android.widget.Button(a);
+        close.setText("Close"); close.setFocusable(true);
+        head.addView(close);
+        page.addView(head);
+        android.widget.ScrollView sv = new android.widget.ScrollView(a);
+        android.widget.LinearLayout grid = new android.widget.LinearLayout(a);
+        grid.setOrientation(android.widget.LinearLayout.VERTICAL);
+        sv.addView(grid);
+        page.addView(sv, new android.widget.LinearLayout.LayoutParams(-1, 0, 1));
         if (majorItems.length() == 0) {
-            new AlertDialog.Builder(a).setTitle("Announcements").setMessage("There are no announcements right now.").setPositiveButton("Close", null).show();
-            return;
+            android.widget.TextView t = new android.widget.TextView(a);
+            t.setText("There are no announcements right now."); t.setTextColor(0xFFDDDDDD); t.setTextSize(18);
+            t.setPadding(0, (int) (24 * d), 0, 0);
+            grid.addView(t);
         }
+        int widthDp = (int) (a.getResources().getDisplayMetrics().widthPixels / d);
+        int cols = widthDp >= 900 ? 3 : widthDp >= 560 ? 2 : 1;
         java.util.Set<String> seen = majorSeen();
-        String[] rows = new String[majorItems.length()];
-        for (int i = 0; i < rows.length; i++) {
+        android.widget.LinearLayout row = null;
+        android.view.View first = null;
+        for (int i = 0; i < majorItems.length(); i++) {
+            final int idx = i;
             org.json.JSONObject o = majorItems.optJSONObject(i);
-            rows[i] = (seen.contains(o.optString("id")) ? "" : "● ") + o.optString("title") + "\n" + o.optString("created_at", "").replace('T', ' ').substring(0, Math.min(16, o.optString("created_at", "").length()));
+            if (i % cols == 0) {
+                row = new android.widget.LinearLayout(a);
+                row.setPadding(0, (int) (18 * d), 0, 0);
+                grid.addView(row);
+            }
+            android.widget.LinearLayout card = new android.widget.LinearLayout(a);
+            card.setOrientation(android.widget.LinearLayout.VERTICAL);
+            card.setPadding((int) (4 * d), (int) (4 * d), (int) (4 * d), (int) (4 * d));
+            android.graphics.drawable.GradientDrawable fb = new android.graphics.drawable.GradientDrawable();
+            fb.setCornerRadius(10 * d); fb.setStroke((int) (3 * d), 0xFFE11D48); fb.setColor(0x22FFFFFF);
+            android.graphics.drawable.StateListDrawable sl = new android.graphics.drawable.StateListDrawable();
+            sl.addState(new int[]{android.R.attr.state_focused}, fb); sl.addState(new int[]{}, new android.graphics.drawable.ColorDrawable(0));
+            card.setBackground(sl);
+            card.setFocusable(true); card.setClickable(true);
+            card.setOnClickListener(v -> openMajor(idx));
+            final android.widget.ImageView img = new android.widget.ImageView(a);
+            img.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
+            img.setBackgroundColor(0xFF16213A);
+            android.widget.FrameLayout pic = new android.widget.FrameLayout(a) {
+                @Override protected void onMeasure(int w, int hh) { int pw = MeasureSpec.getSize(w); super.onMeasure(w, MeasureSpec.makeMeasureSpec(pw * 9 / 16, MeasureSpec.EXACTLY)); }
+            };
+            pic.addView(img, new android.widget.FrameLayout.LayoutParams(-1, -1));
+            String url = o.optString("image_url", "");
+            if (o.isNull("image_url") || url.isEmpty()) {
+                android.widget.TextView ph = new android.widget.TextView(a);
+                ph.setText("📣"); ph.setTextSize(40); ph.setGravity(android.view.Gravity.CENTER);
+                pic.addView(ph, new android.widget.FrameLayout.LayoutParams(-1, -1));
+            } else loadMajorPicture(url, img);
+            card.addView(pic, new android.widget.LinearLayout.LayoutParams(-1, -2));
+            android.widget.TextView t = new android.widget.TextView(a);
+            t.setText((seen.contains(o.optString("id")) ? "" : "● ") + o.optString("title"));
+            t.setTextColor(0xFFFFFFFF); t.setTextSize(19); t.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            t.setGravity(android.view.Gravity.CENTER); t.setSingleLine(true); t.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            t.setPadding(0, (int) (8 * d), 0, (int) (4 * d));
+            card.addView(t);
+            android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(0, -2, 1);
+            lp.setMargins((int) (8 * d), 0, (int) (8 * d), 0);
+            row.addView(card, lp);
+            if (first == null) first = card;
         }
-        new AlertDialog.Builder(a).setTitle("Announcements")
-                .setItems(rows, (d, w) -> openMajor(w))
-                .setNegativeButton("Close", null).show();
+        if (row != null) for (int k = majorItems.length() % cols; k > 0 && k < cols; k++) row.addView(new android.view.View(a), new android.widget.LinearLayout.LayoutParams(0, 1, 1));
+        android.app.Dialog dlg = new android.app.Dialog(a, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        dlg.setContentView(page);
+        close.setOnClickListener(v -> dlg.dismiss());
+        majorPage = dlg;
+        dlg.show();
+        if (first != null) first.requestFocus();
+    }
+    private final java.util.Map<String, android.graphics.Bitmap> majorPics = new java.util.HashMap<>();
+    private void loadMajorPicture(String url, android.widget.ImageView into) {
+        String key = url.contains("?") ? url.substring(0, url.indexOf('?')) : url;
+        android.graphics.Bitmap have = majorPics.get(key);
+        if (have != null) { into.setImageBitmap(have); return; }
+        if (!url.startsWith("https://")) return;
+        annIo.execute(() -> {
+            try {
+                java.net.HttpURLConnection c = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+                c.setConnectTimeout(8000); c.setReadTimeout(10000);
+                android.graphics.BitmapFactory.Options op = new android.graphics.BitmapFactory.Options();
+                op.inSampleSize = 2;
+                final android.graphics.Bitmap bm;
+                try (java.io.InputStream in = c.getInputStream()) { bm = android.graphics.BitmapFactory.decodeStream(in, null, op); }
+                if (bm != null) ui.post(() -> { majorPics.put(key, bm); into.setImageBitmap(bm); });
+            } catch (Throwable ignored) {}
+        });
     }
     private void openMajor(int i) {
         final Activity a = foreground;
@@ -251,10 +339,21 @@ public final class PlayerApplication extends Application implements Application.
         float d = a.getResources().getDisplayMetrics().density;
         t.setPadding((int) (24 * d), (int) (12 * d), (int) (24 * d), (int) (12 * d));
         t.setTextSize(17); t.setText(o.optString("body")); t.setFocusable(true);
-        sv.addView(t);
+        android.widget.LinearLayout col = new android.widget.LinearLayout(a);
+        col.setOrientation(android.widget.LinearLayout.VERTICAL);
+        String url = o.optString("image_url", "");
+        if (!o.isNull("image_url") && !url.isEmpty()) {
+            android.widget.ImageView img = new android.widget.ImageView(a);
+            img.setAdjustViewBounds(true);
+            img.setPadding((int) (24 * d), (int) (8 * d), (int) (24 * d), 0);
+            loadMajorPicture(url, img);
+            col.addView(img, new android.widget.LinearLayout.LayoutParams(-1, -2));
+        }
+        col.addView(t);
+        sv.addView(col);
         new AlertDialog.Builder(a).setTitle(o.optString("title")).setView(sv)
-                .setPositiveButton("Back to list", (dd, w) -> openMajorList())
-                .setNegativeButton("Close", null).show();
+                .setPositiveButton("Close", (dd, w) -> { if (majorPage != null && majorPage.isShowing()) openMajorList(); })
+                .show();
     }
     private void showAnnouncement() {
         Activity a = foreground;

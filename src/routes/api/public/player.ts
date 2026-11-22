@@ -166,7 +166,7 @@ async function currentAnnouncement(admin: { from: (t: "player_announcements") =>
   return announcementCache.value;
 }
 let themeCache: { at: number; items: { id: string; name: string; grp: string; image_path: string; accent: string }[] } | null = null;
-let majorCache: { at: number; items: { id: string; title: string; body: string; created_at: string }[] } | null = null;
+let majorCache: { at: number; items: { id: string; title: string; body: string; created_at: string; image_url: string | null }[] } | null = null;
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: CORS });
 
 export const Route = createFileRoute("/api/public/player")({
@@ -346,9 +346,18 @@ export const Route = createFileRoute("/api/public/player")({
           if (!ratingVoter(device)) return json({ items: [] });
           const now = Date.now();
           if (!majorCache || now - majorCache.at > 30_000) {
-            const { data } = await supabaseAdmin.from("player_major_announcements").select("id, title, body, created_at")
+            const { data } = await supabaseAdmin.from("player_major_announcements").select("id, title, body, created_at, image_path")
               .eq("active", true).order("created_at", { ascending: false }).limit(30);
-            majorCache = { at: now, items: data ?? [] };
+            // Pictures live in a private bucket; apps get 12-hour signed links refreshed with the cache.
+            const items = await Promise.all((data ?? []).map(async ({ image_path, ...r }) => {
+              let image_url: string | null = null;
+              if (image_path) {
+                const { data: signed } = await supabaseAdmin.storage.from("player-announcements").createSignedUrl(image_path, 43_200);
+                image_url = signed?.signedUrl ?? null;
+              }
+              return { ...r, image_url };
+            }));
+            majorCache = { at: now, items };
           }
           return json({ items: majorCache.items });
         }

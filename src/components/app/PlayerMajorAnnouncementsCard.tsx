@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-type Row = { id: string; title: string; body: string; active: boolean; created_at: string };
+type Row = { id: string; title: string; body: string; active: boolean; created_at: string; image_path: string | null; image_url?: string | null };
 const MAX = 4000;
 
 /** Longer announcements opened from the top-right icon in every BM Player; separate from the bottom bar. */
@@ -15,12 +15,18 @@ export function PlayerMajorAnnouncementsCard({ onBack }: { onBack: () => void })
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const load = async () => {
-    const { data, error } = await supabase.from("player_major_announcements").select("id, title, body, active, created_at")
+    const { data, error } = await supabase.from("player_major_announcements").select("id, title, body, active, created_at, image_path")
       .order("created_at", { ascending: false }).limit(50);
     if (error) toast.error("Couldn't load announcements.");
-    setRows(data ?? []);
+    const withPics = await Promise.all((data ?? []).map(async (r) => {
+      if (!r.image_path || !r.active) return r;
+      const { data: s } = await supabase.storage.from("player-announcements").createSignedUrl(r.image_path, 3600);
+      return { ...r, image_url: s?.signedUrl ?? null };
+    }));
+    setRows(withPics);
   };
   useEffect(() => { void load(); }, []);
 
@@ -28,11 +34,18 @@ export function PlayerMajorAnnouncementsCard({ onBack }: { onBack: () => void })
     if (!title.trim() || !body.trim()) return;
     setBusy(true);
     const { data: auth } = await supabase.auth.getUser();
+    let image_path: string | null = null;
+    if (file) {
+      const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+      image_path = `${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("player-announcements").upload(image_path, file, { contentType: file.type });
+      if (up.error) { setBusy(false); toast.error("Couldn't upload the picture (JPG, PNG or WebP up to 5 MB)."); return; }
+    }
     const { error } = await supabase.from("player_major_announcements")
-      .insert({ title: title.trim(), body: body.trim(), created_by: auth.user?.id });
+      .insert({ title: title.trim(), body: body.trim(), created_by: auth.user?.id, image_path });
     setBusy(false);
     if (error) { toast.error("Couldn't post the announcement."); return; }
-    setTitle(""); setBody(""); toast.success("Posted to every BM Player's announcement icon."); void load();
+    setTitle(""); setBody(""); setFile(null); toast.success("Posted to every BM Player's announcement icon."); void load();
   };
   const remove = async (id: string) => {
     setBusy(true);
@@ -55,6 +68,12 @@ export function PlayerMajorAnnouncementsCard({ onBack }: { onBack: () => void })
         </p>
         <Input value={title} maxLength={120} placeholder="Title" onChange={(e) => setTitle(e.target.value)} />
         <Textarea value={body} maxLength={MAX} rows={7} placeholder="Full announcement" onChange={(e) => setBody(e.target.value)} />
+        <label className="block space-y-1 text-sm">
+          <span className="font-medium">Picture (optional)</span>
+          <span className="block text-xs text-muted-foreground">With a picture, the app shows it as a card with the title underneath; the full text opens when the card is pressed. A wide 16:9 picture looks best.</span>
+          <Input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        </label>
+        {file && <img src={URL.createObjectURL(file)} alt="Chosen announcement picture" className="aspect-video w-60 rounded-lg object-cover" />}
         <div className="flex items-center justify-between gap-3">
           <span className="text-xs text-muted-foreground">{body.length}/{MAX}</span>
           <Button onClick={post} disabled={busy || !title.trim() || !body.trim()}>
@@ -72,6 +91,7 @@ export function PlayerMajorAnnouncementsCard({ onBack }: { onBack: () => void })
             {rows.filter((r) => r.active).map((r) => (
               <li key={r.id} className="rounded-xl border border-primary/40 bg-primary/10 p-3">
                 <div className="flex items-start gap-3">
+                  {r.image_url && <img src={r.image_url} alt={r.title} className="aspect-video w-32 shrink-0 rounded-md object-cover" />}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold">{r.title}</p>
                     <p className="text-sm whitespace-pre-wrap">{r.body}</p>

@@ -1,0 +1,2 @@
+CREATE POLICY "Admin and management read announcement pictures" ON storage.objects FOR SELECT TO authenticated
+  USING (bucket_id = 'player-announcements' AND (public.has_role(auth.uid(), 'admin') OR public.has_role(auth.uid(), 'management')));
