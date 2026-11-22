@@ -6,6 +6,9 @@ final class LiveRideThrough {
     static final int MAX_FREEZE_REOPENS = 3;
     private long lastPics = -1, lastAudio = -1, stuckSince = -1, playingSince = -1;
     int freezeReopens;
+    /** Still-picture wait; Coupang Play waits 30s because its event feeds hold still pictures. */
+    long frozenMs = FROZEN_MS;
+    void channel(String name) { frozenMs = StreamRecovery.plainLive(name) ? 30000 : FROZEN_MS; }
 
     /** Feed one stats sample; true once pictures stop for 4s while audio keeps decoding. */
     boolean frozen(long pictures, long audio, long now) {
@@ -14,7 +17,7 @@ final class LiveRideThrough {
         lastPics = pictures; lastAudio = audio;
         if (picsStill && audioMoving) { if (stuckSince < 0) stuckSince = now; }
         else if (!picsStill) stuckSince = -1;
-        return stuckSince >= 0 && now - stuckSince >= FROZEN_MS;
+        return stuckSince >= 0 && now - stuckSince >= frozenMs;
     }
 
     /** True if another quiet same-engine reopen is allowed for a frozen picture. */

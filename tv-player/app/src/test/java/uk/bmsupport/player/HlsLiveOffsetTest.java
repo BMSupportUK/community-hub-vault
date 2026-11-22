@@ -14,7 +14,7 @@ public class HlsLiveOffsetTest {
         assertFalse(StreamRecovery.drifted(45000, 30000, "Sky Sports"));
         assertTrue(StreamRecovery.drifted(61000, 30000, "Sky Sports"));
         assertFalse(StreamRecovery.drifted(85000, 30000, "Coupang Play 3"));
-        assertTrue(StreamRecovery.drifted(91000, 30000, "Coupang Play 3"));
+        assertTrue(StreamRecovery.drifted(91000, 30000, "DAZN 1"));
     }
     @Test public void oneStallNoLongerFlipsFormat() {
         assertEquals(3, StreamRecovery.formatSwapStalls("Coupang Play 3"));

@@ -86,6 +86,7 @@ public class BackupPlayerActivity extends Activity {
         if (stalled && !wasStalled) link.stalled(nowMs);
         wasStalled = stalled;
         updateLink(nowMs);
+        ride.channel(getIntent().getStringExtra("recovery_name") != null ? getIntent().getStringExtra("recovery_name") : getIntent().getStringExtra("content_name"));
         String name = getIntent().getStringExtra("content_name");
         feedNote.setText(retryQueued || reconnect.active()
                 ? "Reconnecting" + (name == null ? "" : " to " + name) + "…\n" + BufferBlame.label(BufferBlame.current(this, "network_drop"))

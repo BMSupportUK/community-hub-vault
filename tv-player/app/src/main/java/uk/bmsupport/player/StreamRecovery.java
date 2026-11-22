@@ -58,6 +58,11 @@ final class StreamRecovery {
     static boolean cushioned(String name) { return isDazn(name) || isCoupang(name) || isHeavy(name); }
     /** Diagnostic tag for the admin buffering report. */
     static String providerTag(String name) { return isDazn(name) ? "dazn" : isCoupang(name) ? "coupang" : isHeavy(name) ? "high_bitrate" : null; }
+    /** Coupang Play plays "plain" like other IPTV apps: no drift jumps, no speed easing, long freeze wait. */
+    static boolean plainLive(String name) { return isCoupang(name); }
+    static final int PLAIN_FREEZE_TICKS = 15;
+    static boolean frozen(int frozenTicks, String name) { return frozenTicks >= (plainLive(name) ? PLAIN_FREEZE_TICKS : FREEZE_TICKS); }
+    static float[] hlsLiveSpeeds(String url, String name) { return plainLive(name) ? null : hlsLiveSpeeds(url); }
     static long liveTargetMs(String name) { return cushioned(name) ? 30000 : LIVE_TARGET_MS; }
     static long stallReconnectMs(String name) { return STALL_RECONNECT_MS; }
     /**
@@ -71,6 +76,7 @@ final class StreamRecovery {
      * from the edge, so a normal provider offset never triggers a buffer-flushing jump.
      */
     static boolean drifted(long offset, long defaultOffset, String name) {
+        if (plainLive(name)) return false;
         return offset > Math.max(0, defaultOffset) + (cushioned(name) ? 60000 : LIVE_DRIFT_MS);
     }
     /**

@@ -819,7 +819,7 @@ public class PlayerActivity extends Activity {
             // The short black/still gap between programme and adverts is not a freeze.
             if (playing && frames >= 0 && frames == afLastFrames && !advertGrace()) afTicks++; else afTicks = 0;
             afLastFrames = frames;
-            if (StreamRecovery.frozen(afTicks)) {
+            if (StreamRecovery.frozen(afTicks, recoveryName())) {
                 afTicks = 0; afLastFrames = -1;
                 reportBuffer(StreamRecovery.FREEZE_TICKS * 1000L, true, true, null);
                 if ("live".equals(kind())) { recoverFrozenLive(); return; } else reconnect();
@@ -972,7 +972,7 @@ public class PlayerActivity extends Activity {
         // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
         if ("live".equals(kind()) && StreamRecovery.overrideLiveOffset(liveUrls[urlAt])) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
                 .setTargetOffsetMs(StreamRecovery.liveTargetMs(recoveryName())).setMinOffsetMs(StreamRecovery.liveTargetMs(recoveryName()) / 2).build()).build();
-        float[] sp = "live".equals(kind()) ? StreamRecovery.hlsLiveSpeeds(liveUrls[urlAt]) : null;
+        float[] sp = "live".equals(kind()) ? StreamRecovery.hlsLiveSpeeds(liveUrls[urlAt], recoveryName()) : null;
         // HLS keeps the provider's hold-back (no offset) but may slow a touch rather than stall when segments arrive late.
         if (sp != null) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
                 .setMinPlaybackSpeed(sp[0]).setMaxPlaybackSpeed(sp[1]).build()).build();
