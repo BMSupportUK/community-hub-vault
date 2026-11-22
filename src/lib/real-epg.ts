@@ -203,6 +203,10 @@ export function needsSportsEvents(channel: string, official: boolean, eventOnly:
  * Sports Pass / event-only channel listings from the website Sports Guide: one slot per event on
  * that channel, "No Event Scheduled" filling the gaps across [from, to).
  */
+function ukClock(ms: number): string {
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(ms));
+}
+
 export function eventListings(
   channel: string,
   events: { title: string; start: number; end?: number; channels: string[]; competition?: string }[],
@@ -219,7 +223,7 @@ export function eventListings(
   for (const e of mine) {
     const start = Math.max(e.start, at);
     if (start >= e.stop) continue;
-    if (start > at) out.push({ start: at, stop: start, title: NO_EVENT, desc: "" });
+    if (start > at) out.push({ start: at, stop: start, title: NO_EVENT, desc: `Next: ${e.title} at ${ukClock(e.start)}` });
     out.push({ ...e, start });
     at = e.stop;
   }

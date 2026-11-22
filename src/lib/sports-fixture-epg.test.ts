@@ -28,3 +28,15 @@ test('Center Ice identity ignores changing programme text after the stable feed 
   expect(sportsFixtureEpg('NHL 01 | Set 2 (Events Only) | Old replay title',events,now).source).toBe('sports');
   expect(sportsFixtureEpg('NBA 01 | (Events Only)',events,now).source).toBe('none');
 });
+import { sportsFixtureEpg as epg2 } from "./sports-fixture-epg";
+test("NFL Sunday Ticket channel with no game gets a No Event Scheduled row, not a blank guide", () => {
+  const r: any = epg2("NFL Sunday Ticket 01 |", [], Date.UTC(2026, 10, 22, 12));
+  expect(r.source).toBe("sports");
+  expect(r.epg_listings.length).toBe(1);
+});
+test("gap before a later game names that game and its UK start time", () => {
+  const now = Date.UTC(2026, 10, 22, 12);
+  const r: any = epg2("NFL Sunday Ticket 06 |", [{ title: "Cardinals @ Chiefs", start: Date.UTC(2026, 10, 22, 18), channels: ["NFL Sunday Ticket 06 |"] }], now);
+  const first = r.epg_listings[0];
+  expect(Buffer.from(first.description, "base64").toString()).toBe("Next: Cardinals @ Chiefs at 18:00");
+});
