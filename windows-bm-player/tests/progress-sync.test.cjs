@@ -17,3 +17,13 @@ test('last watched wins even when this device clock is an hour slow', () => {
   expect(p.mergeRemote(progress, 'h', [{ key: 'film:1', position_ms: 80000, duration_ms: 100000, updated_at: now - 60000 }], slow)).toBe(1);
   expect(progress['h:film:1'].position).toBe(80);
 });
+
+ test('Favourites waits for the other device position before opening Resume', async () => {
+ const progress={'h:film:1':{position:10,duration:100,at:1000}};
+ let finish;const waiting=new Promise(resolve=>{finish=resolve;});let opened=false;
+ const opening=p.beforeOpen(async()=>{await waiting;p.mergeRemote(progress,'h',[{key:'film:1',position_ms:60000,duration_ms:100000,updated_at:2000}]);},()=>{opened=true;return progress['h:film:1'].position;});
+ await Promise.resolve();expect(opened).toBe(false);finish();expect(await opening).toBe(60);
+ });
+ test('Favourites still offers the local resume when offline', async()=>{
+ expect(await p.beforeOpen(async()=>{throw new Error('offline');},()=>42)).toBe(42);
+ });

@@ -33,3 +33,5 @@
 - Renderer-only rules (multi-screen channel picker, guide row rendering, guide speed) live in `windows-bm-player/renderer/AGENTS.md`.
 - Live guide screen, loading pill and saved-list tab rules also live in `windows-bm-player/renderer/AGENTS.md`.
 - Desktop parity with box 6.10–6.11: catch up Fast forward/Back 1 min stack minutes in the renderer and send one `catchupSkip` 1.5s after the last press; channel-link.cjs mirrors Android ChannelLink (shared ping bands, 2-min window, 45s grace on open/VPN change) shown as the in-pane pill; vpn.cjs keeps website server groups then lowest computer-measured VPN ping, sends pings with best/on, and never passes server IPs to the renderer; home Get VPN pill shows a scan-to-pay QR from `vpnPayLink`.
+
+- Saved lists and title choices await the gated state refreshProgress request before showing Resume; progress-sync.beforeOpen retains local progress offline, shared with Mac.

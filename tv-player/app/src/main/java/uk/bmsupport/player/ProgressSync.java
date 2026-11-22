@@ -94,6 +94,15 @@ final class ProgressSync {
 
     /** Fetch the account's positions and keep the newer of each; first sync uploads this device's own. */
     static void pull(Context ctx, boolean force, Runnable changed) {
+        pull(ctx, force, changed, null);
+    }
+
+    /** Explicit opening waits for the newest position; offline keeps the local resume. */
+    static void beforeOpen(Context ctx, Runnable ready) {
+        pull(ctx, true, null, ready);
+    }
+
+    private static void pull(Context ctx, boolean force, Runnable changed, Runnable ready) {
         final Context c = ctx.getApplicationContext();
         long now = System.currentTimeMillis();
         if (!force && now - lastPull < 30000) return;
@@ -101,9 +110,9 @@ final class ProgressSync {
         IO.execute(() -> {
             SharedPreferences p = prefs(c);
             String token = p.getString("token", ""), login = SecureLogin.field(p, "user");
-            if (token.isEmpty() || login.isEmpty()) return;
             String pre = prefix(p);
             try {
+                if (token.isEmpty() || login.isEmpty()) return;
                 if (!p.getBoolean("psync_seeded:" + pre, false)) {
                     // First sync on this device: queue everything it has already watched.
                     Set<String> dirty = new HashSet<>(p.getStringSet("psync_dirty", new HashSet<>()));
@@ -138,7 +147,10 @@ final class ProgressSync {
                 }
                 push(c, true);
                 if (any && changed != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(changed);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            } finally {
+                if (ready != null) new android.os.Handler(android.os.Looper.getMainLooper()).post(ready);
+            }
         });
     }
 }

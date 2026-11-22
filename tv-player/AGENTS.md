@@ -34,3 +34,5 @@
 - PlayerActivity (Media3) live/catch-up shows the same ChannelLink "Channel connection" pill and Live connections snapshot as the libVLC engine (ping every 15s, buffering = stall, reopen after first play = reconnect), shown with the controls or when Poor while buffering.
 - Lost sound on live: picture advancing but no new played audio for 5s (LiveReconnect.soundLost on Android libVLC playedAbuffers / Media3 audio decoder counters; stream-recovery.cjs soundLost on desktop) reopens the channel as audio_drop, max 3 per channel; channels with no audio track are never reopened.
 - Live TV splits the provider's Premier League Hub category into per-broadcaster categories (Android HubSplit.java inside cachedGet, desktop hub-split.cjs in catalogue); split ids are "<providerId>~<slug>" and map back to the provider id for per-category fetches.
+
+- Saved-list film/episode openings await ProgressSync.beforeOpen before reading resume positions; its completion runs even offline to preserve local playback.

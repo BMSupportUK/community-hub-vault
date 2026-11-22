@@ -24,4 +24,9 @@ function mergeRemote(progress, prefix, items, skew = 0) {
   }
   return changed;
 }
-module.exports = { portable, toRemote, mergeRemote };
+/** Wait before showing Resume, retaining local progress if the account is offline. */
+async function beforeOpen(refresh, open) {
+  try { await refresh(); } catch { /* Keep local progress offline. */ }
+  return open();
+}
+module.exports = { portable, toRemote, mergeRemote, beforeOpen };

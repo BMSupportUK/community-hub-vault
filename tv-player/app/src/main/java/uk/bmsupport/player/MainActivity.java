@@ -3386,6 +3386,7 @@ public class MainActivity extends Activity {
     }
 
     private void showSaved(String key, String title) {
+        if (!key.equals(screen)) ProgressSync.pull(this, true, () -> { if (key.equals(screen)) showSaved(key, title); });
         if ("fav".equals(key) && !"fav".equals(screen)) syncFavourites(() -> { if ("fav".equals(screen)) showSaved(key, title); });
         screen = key; back = this::showHome;
         LinearLayout root = column();
@@ -3457,7 +3458,12 @@ public class MainActivity extends Activity {
         });
         lv.setOnItemClickListener((p, v, pos, id) -> {
             Item it = shown.get(pos);
-            if (it.kind.equals("episode")) play(it, defaultVlc()); else open(it);
+            Runnable launch = () -> {
+                if (!key.equals(screen)) return;
+                if (it.kind.equals("episode")) play(it, defaultVlc()); else open(it);
+            };
+            if (WatchProgress.eligible(it.kind) || "series".equals(it.kind)) ProgressSync.beforeOpen(this, launch);
+            else launch.run();
         });
         root.addView(lv, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);

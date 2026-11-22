@@ -249,3 +249,6 @@
 - [x] Remove outside video players (exposed the stream address)
 - [x] Release box 5.77
 - [x] Remove old VLC app hand-off; release box 5.78
+
+- [x] Refresh cross-device watched positions before opening titles from Favourites/Recently watched on Android, Fire TV, phone and shared Windows/Mac code.
+- [ ] Verify the Favourites hand-off on physical players after new app releases; no physical players are connected and release was not requested.
