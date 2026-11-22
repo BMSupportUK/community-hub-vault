@@ -4908,6 +4908,8 @@ public class MainActivity extends Activity {
             shownCh.clear(); requested.clear(); gen[0]++;
             java.util.Set<String> allowed = new java.util.HashSet<>(); for (String[] c : catRows) allowed.add(c[0]);
             for (Item it : liveChannels) if (allowed.contains(it.category) && (cat[0].equals("*") || cat[0].equals(it.category))) shownCh.add(it);
+            // Stable sort: Womens Football rows sit above FA Player ones; everything else keeps provider order.
+            java.util.Collections.sort(shownCh, (a, b) -> ChannelListOrder.compare(a.name, b.name));
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
             if (boxLive && boxCatPill != null) boxCatPill.setText("Category: " + cat[1]);
             selectedCategory.setText("Category: " + cat[1]);
@@ -6224,11 +6226,11 @@ public class MainActivity extends Activity {
     static void sortItems(List<Item> l, String key) {
         java.util.Comparator<Item> c;
         switch (key) {
-            case "added": c = (a, b) -> Long.compare(b.added, a.added); break;
+            case "added": c = (a, b) -> { int r = ChannelListOrder.compare(a.name, b.name); return r != 0 ? r : Long.compare(b.added, a.added); }; break;
             case "az": c = (a, b) -> a.name.compareToIgnoreCase(b.name); break;
             case "za": c = (a, b) -> b.name.compareToIgnoreCase(a.name); break;
             case "rating": c = (a, b) -> Double.compare(b.rating, a.rating); break;
-            default: c = (a, b) -> Integer.compare(a.pos, b.pos);
+            default: c = (a, b) -> { int r = ChannelListOrder.compare(a.name, b.name); return r != 0 ? r : Integer.compare(a.pos, b.pos); };
         }
         java.util.Collections.sort(l, c);
     }
