@@ -1450,7 +1450,7 @@ public class MainActivity extends Activity {
             dnsBtn.setContentDescription(pdnsOn ? "Private DNS on, press to switch off" : "Private DNS off, press to switch on");
             LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(-2, -2);
             dlp.leftMargin = (int) (10 * dd);
-            acctRow.addView(dnsBtn, dlp);
+            top.addView(dnsBtn, dlp);
         }
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (FrameRateMatch.isAndroidTv(this)) {
