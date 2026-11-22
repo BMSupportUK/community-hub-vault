@@ -681,7 +681,7 @@ public class PlayerActivity extends Activity {
     }
     /** UHD/4K live channels play in the box's own engine first (as other IPTV apps do); the backup engine stays their fallback. */
     static boolean backupFirst(String kind, boolean catchup, boolean primaryFallback, String name) {
-        if ("live".equals(kind) && !catchup && UhdChannel.is(name)) return false;
+        if ("live".equals(kind) && !catchup && UhdChannel.ownEngine(name)) return false;
         return backupFirst(kind, catchup, primaryFallback);
     }
 
