@@ -252,3 +252,5 @@
 
 - [x] Refresh cross-device watched positions before opening titles from Favourites/Recently watched on Android, Fire TV, phone and shared Windows/Mac code.
 - [ ] Verify the Favourites hand-off on physical players after new app releases; no physical players are connected and release was not requested.
+
+- [x] Built, signed, uploaded and registered box 6.29 (440), Windows 0.4.121 and universal Mac 0.1.121 with the Favourites resume-position fix; 433 Android and 212 desktop tests pass, public downloads match built hashes. Physical-device hand-off remains unverified (no connected devices).
