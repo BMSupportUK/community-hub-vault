@@ -1,0 +1,11 @@
+const assert=require('node:assert');const {group,split}=require('../hub-split.cjs');
+assert.equal(group('Stan Sport 34  (EPL ONLY)'),'stan');
+assert.equal(group('Star Hub Premier 9'),'starhub');
+assert.equal(group('Fubo Sports | 03 |'),'fubo');
+assert.equal(group('Premier League+ 4'),'plplus');
+assert.equal(group('Astro Premier League 2'),'astro');
+assert.equal(group('Monomax 24/7'),null);
+const r=split([{id:'9',name:'UK | Sky'},{id:'77',name:'EPL | Premier League Hub'}],[{id:1,name:'Stan Sport 1 (EPL ONLY)',category:'77'},{id:2,name:'Monomax 24/7',category:'77'},{id:3,name:'Sky Sports Main Event',category:'9'}]);
+assert.deepEqual(r.categories.map(c=>c.name),['UK | Sky','EPL | Premier League Hub | Stan Sport','EPL | Premier League Hub | Star Hub Premier','EPL | Premier League Hub | Fubo Sports','EPL | Premier League Hub | Premier League+','EPL | Premier League Hub | Astro Premier League','EPL | Premier League Hub | Other']);
+assert.deepEqual(r.items.map(i=>i.category),['77~stan','77','9']);
+console.log('hub-split: all passed');

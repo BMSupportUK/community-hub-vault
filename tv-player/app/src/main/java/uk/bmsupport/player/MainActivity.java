@@ -3892,6 +3892,25 @@ public class MainActivity extends Activity {
 
     /** Lists come from the cache until the user (or Automation) refreshes them. */
     private String cachedGet(String kind, String action, String extra) throws Exception {
+        if (!"live".equals(kind)) return rawCachedGet(kind, action, extra);
+        if ("get_live_categories".equals(action) && extra.isEmpty()) return HubSplit.categories(rawCachedGet(kind, action, extra));
+        if ("get_live_streams".equals(action)) {
+            String split = null;
+            if (extra.startsWith("&category_id=")) {
+                String id = java.net.URLDecoder.decode(extra.substring(13), "UTF-8");
+                if (id.contains(HubSplit.SEP)) { split = id; extra = "&category_id=" + URLEncoder.encode(HubSplit.parentId(id), "UTF-8"); }
+            }
+            java.util.Set<String> hubs = HubSplit.hubIds(rawCachedGet(kind, "get_live_categories", ""));
+            String body = HubSplit.streams(rawCachedGet(kind, action, extra), hubs);
+            if (split == null) return body;
+            JSONArray in = new JSONArray(body), out = new JSONArray();
+            for (int i = 0; i < in.length(); i++) { JSONObject o = in.optJSONObject(i); if (o != null && split.equals(o.optString("category_id"))) out.put(o); }
+            return out.toString();
+        }
+        return rawCachedGet(kind, action, extra);
+    }
+
+    private String rawCachedGet(String kind, String action, String extra) throws Exception {
         java.io.File f = cacheFile(kind, action + extra);
         if (f.exists() && f.length() > 0) {
             try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {

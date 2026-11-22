@@ -120,7 +120,7 @@ async function catalogue(kind){
  const rows=await provider(kind==='series'?'get_series':'get_'+prefix+'_streams');
  const cats=(Array.isArray(categories)?categories:[]).map(c=>({id:String(c.category_id),name:c.category_name}));
  const items=(Array.isArray(rows)?rows:[]).map(r=>core.itemFromProvider(kind,r)).map(i=>({...i,categoryName:cats.find(c=>c.id===i.category)?.name||''}));
- const result={categories:cats,items};cache.set(kind,result);store.refreshed={...(store.refreshed||{}),[kind]:Date.now()};save();send({type:'state',state:publicState()});return result;
+ const result=kind==='live'?require('../hub-split.cjs').split(cats,items):{categories:cats,items};cache.set(kind,result);store.refreshed={...(store.refreshed||{}),[kind]:Date.now()};save();send({type:'state',state:publicState()});return result;
  })();pending.set(kind,task);try{return await task;}finally{pending.delete(kind);}
 }
 async function refresh(startup=false){
