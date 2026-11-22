@@ -1833,6 +1833,7 @@ public class MainActivity extends Activity {
     private Item previewItem;
     private View previewPoster;
     private long previewLastTap;
+    private View boxPreviewFrame;
 
     /** One press on the preview (remote OK, or a tap on a phone) opens that channel full screen. */
     private void previewDoubleTap() {
@@ -4699,6 +4700,7 @@ public class MainActivity extends Activity {
     private void showTvGuide(String startCat, boolean live) {
         screen = "tvguide"; back = this::showHome;
         stopPreview();
+        boxPreviewFrame = null;
         restoreGuide();
         LinearLayout root = column();
         LinearLayout head = row();
@@ -4806,6 +4808,20 @@ public class MainActivity extends Activity {
                 if (h > cap) { h = cap; w = h * 16 / 9; }
                 side.addView(pvFrame, new LinearLayout.LayoutParams(w, h));
             } else side.addView(pvFrame, new LinearLayout.LayoutParams(dp(400), dp(225)));
+            if (boxLive) {
+                // Boxes: the preview is a stop on the remote (Up from the date row); OK opens the previewed channel full screen.
+                pvFrame.setId(View.generateViewId());
+                pvFrame.setFocusable(true); pvFrame.setClickable(true);
+                pvFrame.setPadding(dp(3), dp(3), dp(3), dp(3));
+                pvFrame.setBackground(focusBg(6));
+                pvFrame.setContentDescription("Channel preview · press OK for full screen");
+                pvFrame.setOnClickListener(v -> {
+                    if (previewItem != null) play(previewItem, defaultVlc());
+                    else Toast.makeText(MainActivity.this, "Preview a channel first", Toast.LENGTH_SHORT).show();
+                });
+                pvFrame.setOnFocusChangeListener((v, f) -> { if (f && previewItem != null) Toast.makeText(MainActivity.this, "Press OK for full screen", Toast.LENGTH_SHORT).show(); });
+                boxPreviewFrame = pvFrame;
+            }
             pvStatus.setText("OK on a programme that's on now to preview it · OK again for the channel menu");
             pvStatus.setMaxWidth(dp(400));
             if (phoneLive) {
@@ -4838,6 +4854,7 @@ public class MainActivity extends Activity {
             dr.addView(miniPill("📅 ◀ 24h", "Back 24 hours", () -> { if (dayBack[0] != null) dayBack[0].run(); }));
             dr.addView(miniPill("Now", "Back to now", () -> { if (dayNow[0] != null) dayNow[0].run(); }));
             dr.addView(miniPill("24h ▶", "Forward 24 hours", () -> { if (dayFwd[0] != null) dayFwd[0].run(); }));
+            if (boxPreviewFrame != null) for (int i = 0; i < dr.getChildCount(); i++) dr.getChildAt(i).setNextFocusUpId(boxPreviewFrame.getId());
             // Display-only category label; the remote's Left key opens the list from the guide.
             boxCatPill = miniPill("Category: All", "Current category", () -> {});
             boxCatPill.setOnClickListener(null);
