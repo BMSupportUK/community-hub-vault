@@ -1874,7 +1874,7 @@ function formatSportsListingBlockAt(input: ListingInput): string | null {
   // never the first heading of the whole post. Do not duplicate a heading
   // when the event name already begins with it.
   const sections = splitSportsListingSections(
-    splitFixtureChannelBlocks(input.raw ?? "", { sdOnly: /team channels/i.test(input.guideTitle ?? "") }),
+    splitFixtureChannelBlocks(input.raw ?? "", { sdOnly: /team channels/i.test(input.guideTitle ?? ""), hubOnly: /hub premier/i.test(input.guideTitle ?? "") }),
   );
   const labelled = sections.flatMap((section) => {
     const events = processSection(section.text);
@@ -2241,8 +2241,9 @@ export function isEplFixturePost(raw: string): boolean {
   return lines.some((_, i) => eplFixtureLineAt(lines, i));
 }
 
-export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean }): string {
+export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean; hubOnly?: boolean }): string {
   const sdOnly = opts?.sdOnly ?? false;
+  const hubOnly = !sdOnly && (opts?.hubOnly ?? false);
   const lines = raw.replace(/\r/g, "").split("\n").map((l) => (l.trim() ? unwrapEplMarkdown(l) : l));
   const fixtureAt = (i: number) => eplFixtureLineAt(lines, i);
   if (!lines.some((_, i) => fixtureAt(i))) return raw;
@@ -2255,12 +2256,17 @@ export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean
     i += 2;
     const groups: string[][] = [];
     let cur: string[] = [];
+    let inHub = false;
     while (i < lines.length && !fixtureAt(i) && !/^#\s/.test(lines[i].trim())) {
       const l = lines[i].trim();
       i++;
-      if (!l) { if (cur.length) groups.push(cur); cur = []; continue; }
+      if (!l) { inHub = false; if (cur.length) groups.push(cur); cur = []; continue; }
       const flat = l.replace(/\s*\|\s*/g, " ");
-      if (sdOnly) {
+      if (hubOnly) {
+        // Hub Premier guide: only the block under "EPL | Premier League Hub".
+        if (/^EPL Premier League Hub$/i.test(flat)) { inHub = true; continue; }
+        if (!inHub) continue;
+      } else if (sdOnly) {
         // Team Channels guide: "EPL | Premier League" / "EPL | Premier
         // League Hub" are provider headings, not channels. Only the team's
         // own "… EPL ˢᴰ" feed is a real channel (two per fixture).
