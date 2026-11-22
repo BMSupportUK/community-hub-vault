@@ -257,3 +257,4 @@
 - [x] Built, signed, uploaded and registered box 6.29 (440), Windows 0.4.121 and universal Mac 0.1.121 with the Favourites resume-position fix; 433 Android and 212 desktop tests pass, public downloads match built hashes. Physical-device hand-off remains unverified (no connected devices).
 
 - [x] Private DNS home switch released (box 6.31, Windows 0.4.123, Mac 0.1.123)
+- [x] Released Windows 0.4.128 and Mac 0.1.128: Films/Series merged Search+Voice into one Search pill opening a type-or-voice dialog; TV guide opens on UK | Free to air (no All). 208 desktop tests pass; installers verified by extraction; live downloads serve exact new bytes. Physical-device check unavailable.
