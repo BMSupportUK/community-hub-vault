@@ -1432,6 +1432,25 @@ public class MainActivity extends Activity {
             vlp.leftMargin = (int) (10 * dd);
             top.addView(getVpn, vlp);
         }
+        {
+            // Private DNS switch: free, on by default; gets round broadband blocks on channel lists and the TV guide.
+            boolean pdnsOn = prefs.getBoolean(PrivateDns.PREF, true);
+            boolean viaVpn = BoxVpn.present && BoxVpn.on();
+            android.text.SpannableString ds = new android.text.SpannableString("● DNS: " + PrivateDns.homeLabel(pdnsOn, viaVpn));
+            ds.setSpan(new android.text.style.ForegroundColorSpan(viaVpn || pdnsOn ? 0xFF69F06E : 0xFFFF5252), 0, 1, 0);
+            Button dnsBtn = headerPill("", v -> {
+                boolean now = !prefs.getBoolean(PrivateDns.PREF, true);
+                prefs.edit().putBoolean(PrivateDns.PREF, now).apply();
+                PrivateDns.enabled = now; PrivateDns.clear();
+                Toast.makeText(this, now ? "Private DNS on — gets round broadband blocks on channel lists and the TV guide. If a channel still won't play, try the VPN." : "Private DNS off — using your broadband's normal DNS.", Toast.LENGTH_LONG).show();
+                showHome();
+            });
+            dnsBtn.setText(ds);
+            dnsBtn.setContentDescription(pdnsOn ? "Private DNS on, press to switch off" : "Private DNS off, press to switch on");
+            LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(-2, -2);
+            dlp.leftMargin = (int) (10 * dd);
+            top.addView(dnsBtn, dlp);
+        }
         top.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
         if (FrameRateMatch.isAndroidTv(this)) {
             final boolean on = FrameRateMatch.chosen50(this);
@@ -3814,14 +3833,6 @@ public class MainActivity extends Activity {
                     .setMessage(null).setNegativeButton("Cancel", null).show();
             Toast.makeText(this, "Guide times are slot times and recordings often begin early. Catch up opens this many minutes after the listed start. If the show before is still on, press Fast forward (each press +1 min, presses add up); BM Player remembers where that channel really starts next time.", Toast.LENGTH_LONG).show();
         }));
-        boolean pdns = prefs.getBoolean(PrivateDns.PREF, true);
-        boxes.add(settingBox("🕶", "Private DNS: " + (pdns ? "On" : "Off"), "Hides lookups from your broadband provider", v ->
-                new AlertDialog.Builder(this).setTitle("Private DNS")
-                        .setMessage("Hides which servers you look up from your broadband provider, and gets round provider blocks on channel lists and the TV guide. Your IP address is still visible to the channel server, and it does not change your location. It is not a VPN.")
-                        .setPositiveButton(pdns ? "Switch off" : "Switch on", (d, w) -> {
-                            prefs.edit().putBoolean(PrivateDns.PREF, !pdns).apply();
-                            PrivateDns.enabled = !pdns; PrivateDns.clear(); showSettings(); })
-                        .setNegativeButton("Cancel", null).show()));
         advanced.add(settingBox("📡", "Stream format", label("format", "auto", fmtL, fmtV),
                 v -> choose("Live stream format", "format", "auto", fmtL, fmtV)));
         advanced.add(settingBox("🛡", "Anti-Freeze: On", "Automatic stream recovery",

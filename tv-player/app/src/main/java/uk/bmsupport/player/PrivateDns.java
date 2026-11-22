@@ -56,6 +56,9 @@ final class PrivateDns {
         return null;
     }
 
+    /** Home-screen label: the VPN covers lookups while it is connected. */
+    static String homeLabel(boolean on, boolean viaVpn) { return viaVpn ? "via VPN" : on ? "On" : "Off"; }
+
     static void clear() { cache.clear(); ips.clear(); listUsed = false; }
 
     private static String httpGet(String url, int timeoutMs) throws Exception {

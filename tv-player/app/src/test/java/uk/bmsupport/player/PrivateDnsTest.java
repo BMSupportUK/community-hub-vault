@@ -44,4 +44,11 @@ public class PrivateDnsTest {
         PrivateDns.clear();
         assertFalse(PrivateDns.listUsed);
     }
+
+    @org.junit.Test
+    public void homeLabelShowsVpnThenSwitchState() {
+        org.junit.Assert.assertEquals("via VPN", PrivateDns.homeLabel(false, true));
+        org.junit.Assert.assertEquals("On", PrivateDns.homeLabel(true, false));
+        org.junit.Assert.assertEquals("Off", PrivateDns.homeLabel(false, false));
+    }
 }
