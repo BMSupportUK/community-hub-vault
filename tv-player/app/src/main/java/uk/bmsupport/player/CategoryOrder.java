@@ -31,9 +31,15 @@ final class CategoryOrder {
         sorted.sort((a,b) -> {
             if ("*".equals(a[0])) return "*".equals(b[0]) ? 0 : -1;
             if ("*".equals(b[0])) return 1;
-            return Integer.compare(rank.getOrDefault(a[0], Integer.MAX_VALUE), rank.getOrDefault(b[0], Integer.MAX_VALUE));
+            return Integer.compare(rankOf(rank, a[0]), rankOf(rank, b[0]));
         });
         return sorted;
+    }
+    /** Hub broadcaster categories ("<hubId>~slug") saved before the split take their Hub's place, not the bottom. */
+    static int rankOf(Map<String, Integer> rank, String id) {
+        Integer r = rank.get(id);
+        if (r == null && id.contains(HubSplit.SEP)) r = rank.get(HubSplit.parentId(id));
+        return r == null ? Integer.MAX_VALUE : r;
     }
     static void save(SharedPreferences prefs, String kind, List<String[]> rows) {
         JSONArray ids = new JSONArray();
