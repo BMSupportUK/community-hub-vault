@@ -18,9 +18,14 @@ import java.util.regex.Pattern;
  */
 final class PrivateDns {
     static final String PREF = "private_dns";
-    static final List<String> SERVERS = Arrays.asList(
-            "https://1.1.1.1/dns-query?type=A&name=",
-            "https://8.8.8.8/resolve?type=A&name=");
+    static final String SERVER_PREF = "private_dns_server";
+    static final String[] NAMES = {"Cloudflare", "Google"};
+    static final String CLOUDFLARE = "https://1.1.1.1/dns-query?type=A&name=", GOOGLE = "https://8.8.8.8/resolve?type=A&name=";
+    /** Chosen server first, the other as backup. */
+    static volatile List<String> SERVERS = order(0);
+    static volatile int chosen = 0;
+    static List<String> order(int server) { return server == 1 ? Arrays.asList(GOOGLE, CLOUDFLARE) : Arrays.asList(CLOUDFLARE, GOOGLE); }
+    static void choose(int server) { chosen = server == 1 ? 1 : 0; SERVERS = order(chosen); clear(); }
     static final int TIMEOUT_MS = 3000;
     static volatile boolean enabled = true;
 
@@ -57,7 +62,7 @@ final class PrivateDns {
     }
 
     /** Home-screen label: the VPN covers lookups while it is connected. */
-    static String homeLabel(boolean on, boolean viaVpn) { return viaVpn ? "via VPN" : on ? "On" : "Off"; }
+    static String homeLabel(boolean on, boolean viaVpn) { return viaVpn ? "via VPN" : on ? NAMES[chosen] : "Off"; }
 
     static void clear() { cache.clear(); ips.clear(); listUsed = false; }
 

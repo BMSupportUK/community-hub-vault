@@ -181,6 +181,7 @@ public class MainActivity extends Activity {
         prefs = getSharedPreferences("bmplayer", MODE_PRIVATE);
         prefs.edit().remove("external_players").apply(); // Outside players were removed: they exposed the stream address.
         PrivateDns.enabled = prefs.getBoolean(PrivateDns.PREF, true);
+        PrivateDns.choose(prefs.getInt(PrivateDns.SERVER_PREF, 0));
         if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                 android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::goBack);
         start();
@@ -1440,14 +1441,20 @@ public class MainActivity extends Activity {
             android.text.SpannableString ds = new android.text.SpannableString("● DNS: " + PrivateDns.homeLabel(pdnsOn, viaVpn));
             ds.setSpan(new android.text.style.ForegroundColorSpan(viaVpn || pdnsOn ? 0xFF69F06E : 0xFFFF5252), 0, 1, 0);
             Button dnsBtn = headerPill("", v -> {
-                boolean now = !prefs.getBoolean(PrivateDns.PREF, true);
-                prefs.edit().putBoolean(PrivateDns.PREF, now).apply();
-                PrivateDns.enabled = now; PrivateDns.clear();
-                Toast.makeText(this, now ? "Private DNS on — gets round broadband blocks on channel lists and the TV guide. If a channel still won't play, try the VPN." : "Private DNS off — using your broadband's normal DNS.", Toast.LENGTH_LONG).show();
-                showHome();
+                String[] opts = {"Cloudflare (recommended)", "Google", "Off"};
+                int sel = !prefs.getBoolean(PrivateDns.PREF, true) ? 2 : PrivateDns.chosen;
+                new AlertDialog.Builder(this).setTitle("Private DNS")
+                        .setSingleChoiceItems(opts, sel, (d, w) -> {
+                            boolean now = w != 2;
+                            prefs.edit().putBoolean(PrivateDns.PREF, now).putInt(PrivateDns.SERVER_PREF, now ? w : PrivateDns.chosen).apply();
+                            PrivateDns.enabled = now; PrivateDns.choose(now ? w : PrivateDns.chosen);
+                            d.dismiss();
+                            Toast.makeText(this, now ? "Private DNS: " + PrivateDns.NAMES[w] + ". If a channel still won't play, try the VPN." : "Private DNS off — using your broadband's normal DNS.", Toast.LENGTH_LONG).show();
+                            showHome();
+                        }).setNegativeButton("Cancel", null).show();
             });
             dnsBtn.setText(ds);
-            dnsBtn.setContentDescription(pdnsOn ? "Private DNS on, press to switch off" : "Private DNS off, press to switch on");
+            dnsBtn.setContentDescription(pdnsOn ? "Private DNS " + PrivateDns.NAMES[PrivateDns.chosen] + ", press to change" : "Private DNS off, press to change");
             LinearLayout.LayoutParams dlp = new LinearLayout.LayoutParams(-2, -2);
             dlp.leftMargin = (int) (10 * dd);
             top.addView(dnsBtn, dlp);

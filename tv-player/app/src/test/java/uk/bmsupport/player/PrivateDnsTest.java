@@ -48,7 +48,11 @@ public class PrivateDnsTest {
     @org.junit.Test
     public void homeLabelShowsVpnThenSwitchState() {
         org.junit.Assert.assertEquals("via VPN", PrivateDns.homeLabel(false, true));
-        org.junit.Assert.assertEquals("On", PrivateDns.homeLabel(true, false));
+        org.junit.Assert.assertEquals("Cloudflare", PrivateDns.homeLabel(true, false));
+        PrivateDns.choose(1);
+        org.junit.Assert.assertEquals("Google", PrivateDns.homeLabel(true, false));
+        org.junit.Assert.assertEquals(PrivateDns.GOOGLE, PrivateDns.SERVERS.get(0));
+        PrivateDns.choose(0);
         org.junit.Assert.assertEquals("Off", PrivateDns.homeLabel(false, false));
     }
 }

@@ -106,7 +106,7 @@ async function provider(action='',extra={}){
  const url=new URL('/player_api.php',store.dns);url.searchParams.set('username',store.user);url.searchParams.set('password',store.pass);
  if(action)url.searchParams.set('action',action);
  for(const [k,v]of Object.entries(extra))url.searchParams.set(k,String(v));
- const response=await nativeVpn.fetch(url,{headers:{'User-Agent':store.settings?.userAgent||'VLC/3.0.21 LibVLC/3.0.21',...(store.settings?.privateDns===false?{}:{'X-BM-DNS':'private'})},signal:AbortSignal.timeout(45000)});
+ const response=await nativeVpn.fetch(url,{headers:{'User-Agent':store.settings?.userAgent||'VLC/3.0.21 LibVLC/3.0.21',...(store.settings?.privateDns===false?{}:{'X-BM-DNS':store.settings?.dnsServer==='google'?'private:google':'private'})},signal:AbortSignal.timeout(45000)});
  if(!response.ok)throw new Error('The service provider could not load this section. Try Refresh.');
  return response.json();
 }
