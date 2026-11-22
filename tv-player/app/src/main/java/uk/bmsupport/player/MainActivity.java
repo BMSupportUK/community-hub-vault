@@ -1724,6 +1724,9 @@ public class MainActivity extends Activity {
             bx = at[0]; by = at[1]; bw = stageBox.getWidth(); bh = stageBox.getHeight();
         }
         if (bw <= 0 || bh <= 0) return;
+        // The stage sits in the window decor above the guide, so while the category panel is open it
+        // shrinks to a single pixel (same surface, no decoder restart) instead of covering the panel.
+        if (drawerShown && !stageFull) { bw = 1; bh = 1; bx = 0; by = 0; }
         float ratio = 16f / 9f;
         androidx.media3.exoplayer.ExoPlayer p = stagePlayer;
         if (p != null) {
@@ -1734,6 +1737,7 @@ public class MainActivity extends Activity {
         if (h > bh) { h = bh; w = Math.round(bh * ratio); }
         android.widget.FrameLayout.LayoutParams lp = (android.widget.FrameLayout.LayoutParams) stage.getLayoutParams();
         int x = bx + (bw - w) / 2, y = by + (bh - h) / 2;
+        if (bw == 1) { w = 1; h = 1; x = 0; y = 0; }
         if (lp.width == w && lp.height == h && lp.leftMargin == x && lp.topMargin == y) return;
         lp.width = w; lp.height = h; lp.leftMargin = x; lp.topMargin = y; lp.gravity = android.view.Gravity.TOP | android.view.Gravity.START;
         stage.setLayoutParams(lp);
@@ -6271,6 +6275,7 @@ public class MainActivity extends Activity {
             drawerScrim.animate().alpha(1f).setDuration(200).start();
         }
         if (drawerWrap != null) drawerWrap.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+        placeStage();
         updatePreviewFullIcon();
     }
 
@@ -6285,6 +6290,7 @@ public class MainActivity extends Activity {
                 .withEndAction(() -> drawerScrim.setVisibility(View.INVISIBLE)).start();
         if (drawerWrap != null) drawerWrap.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
         if (focusTarget != null) focusTarget.requestFocus();
+        placeStage();
         drawerPanel.animate().translationX(-w).setDuration(180)
                 .withEndAction(() -> {
                     closingPanel.setVisibility(View.INVISIBLE);
