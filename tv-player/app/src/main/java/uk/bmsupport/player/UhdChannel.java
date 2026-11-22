@@ -4,11 +4,17 @@ package uk.bmsupport.player;
 final class UhdChannel {
     private UhdChannel() {}
     /** Channels that open full screen in the box's own engine (Media3) first, like other IPTV apps: UHD/4K and Coupang Play. */
-    static boolean ownEngine(String name) { return !looped(name); }
-    /** Looped on-demand channels (VIP Cinema, 24/7, box sets) keep the libVLC backup engine first. */
-    static boolean looped(String name) {
-        if (name == null || is(name) || StreamRecovery.plainLive(name)) return false;
-        return name.matches("(?i).*(\\bVIP\\b|cinema|24\\s*/\\s*7|24-7|\\b247\\b|box\\s*sets?|boxset|\\bloop).*");
+    static boolean ownEngine(String name, String category) { return !looped(name, category); }
+    /** Looped on-demand channels keep the libVLC backup engine first. Matched on the channel name AND its
+     *  category, because looped channels are often named without the marker (e.g. "Sky Store Premier 1"
+     *  sits in "VIP Sky Store Premier"). Covers the VIP categories (VIP Sky Store Premier, VIP Netflix
+     *  Movies, VIP Amazon Prime Series, VIP Kids Corner, VIP Cinema) and the 24/7 ones (24/7 Movies/Series,
+     *  24/7 Artists, 24/7 Bollywood), plus box sets. */
+    static boolean looped(String name, String category) {
+        if (is(name) || StreamRecovery.plainLive(name)) return false;
+        String both = ((name == null ? "" : name) + " " + (category == null ? "" : category)).trim();
+        if (both.isEmpty()) return false;
+        return both.matches("(?i).*(\\bVIP\\b|cinema|24\\s*/\\s*7|24-7|\\b247\\b|box\\s*sets?|boxset|\\bloop).*");
     }
     static boolean is(String name) {
         if (name == null) return false;
