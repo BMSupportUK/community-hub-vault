@@ -5,7 +5,7 @@ import org.json.JSONObject;
 
 /**
  * Splits the provider's "EPL | Premier League Hub" Live TV category into one category per
- * overseas broadcaster (Stan Sport, Star Hub Premier, Fubo Sports, Premier League+, Astro),
+ * overseas broadcaster (Stan Sport, Star Hub Premier, Fubo, Premier League+, Astro, Now HK, Flowsport, Monomax, Coupang Play, Peacock),
  * with the remaining channels kept in the original category renamed "... | Other".
  * Split categories get the id "<hubId>~<slug>", so they never clash with provider ids.
  */
@@ -17,6 +17,7 @@ final class HubSplit {
         {"stan", "Stan Sport"}, {"starhub", "Star Hub Premier"}, {"fubo", "Fubo Sports"},
         {"plplus", "Premier League+"}, {"astro", "Astro Premier League"}, {"nowhk", "Now HK Sports"},
         {"flowsport", "Flowsport"}, {"monomax", "Monomax"}, {"coupang", "Coupang Play"},
+        {"peacock", "Peacock Sports"},
     };
 
     static boolean isHub(String categoryName) {
@@ -30,14 +31,15 @@ final class HubSplit {
         if (channelName == null) return null;
         String n = channelName.toLowerCase(java.util.Locale.ROOT).replaceAll("\\s+", " ").trim();
         if (n.contains("coupang")) return "coupang";
-        if (n.startsWith("stan sport")) return "stan";
-        if (n.startsWith("star hub") || n.startsWith("starhub")) return "starhub";
-        if (n.startsWith("fubo")) return "fubo";
-        if (n.startsWith("premier league+") || n.startsWith("premier league +")) return "plplus";
-        if (n.startsWith("astro")) return "astro";
-        if (n.startsWith("now hk") || n.startsWith("nowhk")) return "nowhk";
-        if (n.startsWith("flowsport")) return "flowsport";
-        if (n.startsWith("monomax")) return "monomax";
+        if (n.contains("peacock")) return "peacock";
+        if (n.contains("stan sport")) return "stan";
+        if (n.contains("star hub") || n.contains("starhub")) return "starhub";
+        if (n.contains("fubo")) return "fubo";
+        if (n.contains("premier league+") || n.contains("premier league +")) return "plplus";
+        if (n.startsWith("astro") || n.contains(" astro")) return "astro";
+        if (n.contains("now hk") || n.contains("nowhk")) return "nowhk";
+        if (n.contains("flowsport")) return "flowsport";
+        if (n.contains("monomax")) return "monomax";
         return null;
     }
 

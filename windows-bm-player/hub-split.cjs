@@ -2,19 +2,20 @@
 // Splits the provider's "EPL | Premier League Hub" Live TV category into one category per
 // overseas broadcaster; the rest stay in the original category renamed "... | Other".
 // Mirrors tv-player HubSplit.java — keep in step.
-const GROUPS=[['stan','Stan Sport'],['starhub','Star Hub Premier'],['fubo','Fubo Sports'],['plplus','Premier League+'],['astro','Astro Premier League'],['nowhk','Now HK Sports'],['flowsport','Flowsport'],['monomax','Monomax'],['coupang','Coupang Play']];
+const GROUPS=[['stan','Stan Sport'],['starhub','Star Hub Premier'],['fubo','Fubo Sports'],['plplus','Premier League+'],['astro','Astro Premier League'],['nowhk','Now HK Sports'],['flowsport','Flowsport'],['monomax','Monomax'],['coupang','Coupang Play'],['peacock','Peacock Sports']];
 const norm=s=>String(s||'').toLowerCase().replace(/\s+/g,' ').trim();
 const isHub=name=>norm(name).includes('premier league hub');
 function group(name){const n=norm(name);
  if(n.includes('coupang'))return 'coupang';
- if(n.startsWith('stan sport'))return 'stan';
- if(n.startsWith('star hub')||n.startsWith('starhub'))return 'starhub';
- if(n.startsWith('fubo'))return 'fubo';
- if(n.startsWith('premier league+')||n.startsWith('premier league +'))return 'plplus';
- if(n.startsWith('astro'))return 'astro';
- if(n.startsWith('now hk')||n.startsWith('nowhk'))return 'nowhk';
- if(n.startsWith('flowsport'))return 'flowsport';
- if(n.startsWith('monomax'))return 'monomax';
+ if(n.includes('peacock'))return 'peacock';
+ if(n.includes('stan sport'))return 'stan';
+ if(n.includes('star hub')||n.includes('starhub'))return 'starhub';
+ if(n.includes('fubo'))return 'fubo';
+ if(n.includes('premier league+')||n.includes('premier league +'))return 'plplus';
+ if(n.startsWith('astro')||n.includes(' astro'))return 'astro';
+ if(n.includes('now hk')||n.includes('nowhk'))return 'nowhk';
+ if(n.includes('flowsport'))return 'flowsport';
+ if(n.includes('monomax'))return 'monomax';
  return null;}
 function split(cats,items){
  const hubs=new Map(cats.filter(c=>isHub(c.name)).map(c=>[c.id,c.name]));
