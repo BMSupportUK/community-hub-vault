@@ -68,3 +68,26 @@ test('quiet multi-screen panes switch their sound track off so only the picked s
  expect([session.mute,session.vol,track[a],track[b]]).toEqual([0,100,-1,1]);
  engine.close();
 });
+
+test('multi-screen panes each get their own DirectSound mute so a re-picked screen is heard again',()=>{
+ const out={},mute={},vol={};
+ const koffi={load:()=>({func:(...a)=>{const name=a[0]==='__stdcall'?a[1]:a[0];let n=10n;return (...values)=>{
+  if(name==='GetClientRect'){values[1].writeInt32LE(1280,8);values[1].writeInt32LE(900,12);return true;}
+  if(name==='libvlc_new')return 1n;if(name==='libvlc_media_player_new')return n++;
+  if(['libvlc_media_new_location','CreateWindowExW'].includes(name))return 1n;
+  if(name==='libvlc_audio_output_set'){out[values[0]]=values[1];return 0;}
+  if(name==='libvlc_audio_get_track')return 1;
+  if(name==='libvlc_audio_get_mute')return mute[values[0]]??0;if(name==='libvlc_audio_set_mute'){mute[values[0]]=values[1];return;}
+  if(name==='libvlc_audio_get_volume')return vol[values[0]]??100;if(name==='libvlc_audio_set_volume'){vol[values[0]]=values[1];return 0;}
+  return 0;};}})};
+ const handle=Buffer.alloc(8);handle.writeBigUInt64LE(42n);
+ const engine=new EmbeddedVlc({getNativeWindowHandle:()=>handle},{koffi,root:'/tmp/test-vlc'});
+ engine.play(0,'https://example.invalid/a.ts',{kind:'live',name:'A',multi:true});
+ engine.play(1,'https://example.invalid/b.ts',{kind:'live',name:'B',multi:true});
+ const a=engine.surfaces.get(0).player,b=engine.surfaces.get(1).player;
+ expect([out[a],out[b]]).toEqual(['directsound','directsound']);
+ expect([mute[a]??0,mute[b]]).toEqual([0,1]);
+ engine.volume(1,100);engine.volume(0,0);expect([mute[a],mute[b]]).toEqual([1,0]);
+ engine.volume(0,100);engine.volume(1,0);expect([mute[a],mute[b],vol[a]]).toEqual([0,1,100]);
+ engine.close();
+});
