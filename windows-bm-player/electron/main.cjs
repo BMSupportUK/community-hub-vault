@@ -8,6 +8,7 @@ const nodeNet=require('node:net');
 const {pathToFileURL}=require('node:url');
 const {execFile}=require('node:child_process');
 const core=require('../core.cjs');
+const deviceLock=require('../device-lock.cjs');
 const gate=require('../account-gate.cjs').createAccountGate();
 const startupRefresh=require('../startup-refresh.cjs').createStartupRefresh();
 const {surfaceRows}=require('../playback-core.cjs');
@@ -44,8 +45,8 @@ let sessions=[],awake=null,pollBusy=false,pollStarted=0,checkBusy=false,engine=n
 let lastSystemIdle=0,refreshPromise=null;
 const page=path.join(__dirname,'../dist/index.html');
 const cache=new Map(),pending=new Map();
-function save(){ if(!safeStorage.isEncryptionAvailable())throw new Error(PLATFORM.name+' credential protection unavailable.'); fs.writeFileSync(file,safeStorage.encryptString(JSON.stringify(store))); }
-function send(data){ if(win&&!win.isDestroyed())win.webContents.send('player:event',data); }
+function save(){ if(store.unlinked)deviceLock.wipeStore(store);if(!safeStorage.isEncryptionAvailable())throw new Error(PLATFORM.name+' credential protection unavailable.'); fs.writeFileSync(file,safeStorage.encryptString(JSON.stringify(store))); }
+function send(data){ if(store.unlinked&&!['state','unlinked'].includes(data.type))return;if(win&&!win.isDestroyed())win.webContents.send('player:event',data); }
 function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,item.id);}
 let pinPassed=false,pinNeed=null,linkVerified=false;
 let pinSetup=false,pinDigits=4,pinFallback=false,totpSetup=false,totpData=null;
@@ -53,6 +54,7 @@ function refreshAtStartup(){startupRefresh.run({token:store.token,user:store.use
 async function afterPin(){if(totpSetup){try{totpData=await site({action:'totp_start'});return publicState();}catch(e){if(!/already set up/i.test(String(e&&e.message)))throw e;totpSetup=false;}}pinPassed=true;refreshAtStartup();return publicState();}
 async function checkPin(){pinSetup=false;totpSetup=false;totpData=null;pinNeed=false;pinPassed=true;store.pinRequired=false;send({type:'state',state:publicState()});refreshAtStartup();}
 function publicState(){
+ if(store.unlinked)return {unlinked:true,linked:false,locked:true,signedIn:false,favourites:[],recent:[],progress:{},reminders:[],playing:[],major:[],announcement:null};
  const a=store.account||{};
  const expiry=Number(a.exp_date)*1000;
  return {platform:PLATFORM.id,platformName:PLATFORM.name,version:app.getVersion(),linked:!!store.user,locked:!!store.user&&!gate.unlocked,pinLocked:!!store.user&&gate.unlocked&&!pinPassed&&pinNeed===true,pinSetup:!!store.user&&gate.unlocked&&!pinPassed&&pinSetup,pinDigits,pinFallback,totpSetup:!!store.user&&gate.unlocked&&!pinPassed&&totpSetup&&!!totpData,totpData:totpSetup?totpData:null,pinChecking:!!store.user&&gate.unlocked&&!pinPassed&&pinNeed===null,unlockQr:gate.qr,user:gate.unlocked?store.user||'':'',code:linkCode,maintenance,announcement:store.user&&gate.unlocked&&pinPassed&&announcement&&announcement.id!==store.annClosed?announcement:null,major:store.user&&gate.unlocked&&pinPassed?major:[],signedIn:!!store.user&&gate.unlocked&&pinPassed,majorSeen:store.majorSeen||[],
@@ -61,15 +63,17 @@ function publicState(){
   progress:gate.unlocked?store.progress||{}:{},reminders:gate.unlocked?store.reminders||[]:[],refreshed:gate.unlocked?store.refreshed||{}:{},linkVerified,playing:sessions.map(s=>({index:s.index,item:s.item,position:s.position||0,duration:s.duration||0,paused:s.paused||false,seekable:s.seekable||false,backup:s.backup||false}))};
 }
 async function site(body){
+ deviceLock.requireActive(store);
  let response;try{response=await fetch(SITE+'/api/public/player',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,...(body.action==='register'?{}:{device_token:store.token})}),signal:AbortSignal.timeout(20000)});}catch(e){checkin.fail();throw e;}
  if(response.status===429||response.status>=500)checkin.fail(response.headers.get('retry-after'));else checkin.ok();
  let data;try{data=await response.json();}catch{throw new Error('BM Support is unavailable. Try again shortly.');}
- if(!response.ok){if(response.status===401&&body.action!=='unlock'){linkVerified=false;gate.lock();store.token=null;store.user=null;store.pass=null;save();setImmediate(()=>unlinked().catch(()=>{}));}throw new Error(data.error||'BM Support request failed.');}
+ if(!response.ok){if(deviceLock.revokedResponse(response.status,data))await unlinked();throw new Error(data.error||'BM Support request failed.');}
+ deviceLock.requireActive(store);
  return data;
 }
-// Unlinked on the website: stop every screen, forget the login and show a fresh link code.
+// Revoked installations keep only a persistent lock, never a fresh linking code.
 let unlinking=false;
-async function unlinked(){if(unlinking)return;unlinking=true;try{await vpn.close();await stopAll().catch(()=>{});pinPassed=false;store.account=null;cache.clear();linkCode=null;save();send({type:'unlinked'});send({type:'state',state:publicState()});await getCode().catch(()=>{});pollBusy=false;poll().catch(()=>{});}finally{unlinking=false;}}
+async function unlinked(){if(unlinking||store.unlinked)return;unlinking=true;try{deviceLock.wipeStore(store);gate.lock();linkVerified=false;pinPassed=false;linkCode=null;major=[];announcement=null;sportsSnapshot=null;cache.clear();pending.clear();save();send({type:'unlinked'});send({type:'state',state:publicState()});await stopAll().catch(()=>{});nativeVpn.close();void vpn.close().catch(()=>{});await win?.webContents.session.clearStorageData().catch(()=>{});deviceLock.wipeStore(store);save();}finally{unlinking=false;}}
 async function getCode(){if(!store.token){const r=await site({action:'register',platform:PLATFORM.id,name:'BM Player '+PLATFORM.name});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
 let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||''),image_url:typeof i.image_url==='string'&&/^https:\/\//.test(i.image_url)?i.image_url:null}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
@@ -108,7 +112,7 @@ async function provider(action='',extra={}){
  for(const [k,v]of Object.entries(extra))url.searchParams.set(k,String(v));
  const response=await nativeVpn.fetch(url,{headers:{'User-Agent':store.settings?.userAgent||'VLC/3.0.21 LibVLC/3.0.21',...(store.settings?.privateDns===false?{}:{'X-BM-DNS':store.settings?.dnsServer==='google'?'private:google':'private'})},signal:AbortSignal.timeout(45000)});
  if(!response.ok)throw new Error('The service provider could not load this section. Try Refresh.');
- return response.json();
+ const result=await response.json();deviceLock.requireActive(store);return result;
 }
 async function catalogue(kind){
  if(!['live','film','series'].includes(kind))throw new Error('Unknown section.');
@@ -138,6 +142,7 @@ async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||Strin
 // Resolve trusted catalogue names; only saved sports fixtures override provider EPG.
 async function epg(id){const catalog=await catalogue('live');const channel=catalog.items.find(c=>String(c.id)===String(id));const {loadFixtureGuide}=require('../fixture-guide.cjs');const rows=await loadFixtureGuide(channel,site,async()=>{const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return r.epg_listings;});return core.programmes(rows);}
 function persistProgress(session){
+ if(store.unlinked)return;
  if(!['film','episode'].includes(session.item.kind)||!(session.duration>0))return;
  store.progress=store.progress||{};const k=key(session.item);store.progress[k]={position:session.position||0,duration:session.duration,at:Date.now()};
  store.progressDirty=[...new Set([...(store.progressDirty||[]),k])].slice(-500);save();pushProgress(false);
@@ -171,6 +176,7 @@ let pkgConnections=null;
 // Packages are 1-3 connections; a provider's huge "unlimited" placeholder (e.g. 315368056) is not a real count.
 function realCons(v){const n=Number(v);return Number.isFinite(n)&&n>=1&&n<=3?Math.floor(n):null;}
 async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,takeover=false}){
+ deviceLock.requireActive(store);
  if(item?.kind==='catchup'&&!(Number.isFinite(item.start)&&Number.isFinite(item.end)&&item.end>item.start&&item.end<=Date.now()))throw new Error('Choose a programme that has finished.');
  if(!item||!['live','film','episode','catchup'].includes(item.kind)||String(item.id).length>80)throw new Error('Choose a playable item.');
  if(maintenance)throw new Error(maintenance);
@@ -188,6 +194,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,ta
  const recoveryName=item.kind==='live'?item.name+' '+(item.categoryName||''):'';
  const catchupMinutes=item.kind==='catchup'?catchupStart.offset(store.catchupStarts,key({kind:'live',id:item.id})):0;
  const streamItem=item.kind==='catchup'?catchupStart.recording(item,catchupMinutes):item;
+ deviceLock.requireActive(store);
  const baseUrls=core.streamUrls(store.dns,store.user,store.pass,streamItem,store.settings?.format||'auto'),urls=baseUrls;
  if(!engine)engine=createEngine(win);
  const index=sessions.length,watched=store.progress?.[key(item)];
@@ -292,13 +299,14 @@ async function syncFavourites(){if(!store.user||!store.token||!gate.unlocked)ret
  if(!r.stored){if((store.favourites||[]).length)pushFavourites();store.favSynced=true;save();return;}
  if(!store.favSynced){const seen=new Set(r.items.map(i=>i.kind+'|'+i.id));const extra=(store.favourites||[]).filter(i=>!seen.has(i.kind+'|'+String(i.id)));store.favourites=[...r.items,...extra];store.favSynced=true;save();if(extra.length)pushFavourites();send({type:'state',state:publicState()});return;}
  if(JSON.stringify(r.items)!==JSON.stringify(store.favourites||[])){store.favourites=r.items;save();send({type:'state',state:publicState()});}}
-function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement','majorSeen','signinChat','signinCode'].includes(name)){gate.require();if(name!=='pinCheck'&&name!=='pinCreate'&&name!=='usePinInstead'&&name!=='totpConfirm'&&name!=='totpStart'&&name!=='totpResetRequest'&&!pinPassed)throw new Error('Enter your PIN first.');}if(!promptedAt)lastInput=Date.now();return fn(value);});}
+function register(name,fn){ipcMain.handle('player:'+name,async(event,value)=>{if(!trusted(event))throw new Error('Untrusted window.');if(!['state','exit','stop'].includes(name))deviceLock.requireActive(store);if(!['state','link','unlock','exit','openLink','stop','closeAnnouncement','majorSeen','signinChat','signinCode'].includes(name)){gate.require();if(name!=='pinCheck'&&name!=='pinCreate'&&name!=='usePinInstead'&&name!=='totpConfirm'&&name!=='totpStart'&&name!=='totpResetRequest'&&!pinPassed)throw new Error('Enter your PIN first.');}if(!promptedAt)lastInput=Date.now();return fn(value);});}
 if(!app.requestSingleInstanceLock())app.quit();
 else{
  app.on('second-instance',foreground);
  app.whenReady().then(async()=>{
   file=path.join(app.getPath('userData'),'player-encrypted.bin');
   if(fs.existsSync(file)){try{store=JSON.parse(safeStorage.decryptString(fs.readFileSync(file)));}catch{store={};}}
+  if(store.unlinked){deviceLock.wipeStore(store);save();}
   recovery.loadHeavy(store.heavyChannels);
   store.recent=(store.recent||[]).filter(i=>!core.adult(i.categoryName));
   win=new BrowserWindow({title:'BM Player · '+PLATFORM.name,show:false,width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,...(MAC?{}:{icon:path.join(__dirname,'../build.ico')}),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
@@ -352,7 +360,7 @@ else{
    send({type:'state',state:publicState()});return true;
   });
   register('settings',async value=>{
-   if(value?.logout){await stopAll();await vpn.close();vpnReady=null;await site({action:'unlink'});gate.lock();store.token=null;store.user=null;store.pass=null;store.account=null;cache.clear();save();await getCode();}
+   if(value?.logout){try{await site({action:'unlink'});}finally{await unlinked();}}
    else if(value?.clear){store.recent=[];store.progress={};save();}
    else if(value?.categoryOrder){const {kind,ids}=value.categoryOrder;if(!['live','film','series'].includes(kind)||!Array.isArray(ids))throw new Error('Choose a category list.');store.settings={...store.settings,['category_order_'+kind]:categoryOrder.cleanIds(ids)};save();}
    else if(value){store.settings={...store.settings,...value};save();if('boost' in value)applyAudio();}

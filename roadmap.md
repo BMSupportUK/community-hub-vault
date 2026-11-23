@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Add persistent unlink-only lock and local saved-data wipe across Android/Fire TV/phone and shared Windows/Mac: 450 Android and 221 desktop tests pass; simulated desktop unlink/restart shows only the message. Website orders/shared data untouched. Not released or physically tested.
 - [x] Released Windows 0.4.127 and universal ad-hoc signed Mac 0.1.127 with new provider categories at the top; 208 desktop tests pass, packaged rule/version checks pass, and both public downloads match checked files. Physical-device playback and Apple-native signature verification remain unavailable on Linux.
 - [x] Repair today's published MotoGP guide from the original post: four correctly timed sessions with separate broadcaster lists; parser and saved read-back verified.
 - [x] Reviewed twelve saved security findings: five hardened, seven dismissed after verifying existing protection/public reference data; fourteen focused security tests pass. Real signed-in reads return 33 member-role rows, 34 profiles and three staff records.

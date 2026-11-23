@@ -170,6 +170,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
+        if (DeviceLock.locked()) { startActivity(new Intent(this, UnlinkedActivity.class)); finish(); return; }
         AppForeground.watch(getApplication());
         StreamClaim.host = this;
         StreamClaim.onMainTaken = () -> {
@@ -676,7 +677,7 @@ public class MainActivity extends Activity {
         }
         return super.dispatchKeyEvent(e);
     }
-    @Override protected void onDestroy() { stopPreview(); stopMulti(); stopPolling(); ui.removeCallbacksAndMessages(null); super.onDestroy(); io.shutdownNow(); connectionIo.shutdownNow(); }
+    @Override protected void onDestroy() { if (prefs != null) { stopPreview(); stopMulti(); stopPolling(); } ui.removeCallbacksAndMessages(null); guideIo.shutdownNow(); ratingIo.shutdownNow(); super.onDestroy(); io.shutdownNow(); connectionIo.shutdownNow(); }
 
     @Override public boolean onKeyDown(int keyCode, KeyEvent e) {
         if (keyCode == KeyEvent.KEYCODE_BACK) { goBack(); return true; }
@@ -711,6 +712,7 @@ public class MainActivity extends Activity {
     }
 
     private void start() {
+        if (DeviceLock.locked()) { startActivity(new Intent(this, UnlinkedActivity.class)); finish(); return; }
         if (prefs.getString("token", "").isEmpty()) {
             showMessage("Getting ready…", null);
             io.execute(() -> {
@@ -941,13 +943,11 @@ public class MainActivity extends Activity {
                 else if (now) showHome(); else showLink();
             });
         } catch (Exception ex) {
-            if (String.valueOf(ex.getMessage()).contains("401")) {
-                // Removed from the website (or unused for 60 days): sign out completely.
-                prefs.edit().remove("token").remove("user").remove("pass").remove("unlocked_for").apply();
+            if (DeviceLock.locked()) {
                 linkVerified = false;
                 unlocked = false;
                 PlayerApplication.pinPassed = false;
-                ui.post(this::start);
+                PlayerApplication.unlinked();
             } else if (!unlocked && hasLogin()) {
                 // Stay on the family picture: say it's still checking and let the next check-in (or the 10s Go to home button) carry on.
                 ui.post(() -> {
@@ -2011,7 +2011,7 @@ public class MainActivity extends Activity {
         ui.postDelayed(previewTask, 700);
     }
 
-    @Override protected void onPause() { super.onPause(); saveGuide(); stopPreview(); if ("multi".equals(screen)) { stopMulti(); showHome(); } }
+    @Override protected void onPause() { super.onPause(); if (prefs == null) return; if (!DeviceLock.locked()) saveGuide(); stopPreview(); if ("multi".equals(screen)) { stopMulti(); if (!DeviceLock.locked()) showHome(); } }
 
     private String liveCatId = null;
     private final CategoryMemory categoryMemory = new CategoryMemory();
@@ -3918,13 +3918,12 @@ public class MainActivity extends Activity {
             Toast.makeText(this, "Cache cleared – lists will reload", Toast.LENGTH_SHORT).show();
         }));
         boxes.add(settingBox("⬆", "Update app", "Version " + appVersion(), v -> checkForUpdate(true)));
-        advanced.add(settingBox("🔗", "Unlink device", "Removes the login – use to change login", v -> new AlertDialog.Builder(this)
-                .setMessage("This removes the login from this device. You'll need a new code to link it again.")
+        advanced.add(settingBox("🔗", "Unlink device", "Signs out and locks this device", v -> new AlertDialog.Builder(this)
+                .setMessage("This signs out, wipes this device's saved data and locks BM Player. You won't be able to link it again in the app.")
                 .setPositiveButton("Unlink", (d, w) -> io.execute(() -> {
                     try { Net.postJson(Net.SITE + "/api/public/player",
                             new JSONObject().put("action", "unlink").put("device_token", prefs.getString("token", "")).toString()); } catch (Exception ignored) {}
-                    prefs.edit().clear().apply();
-                    ui.post(this::start);
+                    PlayerApplication.unlinked();
                 })).setNegativeButton("Cancel", null).show()));
 
         boxes.addAll(advanced);
@@ -4283,7 +4282,7 @@ public class MainActivity extends Activity {
             io.execute(() -> {
                 try { Net.postJson(Net.SITE + "/api/public/player",
                         new JSONObject().put("action", "unlink").put("device_token", prefs.getString("token", "")).toString()); } catch (Exception ignored) {}
-                prefs.edit().clear().apply();
+                PlayerApplication.unlinked();
                 ui.post(this::finishAffinity);
             });
         });
@@ -4798,11 +4797,11 @@ public class MainActivity extends Activity {
         } catch (Exception ignored) {}
     }
     private void saveGuide() {
-        if (guideScope == null || guideCache.isEmpty()) return;
+        if (DeviceLock.locked() || guideIo.isShutdown() || guideScope == null || guideCache.isEmpty()) return;
         final String text = GuideStore.encode(new java.util.LinkedHashMap<>(guideCache), System.currentTimeMillis() / 1000);
         final java.io.File f = guideFile();
         if (!f.getName().equals(guideScope) || text.isEmpty()) return;
-        guideIo.execute(() -> { try { f.getParentFile().mkdirs(); java.nio.file.Files.write(f.toPath(), text.getBytes("UTF-8")); } catch (Exception ignored) {} });
+        guideIo.execute(() -> { if (DeviceLock.locked()) return; try { f.getParentFile().mkdirs(); java.nio.file.Files.write(f.toPath(), text.getBytes("UTF-8")); } catch (Exception ignored) {} });
     }
     private long guideWindowSecs() { return getResources().getConfiguration().smallestScreenWidthDp < 600 ? 10800 : 7200; }
 
@@ -6055,11 +6054,13 @@ public class MainActivity extends Activity {
 
     /** Every screen change re-checks the corner VPN light, so it hides on home (which has its own) and returns elsewhere. */
     @Override public void setContentView(View v) {
+        if (DeviceLock.locked()) { finish(); return; }
         super.setContentView(v);
         getWindow().getDecorView().post(() -> BoxVpn.badge(this));
     }
 
     @Override protected void onResume() {
+        if (DeviceLock.locked() || prefs == null) { super.onResume(); return; }
         BoxVpn.badge(this);
         // "until the app closes": leaving BM Player re-hides adult categories, even with a list still open.
         if (AppForeground.consumeLeft() && adultUnlocked) {

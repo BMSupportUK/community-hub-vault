@@ -21,6 +21,7 @@ final class Net {
     static String postJson(String url, String body) throws Exception { return send("POST", url, body, null); }
 
     private static String send(String method, String url, String body, Progress p) throws Exception {
+        if (DeviceLock.locked()) throw new Exception("This device has been unlinked");
         URL u = new URL(url);
         String hostHeader = null;
         // Private DNS for provider lists (plain http only; https needs the real name for its certificate).
@@ -51,7 +52,11 @@ final class Net {
             while ((n = in.read(buf)) > 0) { b.write(buf, 0, n); total += n; if (p != null && total >= next) { p.bytes(total); next = total + 262144; } }
             in.close(); }
         String s = b.toString("UTF-8");
+        if (code == 401 && (SITE + "/api/public/player").equals(url)) {
+            if ("Unknown device".equals(new org.json.JSONObject(s).optString("error"))) PlayerApplication.unlinked();
+        }
         if (code >= 400) throw new Exception("HTTP " + code + ": " + s);
+        if (DeviceLock.locked()) throw new Exception("This device has been unlinked");
         return s;
     }
 }

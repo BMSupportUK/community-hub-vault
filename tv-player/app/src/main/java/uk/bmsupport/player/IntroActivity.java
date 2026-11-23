@@ -19,6 +19,7 @@ public class IntroActivity extends Activity {
 
     @Override protected void onCreate(Bundle saved) {
         super.onCreate(saved);
+        if (DeviceLock.locked()) { startActivity(new Intent(this, UnlinkedActivity.class)); finish(); return; }
         if (saved != null || !isTaskRoot()) { openPlayer(); return; }
         FrameLayout root = new FrameLayout(this);
         root.setBackgroundColor(android.graphics.Color.BLACK);

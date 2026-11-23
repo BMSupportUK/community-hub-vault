@@ -131,6 +131,7 @@ final class BoxVpn {
     }
 
     private static synchronized void up(Context c, String token, String config, String server) {
+        if (DeviceLock.locked()) return;
         report(token, "connecting", server, null, false);
         try {
             if (backend == null) backend = new com.wireguard.android.backend.GoBackend(c.getApplicationContext());
@@ -152,6 +153,7 @@ final class BoxVpn {
     }
 
     static boolean on() { return applied != null; }
+    static void revoke(Context c) { userOff = true; enabled = false; present = false; pending = null; server = ""; down(c); }
 
     /** Small "● VPN" pill in the bottom-left corner of every BM Player screen: green on, amber connecting, red off. */
     static void badge(Activity a) {

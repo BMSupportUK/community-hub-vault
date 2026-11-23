@@ -13,6 +13,24 @@ import java.util.List;
 
 /** One inactivity timer across the app's menus, preview and built-in playback. */
 public final class PlayerApplication extends Application implements Application.ActivityLifecycleCallbacks {
+    private static PlayerApplication instance;
+    private boolean revoking;
+    static void unlinked() {
+        DeviceLock.revoke();
+        PlayerApplication app = instance;
+        if (app == null) return;
+        pinPassed = false;
+        app.ui.post(() -> {
+            if (app.revoking) return; app.revoking = true;
+            app.dismissPrompt(); app.annId = null; app.annMsg = null; app.majorItems = new org.json.JSONArray(); app.majorPics.clear();
+            if (app.majorPage != null) { app.majorPage.dismiss(); app.majorPage = null; }
+            for (Activity activity : new ArrayList<>(app.activities)) if (!(activity instanceof UnlinkedActivity)) activity.finish();
+            PreviewHandoff.drop(); PreviewHandoff.dropBack(); VlcPreview.forward.drop(); VlcPreview.backward.drop();
+            LiveDrawerData.set(new ArrayList<>(), new ArrayList<>()); LiveDrawerData.pendingPick = null;
+            app.startActivity(new Intent(app, UnlinkedActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK));
+            app.annIo.execute(() -> { BoxVpn.revoke(app); DeviceLock.wipe(); });
+        });
+    }
     /** True once the customer has entered their PIN (or has none) since the app opened. */
     static volatile boolean pinPassed = false;
 
@@ -53,6 +71,7 @@ public final class PlayerApplication extends Application implements Application.
     }
     @Override public void onCreate() {
         super.onCreate(); registerActivityLifecycleCallbacks(this);
+        instance = this; DeviceLock.init(this);
         // Keep the last crash so the next open can send it to BM Support as a ticket.
         final Thread.UncaughtExceptionHandler prev = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
@@ -68,6 +87,7 @@ public final class PlayerApplication extends Application implements Application.
         });
     }
     private void tick() {
+        if (DeviceLock.locked()) return;
         if (exiting) return;
         long now = SystemClock.elapsedRealtime();
         // The deadline belongs to the app, not a dialog/activity that Fire OS can destroy.
@@ -106,6 +126,7 @@ public final class PlayerApplication extends Application implements Application.
     }
     /** Brings the app's home screen forward (closing any playback above it) and opens the title sent from the website. */
     private void openWatch(org.json.JSONObject w) {
+        if (DeviceLock.locked()) return;
         String kind = w.optString("kind");
         if (!"film".equals(kind) && !"series".equals(kind)) return;
         android.content.Intent i = new android.content.Intent(this, MainActivity.class)
@@ -114,6 +135,7 @@ public final class PlayerApplication extends Application implements Application.
         startActivity(i);
     }
     private void fetchAnnouncement() {
+        if (DeviceLock.locked()) return;
         if (annBusy) return;
         final String token = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("token", "");
         if (token.isEmpty()) return;
@@ -133,7 +155,7 @@ public final class PlayerApplication extends Application implements Application.
                 ok = true;
             } catch (Throwable ignored) {}
             final boolean got = ok; final String fid = id, fmsg = msg;
-            ui.post(() -> { annBusy = false; if (got) { annId = fid; annMsg = fmsg; showAnnouncement(); } });
+            ui.post(() -> { annBusy = false; if (got && !DeviceLock.locked()) { annId = fid; annMsg = fmsg; showAnnouncement(); } });
         });
     }
     /** Called right after the account number unlocks the app, so members see the icon straight away. */
@@ -156,7 +178,7 @@ public final class PlayerApplication extends Application implements Application.
                 items = r.optJSONArray("items");
             } catch (Throwable ignored) {}
             final org.json.JSONArray got = items;
-            ui.post(() -> { majorBusy = false; if (got != null) majorItems = got; showMajorIcon(); });
+            ui.post(() -> { majorBusy = false; if (got != null && !DeviceLock.locked()) majorItems = got; showMajorIcon(); });
         });
     }
     private java.util.Set<String> majorSeen() {
@@ -171,7 +193,7 @@ public final class PlayerApplication extends Application implements Application.
     void refreshMajorIcon() { showMajorIcon(); showAnnouncement(); }
     private void showMajorIcon() {
         Activity a = foreground;
-        boolean want = a instanceof MainActivity && ((MainActivity) a).showsAnnouncementIcon() && !a.isFinishing() && MainActivity.isUnlocked()
+        boolean want = !DeviceLock.locked() && a instanceof MainActivity && ((MainActivity) a).showsAnnouncementIcon() && !a.isFinishing() && MainActivity.isUnlocked()
                 && !SecureLogin.field(getSharedPreferences("bmplayer", MODE_PRIVATE), "user").isEmpty();
         if (majorIcon != null && (!want || majorIcon.getContext() != a)) {
             if (majorBox != null && majorBox.getParent() instanceof android.view.ViewGroup) ((android.view.ViewGroup) majorBox.getParent()).removeView(majorBox);
@@ -358,7 +380,7 @@ public final class PlayerApplication extends Application implements Application.
     private void showAnnouncement() {
         Activity a = foreground;
         String closed = getSharedPreferences("bmplayer", MODE_PRIVATE).getString("ann_closed", "");
-        boolean want = annId != null && !annId.equals(closed) && a != null && !a.isFinishing()
+        boolean want = !DeviceLock.locked() && annId != null && !annId.equals(closed) && a != null && !a.isFinishing()
                 && (!(a instanceof MainActivity) || ((MainActivity) a).signedInScreen())
                 && PlayerApplication.pinPassed && MainActivity.isUnlocked();
         if (banner != null && (!want || banner.getContext() != a || !banner.getTag().equals(annId + annMsg))) {
@@ -463,10 +485,15 @@ public final class PlayerApplication extends Application implements Application.
             InactivityAlarm.arm(this, InactivityPolicy.closeAt(lastInput));
         }
         activities.add(a);
+        if (DeviceLock.locked() && !(a instanceof UnlinkedActivity)) { a.finish(); return; }
         if (!(a instanceof IntroActivity)) FrameRateMatch.prefer50(a);
     }
     @Override public void onActivityResumed(Activity a) {
         foreground = a;
+        if (DeviceLock.locked()) {
+            if (!(a instanceof UnlinkedActivity)) { a.startActivity(new Intent(a, UnlinkedActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)); a.finish(); }
+            showAnnouncement(); showMajorIcon(); return;
+        }
         tick();
         if (exiting) return;
         showAnnouncement(); showMajorIcon();
@@ -483,6 +510,7 @@ public final class PlayerApplication extends Application implements Application.
     }
     @Override public void onActivityDestroyed(Activity a) {
         activities.remove(a);
+        if (DeviceLock.locked()) annIo.execute(DeviceLock::wipe);
         if (banner != null && banner.getContext() == a) banner = null;
         if (foreground == a) foreground = null;
         if (prompt != null && promptOwner == a) dismissPrompt();

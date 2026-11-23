@@ -9,7 +9,7 @@ final class WatchProgress {
     }
     static void store(android.content.SharedPreferences prefs, android.content.SharedPreferences.Editor edit,
                       String key, long position, long duration) {
-        if (key == null || duration <= 0) return;
+        if (DeviceLock.locked() || key == null || duration <= 0) return;
         boolean watched = remembered(prefs, key) || finished(position, duration);
         edit.putLong(key + ":position", Math.max(0, position)).putLong(key + ":duration", duration)
                 .putBoolean(key + ":watched", watched);

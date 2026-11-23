@@ -1304,6 +1304,7 @@ public class PlayerActivity extends Activity {
 
     /** Backing out of a live channel keeps it playing for the guide preview: no reconnect, no rebuffer. */
     private void handBackToGuide() {
+        if (DeviceLock.locked()) return;
         if (player == null || handedOver || !everReady || !"live".equals(kind()) || getIntent().hasExtra("catchup_prefix")) return;
         int st = player.getPlaybackState();
         if (st != Player.STATE_READY && st != Player.STATE_BUFFERING) return;

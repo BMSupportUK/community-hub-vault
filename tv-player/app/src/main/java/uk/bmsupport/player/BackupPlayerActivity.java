@@ -616,7 +616,7 @@ public class BackupPlayerActivity extends Activity {
         super.onPause();
         saveProgress();
         // Return ownership before the guide resumes; background exits release normally.
-        if (isFinishing() && isLive() && started && mp != null && LiveDrawerData.pendingPick == null) {
+        if (!DeviceLock.locked() && isFinishing() && isLive() && started && mp != null && LiveDrawerData.pendingPick == null) {
             mp.setEventListener(null);
             if (carriedStage == null) mp.detachViews();
             if (paused) mp.play();
@@ -633,6 +633,7 @@ public class BackupPlayerActivity extends Activity {
     }
 
     private void saveProgress() {
+        if (DeviceLock.locked()) return;
         String key = getIntent().getStringExtra("progress_key");
         if (mp == null || key == null || isLive()) return;
         long pos = mp.getTime(), len = mp.getLength();
