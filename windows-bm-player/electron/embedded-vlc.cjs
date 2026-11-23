@@ -97,11 +97,11 @@ class EmbeddedVlc {
  // libVLC ignores this before the stream's sound exists and resets it on new media, so a short timer re-applies it.
  volume(index,value){const s=this.surfaces.get(index);if(!s)return;s.wantVolume=value;this.applyVolume(s);this.keepAudio();}
  applyVolume(s){if(s.wantVolume==null)return;try{
-  // Quiet screens switch their sound track off: Windows' normal sound shares one volume across the app, so per-player mute alone let every screen play together.
-  if(s.wantVolume<=0){const cur=this.api.audio_get_track(s.player);if(cur!==-1){s.audioId=cur;this.api.audio_set_track(s.player,-1);}if(!this.api.audio_get_mute(s.player))this.api.audio_set_mute(s.player,1);if(this.api.audio_get_volume(s.player)!==0)this.api.audio_set_volume(s.player,0);return;}
+  // Windows' normal sound (WASAPI) shares ONE mute/volume across every player in the app. Quiet screens therefore only
+  // switch their sound track off and never touch mute/volume; otherwise a quiet screen silenced the picked one.
+  if(s.wantVolume<=0){const cur=this.api.audio_get_track(s.player);if(cur!==-1){s.audioId=cur;this.api.audio_set_track(s.player,-1);}return;}
   if(this.api.audio_get_track(s.player)===-1){let ids=[];try{ids=this.trackRows(s.index,'audio').map(t=>t.id);}catch{}const id=ids.includes(s.audioId)?s.audioId:(ids[0]??s.audioId);if(id!=null)this.api.audio_set_track(s.player,id);}
-  if(s.wantVolume<=0){if(!this.api.audio_get_mute(s.player))this.api.audio_set_mute(s.player,1);if(this.api.audio_get_volume(s.player)!==0)this.api.audio_set_volume(s.player,0);return;}
-  if(this.api.audio_get_mute(s.player))this.api.audio_set_mute(s.player,0);if(this.api.audio_get_volume(s.player)!==s.wantVolume)this.api.audio_set_volume(s.player,s.wantVolume);
+  if(this.api.audio_get_mute(s.player)===1)this.api.audio_set_mute(s.player,0);if(this.api.audio_get_volume(s.player)!==s.wantVolume)this.api.audio_set_volume(s.player,s.wantVolume);
  }catch{}}
  keepAudio(){if(this.audioTimer)return;this.audioTimer=setInterval(()=>{if(!this.surfaces.size){clearInterval(this.audioTimer);this.audioTimer=null;return;}for(const s of this.surfaces.values())this.applyVolume(s);},400);this.audioTimer.unref?.();}
  /** Real subtitle track ids (VLC's list also holds a "Disable" entry with id -1). */

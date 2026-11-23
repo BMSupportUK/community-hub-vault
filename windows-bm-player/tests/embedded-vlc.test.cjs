@@ -34,7 +34,7 @@ test('embedded playback owns its video window and releases playback before destr
  }finally{if(old===undefined)delete process.env.VLC_PLUGIN_PATH;else process.env.VLC_PLUGIN_PATH=old;}
 });
 test('quiet multi-screen panes switch their sound track off so only the picked screen is heard',()=>{
- const calls=[];const mute={},vol={},track={};let args=[];
+ const calls=[];const session={mute:0,vol:100},track={};let args=[];
  const koffi={load:()=>({func:(...a)=>{
   const name=a[0]==='__stdcall'?a[1]:a[0];
   return (...values)=>{
@@ -45,10 +45,10 @@ test('quiet multi-screen panes switch their sound track off so only the picked s
    if(['libvlc_media_new_location','CreateWindowExW'].includes(name))return 1n;
    if(name==='libvlc_audio_get_track')return track[values[0]]??1;
    if(name==='libvlc_audio_set_track'){track[values[0]]=values[1];return 0;}
-   if(name==='libvlc_audio_get_mute')return mute[values[0]]??0;
-   if(name==='libvlc_audio_set_mute'){mute[values[0]]=values[1];return;}
-   if(name==='libvlc_audio_get_volume')return vol[values[0]]??100;
-   if(name==='libvlc_audio_set_volume'){vol[values[0]]=values[1];return 0;}
+   if(name==='libvlc_audio_get_mute')return session.mute;
+   if(name==='libvlc_audio_set_mute'){session.mute=values[1];return;}
+   if(name==='libvlc_audio_get_volume')return session.vol;
+   if(name==='libvlc_audio_set_volume'){session.vol=values[1];return 0;}
    return 0;
   };
  }})};
@@ -58,15 +58,13 @@ test('quiet multi-screen panes switch their sound track off so only the picked s
  engine.play(0,'https://example.invalid/a.ts',{});
  engine.play(1,'https://example.invalid/b.ts',{});
  const a=engine.surfaces.get(0).player,b=engine.surfaces.get(1).player;
- expect([mute[a]??0,vol[a]??100]).toEqual([0,100]);
- expect([mute[b],vol[b],track[b]]).toEqual([1,0,-1]);
+ // Windows sound is shared by the whole app: quiet screens must never mute it.
+ expect([session.mute,session.vol,track[a]??1,track[b]]).toEqual([0,100,1,-1]);
  // Click screen 2: it gets the sound, screen 1 goes quiet.
  engine.volume(1,100);engine.volume(0,0);
- expect([mute[b],vol[b]]).toEqual([0,100]);
- expect([mute[a],vol[a],track[a]]).toEqual([1,0,-1]);
- expect(track[b]).toBe(1);
+ expect([session.mute,session.vol,track[a],track[b]]).toEqual([0,100,-1,1]);
  // A reconnect on screen 2 keeps its sound.
  engine.play(1,'https://example.invalid/b2.ts',{});
- expect([mute[b],vol[b]]).toEqual([0,100]);
+ expect([session.mute,session.vol,track[a],track[b]]).toEqual([0,100,-1,1]);
  engine.close();
 });
