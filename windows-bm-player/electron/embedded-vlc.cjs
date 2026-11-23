@@ -97,7 +97,9 @@ class EmbeddedVlc {
  // libVLC ignores this before the stream's sound exists and resets it on new media, so a short timer re-applies it.
  volume(index,value){const s=this.surfaces.get(index);if(!s)return;s.wantVolume=value;this.applyVolume(s);this.keepAudio();}
  applyVolume(s){if(s.wantVolume==null)return;try{
-  if(this.api.audio_get_track(s.player)===-1){const ids=this.trackRows(s.index,'audio').map(t=>t.id);const id=ids.includes(s.audioId)?s.audioId:ids[0];if(id!=null)this.api.audio_set_track(s.player,id);}
+  // Quiet screens switch their sound track off: Windows' normal sound shares one volume across the app, so per-player mute alone let every screen play together.
+  if(s.wantVolume<=0){const cur=this.api.audio_get_track(s.player);if(cur!==-1){s.audioId=cur;this.api.audio_set_track(s.player,-1);}if(!this.api.audio_get_mute(s.player))this.api.audio_set_mute(s.player,1);if(this.api.audio_get_volume(s.player)!==0)this.api.audio_set_volume(s.player,0);return;}
+  if(this.api.audio_get_track(s.player)===-1){let ids=[];try{ids=this.trackRows(s.index,'audio').map(t=>t.id);}catch{}const id=ids.includes(s.audioId)?s.audioId:(ids[0]??s.audioId);if(id!=null)this.api.audio_set_track(s.player,id);}
   if(s.wantVolume<=0){if(!this.api.audio_get_mute(s.player))this.api.audio_set_mute(s.player,1);if(this.api.audio_get_volume(s.player)!==0)this.api.audio_set_volume(s.player,0);return;}
   if(this.api.audio_get_mute(s.player))this.api.audio_set_mute(s.player,0);if(this.api.audio_get_volume(s.player)!==s.wantVolume)this.api.audio_set_volume(s.player,s.wantVolume);
  }catch{}}

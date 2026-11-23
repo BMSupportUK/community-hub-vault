@@ -7,7 +7,7 @@
 - Bundled libVLC runs in-process through the pinned Windows x64 Koffi bridge and renders to BM-owned child HWNDs; never spawn external VLC or expose provider URLs/native handles to the renderer. Validated normalised surface rectangles keep previews, playback controls and dialogs separate.
 - The installer closes BM Player (taskkill + path-matched Stop-Process) and confirms the DLLs are writable before copying, asking Retry/Cancel if still locked.
 - Sound booster levels live in sound-boost.cjs (shared with Mac); main.cjs applies boosted libVLC volume only to the audible pane, Mac's <video> engine uses a Web Audio gain node above 100.
-- Windows libVLC uses `--aout=mmdevice,directsound,any` (DirectSound alone left some PCs silent); quiet multi-screen panes are muted per player at volume 0 and keep their sound track, so picking a screen just unmutes it.
+- Windows libVLC uses `--aout=mmdevice,directsound,any` (DirectSound alone left some PCs silent); quiet multi-screen panes are muted and have their sound track switched off (mmdevice shares one volume, so mute alone let every screen play); picking a screen restores its track.
 - Full screen unmaximises and sizes the window to its whole monitor before setFullScreen, re-maximising on exit; a maximised window otherwise left the taskbar/borders.
 - Windows demanding live feeds use hardware-auto decoding; MonoMax, catch-up and unrelated feeds keep software protection. Native surfaces retain the verified decode context on reconnect to avoid reverting demanding feeds to CPU-only decoding.
 - Native live freeze recovery uses displayed-picture counters, never the MPEG-TS playback clock, and waits for the live cushion; VLC can display moving pictures while its live clock remains zero.
