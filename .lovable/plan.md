@@ -1,22 +1,20 @@
-# Unlinked devices lock themselves
+# Windows BM Player: no sound and full screen not filling the PC
 
-## What happens now
-When you remove a device on the website, the app on that device is already turned away on its next check-in. It forgets the login and goes back to the link-code screen. But the saved favourites, recently watched, watched progress, downloaded channel/film lists and settings stay on the device.
+## What I found so far
+- Sound: each screen keeps its own sound setting. The first screen is meant to start at full volume and any extra screens start silent. Moving from the small preview to full screen reuses the same running channel, so if the preview started silent, the full-screen picture may keep that silence. This is my best guess, not confirmed yet.
+- Full screen: the ⛶ button and the F key ask Windows to make the app full screen. The app opens maximised first, and on Windows a maximised window sometimes doesn't fill the whole screen, leaving the taskbar or a border showing. Not confirmed yet.
 
-## What will change
-When a device is unlinked (by you, by the customer, or after 60 days unused):
-1. **Everything is wiped:** saved logins, favourites, recently watched, watch progress, saved channel/film/series lists, guide data, category order, parental PIN, VPN details and reminders.
-2. **Playback stops at once** if something is playing.
-3. **A locked screen appears:** "This device has been unlinked from BM Support". It has no menus and nothing plays. One **Link this device again** button gives a fresh link code, so the owner can get back in only through their website account.
-4. It applies on the next check-in, which is usually within a minute, including while the app is in the background on the box.
+## Plan
+1. Check your Windows player's reports from today for sound and picture-size details, so I know the real cause before changing anything.
+2. Sound fix: whenever a single channel plays, or the preview opens into full screen, that screen always gets sound at your chosen volume. Silence stays only for the extra screens in multi-screen.
+3. Full-screen fix: un-maximise the window before going full screen, then make the watch screen fill the whole monitor (edge to edge, over the taskbar). Restore the maximised window when you leave full screen.
+4. Add tests for both rules: a single playing channel is never silent, and full screen covers the whole monitor size.
+5. Run all Windows player tests, then release Windows 0.4.130.
 
-Applies to Android/Fire TV box and phone, Windows and Mac.
-
-## Not possible
-The app can't delete itself. Devices don't allow that without the owner pressing OK.
+## Not checked
+I can't play sound or test full screen on a real Windows PC, so you'll need to confirm both on yours after the release.
 
 ## Technical details
-- Android: in the MainActivity 401 handler, also stop PlayerActivity/BackupPlayerActivity, clear every SharedPreferences file plus cache and files dirs (keep only the intro film asset), then show a new "unlinked" screen whose button registers a new device token and opens the link screen. Also handle 401 from the announcement/poll Checkin paths.
-- Desktop (Windows/Mac): main process on 401 clears the saved store, catalogue/EPG caches and parental/VPN state, stops the engines, and the renderer shows an UnlinkedScreen with the same button.
-- Add a small test for each: a 401 wipes the stored items and shows the unlinked state.
-- Releases after approval: box 6.45, Windows 0.4.129, Mac 0.1.129. No website change needed.
+- `electron/embedded-vlc.cjs`: initial `wantVolume` (index 0 → 100) and the reused-session path in `main.cjs` play IPC; force audible volume for single-screen/preview→full-screen.
+- `electron/main.cjs` `fullscreen` IPC: `unmaximize()` before `setFullScreen(true)`, re-`maximize()` on exit; verify `.watch-screen.is-fullscreen` uses 100vw/100vh with no header offset.
+- Mac is unaffected (different engine) and won't be changed.
