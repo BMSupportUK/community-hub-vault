@@ -1,16 +1,17 @@
 import { test, expect } from "bun:test";
-import { awayWindow, awayIcon, awayElapsedLabel } from "../src/lib/staff-away";
-import { Toilet, Cigarette, Users, Moon } from "lucide-react";
+import { awayWindow, awayIcon, awayElapsedLabel, awayReasonsFor } from "../src/lib/staff-away";
+import { Car, Cigarette, Moon, Toilet, Users } from "lucide-react";
 
 test("each Away reason has its own icon", () => {
   expect(awayIcon("Toilet Break")).toBe(Toilet);
   expect(awayIcon("Smoking Break")).toBe(Cigarette);
   expect(awayIcon("Meeting")).toBe(Users);
+  expect(awayIcon("Away from the office")).toBe(Car);
   expect(awayIcon("Outside Of Office Hours")).toBe(Moon);
   expect(awayIcon(null)).toBe(Moon);
 });
 
-for (const reason of ["Toilet Break", "Smoking Break", "Meeting"] as const) {
+for (const reason of ["Toilet Break", "Smoking Break", "Meeting", "Away from the office"] as const) {
   test(`${reason} starts now and has no automatic end`, () => {
     expect(awayWindow(reason, 1000, 2000, 3000)).toEqual({ starts_at: new Date(3000).toISOString(), ends_at: null });
   });
@@ -31,5 +32,11 @@ test("the away timer counts up live in seconds, minutes or hours", () => {
 import { awayReasonsFor } from "../src/lib/staff-away";
 test("after a shift ends only Outside Of Office Hours is allowed", () => {
   expect(awayReasonsFor(false)).toEqual(["Outside Of Office Hours"]);
-  expect(awayReasonsFor(true)).toHaveLength(4);
+  expect(awayReasonsFor(true)).toEqual([
+    "Toilet Break",
+    "Smoking Break",
+    "Meeting",
+    "Away from the office",
+    "Outside Of Office Hours",
+  ]);
 });

@@ -2780,6 +2780,13 @@
       "when": 1795361162667,
       "tag": "0396_announcement_pictures_read",
       "breakpoints": true
+    },
+    {
+      "idx": 397,
+      "version": "7",
+      "when": 1795468981079,
+      "tag": "0397_away_from_office_reason",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
-import { Cigarette, Moon, Toilet, Users } from "lucide-react";
+import { Car, Cigarette, Moon, Toilet, Users } from "lucide-react";
 
-export const AWAY_REASONS = ["Toilet Break", "Smoking Break", "Meeting", "Outside Of Office Hours"] as const;
+export const AWAY_REASONS = ["Toilet Break", "Smoking Break", "Meeting", "Away from the office", "Outside Of Office Hours"] as const;
 export type AwayReason = (typeof AWAY_REASONS)[number];
 
 /** Each Away reason gets its own icon, the same way break kinds do. */
@@ -8,6 +8,7 @@ export function awayIcon(reason: string | null | undefined) {
   if (reason === "Toilet Break") return Toilet;
   if (reason === "Smoking Break") return Cigarette;
   if (reason === "Meeting") return Users;
+  if (reason === "Away from the office") return Car;
   return Moon; // Outside Of Office Hours and anything unknown keeps the moon.
 }
 /** Off shift, only Outside Of Office Hours may be chosen. */
