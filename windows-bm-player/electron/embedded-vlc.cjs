@@ -102,7 +102,9 @@ class EmbeddedVlc {
   // Windows' normal sound (WASAPI) shares ONE mute/volume across every player in the app. Quiet screens therefore only
   // switch their sound track off and never touch mute/volume; otherwise a quiet screen silenced the picked one.
   if(s.ds){if(this.api.audio_get_track(s.player)===-1&&s.audioId!=null)this.api.audio_set_track(s.player,s.audioId);const m=s.wantVolume<=0?1:0;if(this.api.audio_get_mute(s.player)!==m)this.api.audio_set_mute(s.player,m);const v=Math.max(0,s.wantVolume);if(this.api.audio_get_volume(s.player)!==v)this.api.audio_set_volume(s.player,v);return;}
-  if(s.wantVolume<=0){const cur=this.api.audio_get_track(s.player);if(cur!==-1){s.audioId=cur;this.api.audio_set_track(s.player,-1);}return;}
+  // A screen started alone stays on normal Windows sound when more screens are added (those use DirectSound), so it is the
+  // only player on that shared mute: going quiet mutes it instead of switching its live track off, which never came back.
+  if(s.wantVolume<=0){if(this.api.audio_get_mute(s.player)!==1)this.api.audio_set_mute(s.player,1);return;}
   if(this.api.audio_get_track(s.player)===-1){let ids=[];try{ids=this.trackRows(s.index,'audio').map(t=>t.id);}catch{}const id=ids.includes(s.audioId)?s.audioId:(ids[0]??s.audioId);if(id!=null)this.api.audio_set_track(s.player,id);}
   if(this.api.audio_get_mute(s.player)===1)this.api.audio_set_mute(s.player,0);if(this.api.audio_get_volume(s.player)!==s.wantVolume)this.api.audio_set_volume(s.player,s.wantVolume);
  }catch{}}

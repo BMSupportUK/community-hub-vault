@@ -33,41 +33,6 @@ test('embedded playback owns its video window and releases playback before destr
   expect(names.indexOf('DestroyWindow')).toBeLessThan(names.lastIndexOf('libvlc_release'));
  }finally{if(old===undefined)delete process.env.VLC_PLUGIN_PATH;else process.env.VLC_PLUGIN_PATH=old;}
 });
-test('quiet multi-screen panes switch their sound track off so only the picked screen is heard',()=>{
- const calls=[];const session={mute:0,vol:100},track={};let args=[];
- const koffi={load:()=>({func:(...a)=>{
-  const name=a[0]==='__stdcall'?a[1]:a[0];
-  return (...values)=>{
-   calls.push({name,values});
-   if(name==='GetClientRect'){values[1].writeInt32LE(1280,8);values[1].writeInt32LE(900,12);return true;}
-   if(name==='libvlc_new'){args=values[1];return 1n;}
-   if(name==='libvlc_media_player_new'){return BigInt(calls.filter(c=>c.name==='libvlc_media_player_new').length+10);}
-   if(['libvlc_media_new_location','CreateWindowExW'].includes(name))return 1n;
-   if(name==='libvlc_audio_get_track')return track[values[0]]??1;
-   if(name==='libvlc_audio_set_track'){track[values[0]]=values[1];return 0;}
-   if(name==='libvlc_audio_get_mute')return session.mute;
-   if(name==='libvlc_audio_set_mute'){session.mute=values[1];return;}
-   if(name==='libvlc_audio_get_volume')return session.vol;
-   if(name==='libvlc_audio_set_volume'){session.vol=values[1];return 0;}
-   return 0;
-  };
- }})};
- const handle=Buffer.alloc(8);handle.writeBigUInt64LE(42n);
- const engine=new EmbeddedVlc({getNativeWindowHandle:()=>handle},{koffi,root:'/tmp/test-vlc'});
- expect(args).toContain('--aout=mmdevice,directsound,any');expect(args).not.toContain('--aout=directsound');
- engine.play(0,'https://example.invalid/a.ts',{});
- engine.play(1,'https://example.invalid/b.ts',{});
- const a=engine.surfaces.get(0).player,b=engine.surfaces.get(1).player;
- // Windows sound is shared by the whole app: quiet screens must never mute it.
- expect([session.mute,session.vol,track[a]??1,track[b]]).toEqual([0,100,1,-1]);
- // Click screen 2: it gets the sound, screen 1 goes quiet.
- engine.volume(1,100);engine.volume(0,0);
- expect([session.mute,session.vol,track[a],track[b]]).toEqual([0,100,-1,1]);
- // A reconnect on screen 2 keeps its sound.
- engine.play(1,'https://example.invalid/b2.ts',{});
- expect([session.mute,session.vol,track[a],track[b]]).toEqual([0,100,-1,1]);
- engine.close();
-});
 
 test('multi-screen panes each get their own DirectSound mute so a re-picked screen is heard again',()=>{
  const out={},mute={},vol={};
@@ -89,5 +54,27 @@ test('multi-screen panes each get their own DirectSound mute so a re-picked scre
  expect([mute[a]??0,mute[b]]).toEqual([0,1]);
  engine.volume(1,100);engine.volume(0,0);expect([mute[a],mute[b]]).toEqual([1,0]);
  engine.volume(0,100);engine.volume(1,0);expect([mute[a],mute[b],vol[a]]).toEqual([0,1,100]);
+ engine.close();
+});
+
+test('a screen started alone, then joined by a second screen, is heard again when picked back',()=>{
+ const out={},mute={},track={};let shared=0;
+ const koffi={load:()=>({func:(...a)=>{const name=a[0]==='__stdcall'?a[1]:a[0];let n=10n;return (...values)=>{
+  if(name==='GetClientRect'){values[1].writeInt32LE(1280,8);values[1].writeInt32LE(900,12);return true;}
+  if(name==='libvlc_new')return 1n;if(name==='libvlc_media_player_new')return n++;
+  if(['libvlc_media_new_location','CreateWindowExW'].includes(name))return 1n;
+  if(name==='libvlc_audio_output_set'){out[values[0]]=values[1];return 0;}
+  if(name==='libvlc_audio_get_track')return track[values[0]]??1;if(name==='libvlc_audio_set_track'){track[values[0]]=values[1];return 0;}
+  const ds=v=>out[v]==='directsound';
+  if(name==='libvlc_audio_get_mute')return ds(values[0])?(mute[values[0]]??0):shared;
+  if(name==='libvlc_audio_set_mute'){if(ds(values[0]))mute[values[0]]=values[1];else shared=values[1];return;}
+  if(name==='libvlc_audio_get_volume')return 100;return 0;};}})};
+ const handle=Buffer.alloc(8);handle.writeBigUInt64LE(42n);
+ const engine=new EmbeddedVlc({getNativeWindowHandle:()=>handle},{koffi,root:'/tmp/test-vlc'});
+ engine.play(0,'https://example.invalid/a.ts',{kind:'live',name:'A',multi:false});
+ engine.play(1,'https://example.invalid/b.ts',{kind:'live',name:'B',multi:true});
+ const a=engine.surfaces.get(0).player,b=engine.surfaces.get(1).player;
+ engine.volume(1,100);engine.volume(0,0);expect([shared,mute[b]]).toEqual([1,0]);
+ engine.volume(0,100);engine.volume(1,0);expect([shared,mute[b],track[a]??1]).toEqual([0,1,1]);
  engine.close();
 });
