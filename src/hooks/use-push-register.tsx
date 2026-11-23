@@ -93,7 +93,7 @@ export function usePushRegister() {
         // backgrounded or closed. Channel IDs are bumped whenever the sound
         // changes because Android keeps a channel's original sound forever.
         await PushNotifications.createChannel({
-          id: "bm_support_ticket_replies_v5",
+          id: "bm_support_ticket_replies_v6",
           name: "Support ticket replies",
           description: "Ding alert when a customer replies to an assigned ticket",
           importance: 4,
@@ -108,7 +108,7 @@ export function usePushRegister() {
         // received ticket reply into a native local notification so the exact
         // bundled ding is used whether the app is open, backgrounded or closed.
         await LocalNotifications.createChannel({
-          id: "bm_support_ticket_replies_v5",
+          id: "bm_support_ticket_replies_v6",
           name: "Support ticket replies",
           description: "Ding alert when a customer replies to an assigned ticket",
           importance: 5,
@@ -118,7 +118,7 @@ export function usePushRegister() {
         });
 
         await PushNotifications.createChannel({
-          id: "bm_support_mentions_v4",
+          id: "bm_support_mentions_v5",
           name: "Mentions",
           description: "Ding alert when somebody mentions you",
           importance: 4,
@@ -129,7 +129,7 @@ export function usePushRegister() {
         });
 
         await LocalNotifications.createChannel({
-          id: "bm_support_mentions_v4",
+          id: "bm_support_mentions_v5",
           name: "Mentions",
           description: "Ding alert when somebody mentions you",
           importance: 5,
@@ -141,13 +141,13 @@ export function usePushRegister() {
         // One distinct ding per alert type; IDs bumped from the spoken
         // versions so Android picks up the new sounds.
         const dingChannels = [
-          { id: "bm_support_tickets_v6", name: "New support tickets", sound: "ticket_tone.mp3" },
-          { id: "bm_support_shift_start_v7", name: "Shift starting", sound: "shift_start_tone.mp3" },
-          { id: "bm_support_shift_end_v7", name: "Shift ending", sound: "shift_end_tone.mp3" },
-          { id: "bm_support_outage_v5", name: "Service outage", sound: "outage_tone.mp3" },
-          { id: "bm_support_outage_resolved_v5", name: "Outage resolved", sound: "outage_resolved_tone.mp3" },
-          { id: "bm_support_orders_v4", name: "New orders", sound: "order_tone.mp3" },
-          { id: "bm_support_payments_v4", name: "Payments received", sound: "payment_tone.mp3" },
+          { id: "bm_support_tickets_v7", name: "New support tickets", sound: "ticket_tone.mp3" },
+          { id: "bm_support_shift_start_v8", name: "Shift starting", sound: "shift_start_tone.mp3" },
+          { id: "bm_support_shift_end_v8", name: "Shift ending", sound: "shift_end_tone.mp3" },
+          { id: "bm_support_outage_v6", name: "Service outage", sound: "outage_tone.mp3" },
+          { id: "bm_support_outage_resolved_v6", name: "Outage resolved", sound: "outage_resolved_tone.mp3" },
+          { id: "bm_support_orders_v5", name: "New orders", sound: "order_tone.mp3" },
+          { id: "bm_support_payments_v5", name: "Payments received", sound: "payment_tone.mp3" },
         ];
         for (const c of dingChannels) {
           await PushNotifications.createChannel({
