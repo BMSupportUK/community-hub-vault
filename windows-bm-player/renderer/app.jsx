@@ -163,7 +163,7 @@ async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[
  async function reminder(item,p){const old=state.reminders.find(r=>r.id===`${item.id}:${p.start}`);setModal({type:'reminder-confirm',item,p,old});}
  async function changeReminder(m){if(m.old){const s=await act(()=>bm.reminder({remove:true,id:m.old.id}));if(s)setState(s);}else{const s=await act(()=>bm.reminder({...m.p,item:m.item}));if(s)setState(s);}setModal(null);}
  const inApp=!intro&&linkGo&&!!state&&!!state.linked&&!state.locked&&!!state.signedIn;useEffect(()=>{setInApp(inApp);},[inApp]);
- if(state?.unlinked)return <main className="link-screen"><h1>This device has been unlinked</h1></main>;
+ if(state?.unlinked)return <main className="link-screen"><h1>This device has been unlinked</h1><button className="primary" autoFocus onClick={()=>bm.relink().then(next=>{revoked.current=false;setState(next);}).catch(e=>toast(e.message||'Something went wrong. Try again.'))}>Link this device again</button>{notice&&<p role="alert">{notice}</p>}</main>;
  if(intro)return <main className="opening"><video src="player-intro.mp4" autoPlay playsInline onEnded={()=>setIntro(false)} onError={()=>setIntro(false)} aria-label="BM Player family opening intro"/></main>;
  if(!state)return <main className="link-screen"><img src="logo.png" width="90"/><h1>BM Player</h1><p>Connecting…</p></main>;
  if(!state.linked||state.locked)return <SigninScreen bm={bm} platformName={state.platformName} code={state.code}/>;

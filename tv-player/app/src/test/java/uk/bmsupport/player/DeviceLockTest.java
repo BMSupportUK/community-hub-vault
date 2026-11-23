@@ -33,4 +33,11 @@ public class DeviceLockTest {
         DeviceLock.wipe(); assertTrue(context.getSharedPreferences("bmplayer", 0).getAll().isEmpty());
         assertTrue(DeviceLock.locked());
     }
+    @Test public void linkAgainClearsTheLockWithNoOldTokenLeft() {
+        Context context = RuntimeEnvironment.getApplication(); DeviceLock.init(context);
+        context.getSharedPreferences("bmplayer", 0).edit().putString("token", "old-device").commit();
+        DeviceLock.revoke(); DeviceLock.relink();
+        assertFalse(DeviceLock.locked());
+        assertNull(context.getSharedPreferences("bmplayer", 0).getString("token", null));
+    }
 }

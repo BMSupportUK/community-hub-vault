@@ -13,6 +13,12 @@ final class DeviceLock {
         app.getSharedPreferences("bm_device_lock", Context.MODE_PRIVATE).edit().putBoolean("unlinked", true).commit();
         wipe();
     }
+    /** The user's own "Link this device again": data is already wiped, so clearing the marker starts a brand-new registration and code. */
+    static void relink() {
+        if (app == null) return;
+        wipe();
+        app.getSharedPreferences("bm_device_lock", Context.MODE_PRIVATE).edit().remove("unlinked").commit();
+    }
     static void wipe() {
         if (app == null || !locked()) return;
         app.getSharedPreferences("bmplayer", Context.MODE_PRIVATE).edit().clear().commit();
