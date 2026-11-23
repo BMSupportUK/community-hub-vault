@@ -19,3 +19,4 @@
 - Before uploading an installer, wait for makensis to exit, check the file size equals its "Total size" line and run a 7-Zip test; never let two makensis runs write the same output file (that shipped a corrupt 0.4.105).
 - Approved Windows releases are packaged with @electron/packager and the NSIS script as per-user installers; upload the executable before registering its separate Windows app-build identity, and serve it through the logged Windows download endpoint, never the Android updater.
 - Native video panes too small to draw into (<16px) are hidden at their last size, never squashed: libVLC's output dies at ~0px during preview→full-screen relayout and forced a reconnect.
+- Lost-sound reopen (stream-recovery soundLost) skips quiet multi-screen panes (session.quiet = not the audible pane); silencing a pane on purpose otherwise restarted its channel on every screen switch.

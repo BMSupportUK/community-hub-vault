@@ -57,7 +57,8 @@ function frozen(session, state, position, now, status = {}) {
 const SILENT_MS = 5000, MAX_SILENT_REOPENS = 3;
 /** Picture moving but no new sound for 5s on live: reopen to pick the audio back up (3 per channel, same as Android LiveReconnect.soundLost). */
 function soundLost(session, status, now) {
-  if (session.item?.kind !== 'live' || status.state !== 3) { session.muteAt = 0; session.muteAudio = undefined; return false; }
+  // A quiet multi-screen pane plays no sound on purpose; reopening it restarted the channel every time you switched screens.
+  if (session.item?.kind !== 'live' || status.state !== 3 || session.quiet) { session.muteAt = 0; session.muteAudio = undefined; return false; }
   const audio = Number(status.audioBuffers), pics = Number(status.videoFrames) > 0 ? Number(status.videoFrames) : Number(status.position) || 0;
   if (!Number.isFinite(audio) || audio < 0) return false;
   const picsMoving = session.mutePics !== undefined && pics !== session.mutePics; session.mutePics = pics;
