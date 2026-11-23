@@ -71,9 +71,9 @@ class EmbeddedVlc {
   for(const row of rows||[]){
    const s=this.surfaces.get(row.index);if(!s)continue;
    shown.add(row.index);
-   if(!row.visible){this.show(s.hwnd,0);continue;}
-   const x=Math.round(row.x*width),y=Math.round(row.y*height),w=Math.round(row.width*width),h=Math.round(row.height*height);
-   this.move(s.hwnd,null,x,y,w,h,0x0010|0x0040);this.show(s.hwnd,5);
+   const box=require('../playback-core.cjs').paneBox(row,width,height);
+   if(!box){this.show(s.hwnd,0);continue;} // hide but keep the last real size
+   this.move(s.hwnd,null,box.x,box.y,box.w,box.h,0x0010|0x0040);this.show(s.hwnd,5);
   }
   for(const [index,s]of this.surfaces)if(!shown.has(index))this.show(s.hwnd,0);
  }
