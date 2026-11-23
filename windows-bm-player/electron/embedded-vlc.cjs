@@ -26,7 +26,7 @@ class EmbeddedVlc {
   this.api=Object.fromEntries(Object.entries(api).map(([name,[ret,args]])=>[name,this.dll.func('libvlc_'+name,ret,args)]));
   this.api.media_player_get_media=this.dll.func('libvlc_media_player_get_media','void *',['void *']);
   this.api.media_get_stats=this.dll.func('libvlc_media_get_stats','int',['void *','void *']);
-  // Normal Windows sound (WASAPI) first: DirectSound played nothing on some PCs. DirectSound/any remain fallbacks; quiet multi-screen panes are muted per player.
+  // Normal Windows sound (WASAPI) first: DirectSound played nothing on some PCs. DirectSound/any remain fallbacks; quiet multi-screen panes switch their track off.
   const args=['--ignore-config','--no-video-title-show','--no-osd','--stats','--quiet','--aout=mmdevice,directsound,any'];
   this.instance=this.api.new(args.length,args);
   if(!this.instance)throw new Error('The included playback engine could not initialise.');
@@ -92,8 +92,7 @@ class EmbeddedVlc {
  size(player){try{const w=[0],h=[0];if(this.api.video_get_size(player,0,w,h)===0)return{w:w[0]||0,h:h[0]||0};}catch{}return{};}
  pause(index,paused){const s=this.surfaces.get(index);if(s)this.api.media_player_set_pause(s.player,paused?1:0);}
  seek(index,seconds){const s=this.surfaces.get(index);if(s&&this.api.media_player_is_seekable(s.player))this.api.media_player_set_time(s.player,Math.round(seconds*1000));}
- // Every player runs on its own DirectSound output (see --aout above), so each screen owns its volume and mute.
- // Quiet screens are muted at volume 0 and keep their sound track, so picking one simply unmutes it (no track restart).
+ // Windows sound (WASAPI) is shared by the whole app, so the picked screen owns mute/volume and quiet screens only switch their track off.
  // libVLC ignores this before the stream's sound exists and resets it on new media, so a short timer re-applies it.
  volume(index,value){const s=this.surfaces.get(index);if(!s)return;s.wantVolume=value;this.applyVolume(s);this.keepAudio();}
  applyVolume(s){if(s.wantVolume==null)return;try{
