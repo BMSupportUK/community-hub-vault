@@ -53,7 +53,7 @@ test('each multi-screen pane has its own DirectSound output; picking a screen un
  }})};
  const handle=Buffer.alloc(8);handle.writeBigUInt64LE(42n);
  const engine=new EmbeddedVlc({getNativeWindowHandle:()=>handle},{koffi,root:'/tmp/test-vlc'});
- expect(args).toContain('--aout=directsound');
+ expect(args).toContain('--aout=mmdevice,directsound,any');expect(args).not.toContain('--aout=directsound');
  engine.play(0,'https://example.invalid/a.ts',{});
  engine.play(1,'https://example.invalid/b.ts',{});
  const a=engine.surfaces.get(0).player,b=engine.surfaces.get(1).player;

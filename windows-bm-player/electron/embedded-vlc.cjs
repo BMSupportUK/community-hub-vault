@@ -26,8 +26,8 @@ class EmbeddedVlc {
   this.api=Object.fromEntries(Object.entries(api).map(([name,[ret,args]])=>[name,this.dll.func('libvlc_'+name,ret,args)]));
   this.api.media_player_get_media=this.dll.func('libvlc_media_player_get_media','void *',['void *']);
   this.api.media_get_stats=this.dll.func('libvlc_media_get_stats','int',['void *','void *']);
-  // DirectSound gives every player its own sound buffer and volume; the default WASAPI output shares one volume/mute across all players in the app, so multi-screen panes fought each other.
-  const args=['--ignore-config','--no-video-title-show','--no-osd','--stats','--quiet','--aout=directsound'];
+  // Normal Windows sound (WASAPI) first: DirectSound played nothing on some PCs. DirectSound/any remain fallbacks; quiet multi-screen panes are muted per player.
+  const args=['--ignore-config','--no-video-title-show','--no-osd','--stats','--quiet','--aout=mmdevice,directsound,any'];
   this.instance=this.api.new(args.length,args);
   if(!this.instance)throw new Error('The included playback engine could not initialise.');
   const buffer=win.getNativeWindowHandle();this.parent=buffer.length===8?buffer.readBigUInt64LE():BigInt(buffer.readUInt32LE());
