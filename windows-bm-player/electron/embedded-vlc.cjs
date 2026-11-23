@@ -43,9 +43,9 @@ class EmbeddedVlc {
   this.api.video_set_mouse_input(player,0);this.api.video_set_key_input(player,0);
   const s={hwnd,player,index};this.surfaces.set(index,s);return s;
  }
- play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,fill=false,kind,name}={}){
+ play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,fill=false,kind,name,multi}={}){
   const s=this.surface(index);s.fill=!!fill;this.api.media_player_stop(s.player);
-  if(kind!==undefined)s.decodeContext={kind,name};
+  if(kind!==undefined)s.decodeContext={kind,name,multi:!!multi};
   const media=this.api.media_new_location(this.instance,this.transport(url));
   if(!media)throw new Error('This stream could not be opened.');
   try{

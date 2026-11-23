@@ -20,4 +20,8 @@ test('native FHD playback and reconnect retain hardware choice',()=>{
  expect(options.filter(x=>x.startsWith(':avcodec-hw='))).toEqual([':avcodec-hw=any',':avcodec-hw=any']);
  engine.play(0,'test',{kind:'catchup',name:'TNT Sports FHD'});
  expect(options.at(-1)).toBe(':avcodec-hw=none');
+});test('multi-screen live panes use hardware, MonoMax and catch up stay software',()=>{
+ expect(decodeOptions({kind:'live',name:'BBC One HD',multi:true})).toEqual([':avcodec-hw=any']);
+ expect(decodeOptions({kind:'live',name:'MonoMax',multi:true})).toEqual([':avcodec-hw=none']);
+ expect(decodeOptions({kind:'catchup',name:'BBC One',multi:true})).toEqual([':avcodec-hw=none']);
 });
