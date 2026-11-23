@@ -2241,7 +2241,7 @@ export function isEplFixturePost(raw: string): boolean {
   return lines.some((_, i) => eplFixtureLineAt(lines, i));
 }
 
-export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean; hubOnly?: boolean }): string {
+export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean; hubOnly?: boolean; separateGroups?: boolean }): string {
   const sdOnly = opts?.sdOnly ?? false;
   const hubOnly = !sdOnly && (opts?.hubOnly ?? false);
   const lines = raw.replace(/\r/g, "").split("\n").map((l) => (l.trim() ? unwrapEplMarkdown(l) : l));
@@ -2283,7 +2283,9 @@ export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean
     // Premier League posts list Sky and Hub Premier/Astro channels as separate
     // blocks for one fixture; keep them together as a single event. The Team
     // Channels guide (sdOnly) keeps one entry per team feed.
-    const merged = sdOnly ? groups : [groups.flat()];
+    // Queue splitting separates source groups for filing; saved/public guides
+    // still combine all supplied broadcasters into one fixture by default.
+    const merged = sdOnly || opts?.separateGroups ? groups : [groups.flat()];
     for (const g of merged.length ? merged : [[]]) {
       out.push(time, title, ...g, "");
     }

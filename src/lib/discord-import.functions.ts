@@ -447,7 +447,7 @@ export const splitQueueItem = createServerFn({ method: "POST" })
     const headDate = headlineListingDate(raw);
     // Premier League fixture posts split into one block per channel group
     // first, so each block keeps the fixture name and kick-off time.
-    const events = sortSportsListingEvents(parseSportsListingBlock(splitFixtureChannelBlocks(raw))).map((e) => ({ ...e, date: e.date || headDate }));
+    const events = sortSportsListingEvents(parseSportsListingBlock(splitFixtureChannelBlocks(raw, { separateGroups: true }))).map((e) => ({ ...e, date: e.date || headDate }));
     if (!events.length) throw new Error("Couldn't read any events in this post");
 
     const epl = isEplFixturePost(raw);

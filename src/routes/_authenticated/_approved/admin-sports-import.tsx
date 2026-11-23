@@ -736,7 +736,7 @@ function QueueRow({
   const needsZone = parseClockTime(zoneSource) !== null;
   const splitCount = useMemo(
     // Premier League fixture posts count one block per channel group.
-    () => parseSportsListingBlock(splitFixtureChannelBlocks(normalizedRaw)).length,
+    () => parseSportsListingBlock(splitFixtureChannelBlocks(normalizedRaw, { separateGroups: true })).length,
     [normalizedRaw],
   );
   // Names listed inside the post that each have their own guide.
@@ -747,6 +747,10 @@ function QueueRow({
   // Premier League fixture posts get a one-press split: one listing per
   // fixture, and each fixture imports into its channel-group blocks.
   const isEpl = useMemo(() => isEplFixturePost(normalizedRaw), [normalizedRaw]);
+  const fixtureCount = useMemo(
+    () => parseSportsListingBlock(splitFixtureChannelBlocks(normalizedRaw)).length,
+    [normalizedRaw],
+  );
   const [pickingSplit, setPickingSplit] = useState(false);
   const rawLines = useMemo(
     () => normalizedRaw.split("\n"),
@@ -808,7 +812,7 @@ function QueueRow({
             onClick={onSplit}
           >
             {splitting ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
-            EPL split — {splitCount} channel cards ({providerSections.length} fixtures)
+            EPL split — {splitCount} channel cards ({fixtureCount} fixtures)
           </Button>
           <span className="text-[11px] text-muted-foreground">
             One card per channel group, each keeping the fixture name and kick-off time
