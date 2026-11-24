@@ -338,9 +338,15 @@ public class PlayerActivity extends Activity {
         catchupOpenAt(CatchupStart.jump(reached, deltaMin, getIntent().getLongExtra("catchup_listed", cuSegStart), cuEnd));
     }
 
+    private boolean cuHushListener;
+    private final Runnable cuUnhush = () -> { if (player != null) player.setVolume(1f); };
     private void catchupOpenAt(long start) {
         if (player == null) return;
         cuSegStart = start; cuRetries = 0;
+        // Sound waits for the picture: silent until the new time's first picture is drawn (10s cap).
+        player.setVolume(0f);
+        if (!cuHushListener) { cuHushListener = true; player.addListener(new Player.Listener() { @Override public void onRenderedFirstFrame() { ui.post(cuUnhush); } }); }
+        ui.removeCallbacks(cuUnhush); ui.postDelayed(cuUnhush, 10000);
         player.setMediaItem(item(timeshiftUrl(getIntent().getStringExtra("catchup_prefix"), getIntent().getStringExtra("catchup_id"), cuSegStart, cuEnd, getIntent().getStringExtra("catchup_tz"))));
         player.setPlayWhenReady(true); player.prepare();
     }
