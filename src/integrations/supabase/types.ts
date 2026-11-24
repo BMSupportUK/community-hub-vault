@@ -6526,6 +6526,30 @@ export type Database = {
           },
         ]
       }
+      player_fault_notes: {
+        Row: {
+          app_version: string
+          created_at: string
+          device_id: string
+          id: string
+          note: string
+        }
+        Insert: {
+          app_version?: string
+          created_at?: string
+          device_id: string
+          id?: string
+          note: string
+        }
+        Update: {
+          app_version?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+          note?: string
+        }
+        Relationships: []
+      }
       player_favourites: {
         Row: {
           items: Json

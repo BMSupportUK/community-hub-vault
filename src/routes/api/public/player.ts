@@ -37,6 +37,7 @@ const Body = z.discriminatedUnion("action", [
     name: z.string().trim().min(1).max(60).optional(),
   }),
   z.object({ action: z.literal("code"), device_token: Token }),
+  z.object({ action: z.literal("fault_notes"), device_token: Token, version: z.string().trim().max(20).optional(), notes: z.array(z.string().max(2000)).min(1).max(20) }),
   z.object({
     action: z.literal("poll"), device_token: Token,
     login: z.string().trim().max(120).optional(),
@@ -904,6 +905,17 @@ export const Route = createFileRoute("/api/public/player")({
         if (body.action === 'guide_category_open') {
           const { retiredCategoryRefresh } = await import('@/lib/provider-epg-policy');
           return json(retiredCategoryRefresh());
+        }
+
+        if (body.action === "fault_notes") {
+          // Screen faults from Windows/Mac players, read by BM Support staff through the backend only.
+          if (device.platform !== "windows" && device.platform !== "mac") return json({ ok: true });
+          const since = new Date(Date.now() - 60 * 60_000).toISOString();
+          const { count } = await supabaseAdmin.from("player_fault_notes").select("id", { count: "exact", head: true }).eq("device_id", device.id).gte("created_at", since);
+          if ((count ?? 0) >= 60) return json({ ok: true });
+          await supabaseAdmin.from("player_fault_notes").insert(body.notes.map((note) => ({ device_id: device.id, app_version: body.version ?? "", note })));
+          await supabaseAdmin.from("player_fault_notes").delete().lt("created_at", new Date(Date.now() - 30 * 86_400_000).toISOString());
+          return json({ ok: true });
         }
 
         if (body.action === "guide") {

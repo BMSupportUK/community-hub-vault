@@ -397,12 +397,24 @@ else{
     broadbandBusy=true;try{broadbandResult=await broadband.run();poll().catch(()=>{});return{ping:broadbandResult.ping,download:broadbandResult.down/1000,upload:broadbandResult.up/1000};}finally{broadbandBusy=false;}
   });
   // A crashed or broken screen must never sit white: note why in a small log and reload it.
-  const crashLog=m=>{try{const f=path.join(app.getPath('userData'),'bm-player-log.txt');try{if(fs.statSync(f).size>200000)fs.unlinkSync(f);}catch{}fs.appendFileSync(f,new Date().toISOString()+' '+String(m).slice(0,2000)+'\n');}catch{}};
+  // Notes also go to BM Support (fault_notes) so a fault can be found without asking for the file.
+  const faultFile=path.join(app.getPath('userData'),'bm-player-log.txt');
+  const faultQueue=[];let faultTimer=null;
+  const flushFaults=()=>{faultTimer=null;if(!store.token||store.unlinked||!faultQueue.length)return;const notes=faultQueue.splice(0,20);site({action:'fault_notes',version:app.getVersion(),notes}).then(()=>{store.faultSentAt=Date.now();try{save();}catch{}}).catch(()=>{});if(faultQueue.length)faultTimer=setTimeout(flushFaults,5000);};
+  const memNote=()=>{try{return ' | memory MB: '+app.getAppMetrics().map(p=>p.type+'='+Math.round((p.memory?.workingSetSize||0)/1024)).join(', ');}catch{return '';}};
+  const crashLog=m=>{const line=new Date().toISOString()+' '+String(m).slice(0,1800);try{try{if(fs.statSync(faultFile).size>200000)fs.unlinkSync(faultFile);}catch{}fs.appendFileSync(faultFile,line+'\n');}catch{}faultQueue.push(line);if(faultQueue.length>40)faultQueue.splice(0,faultQueue.length-40);if(!faultTimer)faultTimer=setTimeout(flushFaults,3000);};
+  // The last run's notes (including a run that never logged "closed", i.e. the whole app died) are sent once on start.
+  try{const lines=fs.readFileSync(faultFile,'utf8').split('\n').filter(Boolean);const sent=Number(store.faultSentAt||0);const fresh=lines.filter(l=>Date.parse(l.slice(0,24))>sent).slice(-15);if(fresh.length){faultQueue.push(...fresh.map(l=>'earlier: '+l));store.faultSentAt=Date.now();try{save();}catch{}}}catch{}
+  crashLog('started '+app.getVersion()+' '+process.platform+' '+require('node:os').release()+memNote());
+  app.on('will-quit',()=>{try{fs.appendFileSync(faultFile,new Date().toISOString()+' closed\n');}catch{}});
+  app.on('child-process-gone',(_e,d)=>crashLog('helper stopped: '+d.type+' '+d.reason+' '+d.exitCode+(d.name?' '+d.name:'')+memNote()));
+  win.webContents.on('responsive',()=>crashLog('screen responding again'));
+  setTimeout(()=>crashLog('running 2 min'+memNote()),120000).unref?.();
   let reloads=0;
-  win.webContents.on('render-process-gone',(_e,d)=>{crashLog('screen stopped: '+d.reason+' '+d.exitCode);if(reloads++<3&&!win.isDestroyed())setTimeout(()=>{if(!win.isDestroyed())win.loadFile(page);},1000);});
+  win.webContents.on('render-process-gone',(_e,d)=>{crashLog('screen stopped: '+d.reason+' '+d.exitCode+memNote());if(reloads++<3&&!win.isDestroyed())setTimeout(()=>{if(!win.isDestroyed())win.loadFile(page);},1000);});
   win.webContents.on('unresponsive',()=>crashLog('screen not responding'));
   win.webContents.on('did-fail-load',(_e,c,d)=>crashLog('screen failed to load: '+c+' '+d));
-  win.webContents.on('console-message',(_e,level,message,line,source)=>{if(level>=3)crashLog('screen error: '+message+' @'+source+':'+line);});
+  win.webContents.on('console-message',(e,level,message,line,source)=>{const lv=e&&e.level!==undefined?e.level:level;if(lv==='error'||lv>=3)crashLog('screen error: '+(e&&e.message!==undefined?e.message:message)+' @'+(e&&e.sourceId!==undefined?e.sourceId:source)+':'+(e&&e.lineNumber!==undefined?e.lineNumber:line));});
   process.on('uncaughtException',e=>crashLog('main error: '+(e&&e.stack||e)));
   await win.loadFile(page);
   setInterval(()=>{if(store.user&&gate.unlocked&&pinPassed)vpn.health().catch(()=>{});},15000);
