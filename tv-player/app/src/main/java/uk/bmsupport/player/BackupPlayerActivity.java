@@ -147,6 +147,11 @@ public class BackupPlayerActivity extends Activity {
         BufferBlame.reset();
         layout = new VLCVideoLayout(this);
         root.addView(layout, new FrameLayout.LayoutParams(-1, -1));
+        // Catch up skips: the last picture stays up as a still until the new time draws, never a black gap.
+        still = new android.widget.ImageView(this);
+        still.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        still.setVisibility(android.view.View.GONE);
+        root.addView(still, new FrameLayout.LayoutParams(-1, -1));
         note = new TextView(this);
         note.setTextColor(Color.WHITE); note.setTextSize(16); note.setPadding(24, 16, 24, 16);
         note.setBackgroundColor(0xCC0B1220);
@@ -234,7 +239,11 @@ public class BackupPlayerActivity extends Activity {
                     feedStatus.buffering(ev.getBuffering());
                     updateFeedNote();
                     break;
+                case MediaPlayer.Event.Vout:
+                    if (ev.getVoutCount() > 0) ui.postDelayed(dropStill, 150);
+                    break;
                 case MediaPlayer.Event.TimeChanged:
+                    if (started && ev.getTimeChanged() > 0 && still != null && still.getVisibility() == android.view.View.VISIBLE) ui.postDelayed(dropStill, 150);
                     feedStatus.progress(ev.getTimeChanged(), android.os.SystemClock.elapsedRealtime());
                     updateFeedNote();
                     break;
@@ -267,9 +276,32 @@ public class BackupPlayerActivity extends Activity {
     }
     // Until the reopened recording plays, the old one's clock and end/error events are stale: they must not drag the start back.
     private long cuOpenedAt;
+    private android.widget.ImageView still;
+    private final Runnable dropStill = () -> { if (still != null) { still.setVisibility(android.view.View.GONE); still.setImageBitmap(null); } };
+    private static android.view.SurfaceView firstSurface(android.view.View v) {
+        if (v instanceof android.view.SurfaceView) return (android.view.SurfaceView) v;
+        if (v instanceof android.view.ViewGroup) { android.view.ViewGroup g = (android.view.ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) { android.view.SurfaceView s = firstSurface(g.getChildAt(i)); if (s != null) return s; } }
+        return null;
+    }
+    /** Freeze the current frame over the picture (PixelCopy, Android 7+); older boxes just keep the old behaviour. */
+    private void holdStill() {
+        if (still == null || android.os.Build.VERSION.SDK_INT < 24 || !started) return;
+        android.view.SurfaceView sv = firstSurface(layout);
+        if (sv == null || sv.getWidth() <= 0 || sv.getHeight() <= 0 || !sv.getHolder().getSurface().isValid()) return;
+        try {
+            final android.graphics.Bitmap bm = android.graphics.Bitmap.createBitmap(sv.getWidth(), sv.getHeight(), android.graphics.Bitmap.Config.ARGB_8888);
+            android.view.PixelCopy.request(sv, bm, r -> {
+                if (r != android.view.PixelCopy.SUCCESS || still == null) return;
+                still.setImageBitmap(bm); still.setVisibility(android.view.View.VISIBLE);
+                ui.removeCallbacks(dropStill); ui.postDelayed(dropStill, 20000);
+            }, ui);
+        } catch (Throwable ignored) { }
+    }
     private boolean staleCatchupEvent() { return !started && android.os.SystemClock.elapsedRealtime() - cuOpenedAt < 3000; }
     private long cuReached() { return started ? cuSegStart + Math.max(0, mp == null ? 0 : mp.getTime()) / 1000 : cuSegStart; }
     private void catchupOpenAt(long start) {
+        holdStill();
         cuSegStart = start; urls[0] = cuUrl(); at = 0; started = false; resume = 0; cuOpenedAt = android.os.SystemClock.elapsedRealtime();
         try { mp.stop(); } catch (Exception ignored) {}
         open();
