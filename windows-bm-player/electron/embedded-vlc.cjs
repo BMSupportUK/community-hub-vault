@@ -48,7 +48,9 @@ class EmbeddedVlc {
   const s=this.surface(index);s.fill=!!opts.fill;this.api.media_player_stop(s.player);
   this.load(s,url,opts);
  }
- /** Catch up skip: the old picture stays on screen (paused) while a hidden second player opens the new time; it swaps in on its first frame, so the screen never goes black. */
+ /** Catch up skip: the old picture stays on screen (paused) while a second player opens the new time in a full-size window
+  *  tucked directly behind it; once that player has drawn real pictures the old window is removed, so the screen never goes black.
+  *  (A 1x1 hidden window drew its first pictures tiny, so the swap still showed black until VLC caught up with the new size.) */
  handoff(index,url,opts={}){
   const s=this.surfaces.get(index);if(!s)return this.play(index,url,opts);
   this.cancelHandoff(index);
@@ -58,17 +60,29 @@ class EmbeddedVlc {
   if(!player){this.destroy(hwnd);return this.play(index,url,opts);}
   this.api.media_player_set_hwnd(player,hwnd);this.api.video_set_mouse_input(player,0);this.api.video_set_key_input(player,0);
   const t={hwnd,player,index,handoff:true,fill:s.fill,decodeContext:s.decodeContext,ds:false,audioId:s.audioId,wantVolume:s.wantVolume};
+  s.pending=t;this.placePending(s,this.lastRows); // full size, behind the frozen picture, before VLC opens its video window
   this.api.media_player_set_pause(s.player,1);
-  try{this.load(t,url,{...opts,kind:undefined});}catch(e){this.api.media_player_release(player);this.destroy(hwnd);return this.play(index,url,opts);}
-  const started=Date.now();
-  t.timer=setInterval(()=>{let frames=0;try{frames=this.pictureProgress(player).videoFrames||0;}catch{}
-   if(frames<=0&&Date.now()-started<20000)return;
+  try{this.load(t,url,{...opts,kind:undefined});}catch(e){s.pending=null;this.api.media_player_release(player);this.destroy(hwnd);return this.play(index,url,opts);}
+  const started=Date.now();let shownAt=0;
+  t.timer=setInterval(()=>{let frames=0,state=0;try{frames=this.pictureProgress(player).videoFrames||0;state=this.api.media_player_get_state(player);}catch{}
+   // Provider refused a second connection while the old one was open: fall back to closing it first, then opening the new time.
+   if(state===7||state===6){this.cancelHandoff(index);try{this.play(index,url,opts);}catch{}return;}
+   const now=Date.now();
+   if(frames>=2&&!shownAt)shownAt=now;
+   // Give VLC a moment after its first pictures so the new window holds a finished frame before it is revealed.
+   if(!(shownAt&&now-shownAt>=300)&&now-started<20000)return;
    clearInterval(t.timer);s.pending=null;
    try{this.api.media_player_stop(s.player);this.api.media_player_release(s.player);}catch{}
    const oldHwnd=s.hwnd;s.hwnd=hwnd;s.player=player;s.ds=t.ds;
    if(this.lastRows)this.layout(this.lastRows);this.destroy(oldHwnd);this.applyVolume(s);
-  },100);t.timer.unref?.();s.pending=t;
+  },100);t.timer.unref?.();
  }
+ /** The waiting catch up window sits exactly over the pane but directly below the visible picture, so it stays unseen. */
+ placePending(s,rows){const t=s.pending;if(!t)return;const row=(rows||[]).find(r=>r.index===s.index);if(!row){this.show(t.hwnd,0);return;}
+  const rect=Buffer.alloc(16);if(!this.client(this.parent,rect))return;
+  const box=require('../playback-core.cjs').paneBox(row,rect.readInt32LE(8),rect.readInt32LE(12));
+  if(!box){this.show(t.hwnd,0);return;}
+  this.move(t.hwnd,s.hwnd,box.x,box.y,box.w,box.h,0x0010|0x0040);}
  cancelHandoff(index){const s=this.surfaces?.get(index);const t=s&&s.pending;if(!t)return;clearInterval(t.timer);s.pending=null;try{this.api.media_player_stop(t.player);this.api.media_player_release(t.player);}catch{}this.destroy(t.hwnd);}
  load(s,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,kind,name,multi}={}){
   if(kind!==undefined)s.decodeContext={kind,name,multi:!!multi};
@@ -102,10 +116,10 @@ class EmbeddedVlc {
    const s=this.surfaces.get(row.index);if(!s)continue;
    shown.add(row.index);
    const box=require('../playback-core.cjs').paneBox(row,width,height);
-   if(!box){this.show(s.hwnd,0);continue;} // hide but keep the last real size
-   this.move(s.hwnd,null,box.x,box.y,box.w,box.h,0x0010|0x0040);this.show(s.hwnd,5);
+   if(!box){this.show(s.hwnd,0);if(s.pending)this.show(s.pending.hwnd,0);continue;} // hide but keep the last real size
+   this.move(s.hwnd,null,box.x,box.y,box.w,box.h,0x0010|0x0040);this.show(s.hwnd,5);this.placePending(s,rows);
   }
-  for(const [index,s]of this.surfaces)if(!shown.has(index))this.show(s.hwnd,0);
+  for(const [index,s]of this.surfaces)if(!shown.has(index)){this.show(s.hwnd,0);if(s.pending)this.show(s.pending.hwnd,0);}
  }
  /** Index of the visible screen just clicked with the left mouse button, or null. */
  clickedPane(){if(!this.keyState||this.surfaces.size<2)return null;try{

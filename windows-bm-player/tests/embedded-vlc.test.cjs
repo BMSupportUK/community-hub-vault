@@ -92,14 +92,20 @@ test('catch up skip keeps the old picture paused until the new time shows its fi
  const old=process.env.VLC_PLUGIN_PATH;
  try{
   const engine=new EmbeddedVlc({getNativeWindowHandle:()=>handle},{koffi,root:'/tmp/test-vlc'});
-  engine.play(0,'https://example.invalid/a.ts');const first=engine.surfaces.get(0).player;
-  engine.handoff(0,'https://example.invalid/b.ts');
+  engine.play(0,'https://example.invalid/a.ts');const first=engine.surfaces.get(0).player,firstWin=engine.surfaces.get(0).hwnd;
+  engine.layout([{index:0,x:0,y:0,width:1,height:1,visible:true}]);
+  engine.handoff(0,'https://example.invalid/b.ts');const waiting=engine.surfaces.get(0).pending.hwnd;
+  // The new time loads in a full-size window directly behind the frozen picture, never a 1x1 hidden one.
+  expect(calls.some(c=>c.name==='SetWindowPos'&&c.values[0]===waiting&&c.values[1]===firstWin&&c.values[4]===1280&&c.values[5]===900)).toBe(true);
   await new Promise(r=>setTimeout(r,250));
   expect(engine.surfaces.get(0).player).toBe(first);
   expect(calls.some(c=>c.name==='libvlc_media_player_set_pause'&&c.values[0]===first&&c.values[1]===1)).toBe(true);
   expect(calls.some(c=>c.name==='DestroyWindow')).toBe(false);
-  frames=5;await new Promise(r=>setTimeout(r,250));
+  frames=5;await new Promise(r=>setTimeout(r,150));
+  expect(engine.surfaces.get(0).player).toBe(first); // first pictures get a moment to finish drawing before the swap
+  await new Promise(r=>setTimeout(r,450));
   expect(engine.surfaces.get(0).player).not.toBe(first);
+  expect(engine.surfaces.get(0).hwnd).toBe(waiting);
   expect(calls.some(c=>c.name==='libvlc_media_player_release'&&c.values[0]===first)).toBe(true);
   engine.close();
  }finally{if(old===undefined)delete process.env.VLC_PLUGIN_PATH;else process.env.VLC_PLUGIN_PATH=old;}

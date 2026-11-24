@@ -20,4 +20,4 @@
 - Approved Windows releases are packaged with @electron/packager and the NSIS script as per-user installers; upload the executable before registering its separate Windows app-build identity, and serve it through the logged Windows download endpoint, never the Android updater.
 - Native video panes too small to draw into (<16px) are hidden at their last size, never squashed: libVLC's output dies at ~0px during preview→full-screen relayout and forced a reconnect.
 - Lost-sound reopen (stream-recovery soundLost) skips quiet multi-screen panes (session.quiet = not the audible pane); silencing a pane on purpose otherwise restarted its channel on every screen switch.
-- Catch up Forward/Back uses EmbeddedVlc.handoff: the old picture stays paused on screen while a hidden second player opens the new time, swapping in on its first frame (20s cap), so a skip never shows black.
+- Catch up Forward/Back uses EmbeddedVlc.handoff: the old picture stays paused while a second player opens the new time in a full-size window placed directly behind it (never 1x1), swapping after its first frames have drawn (20s cap); a refused/ended second connection falls back to stop-then-play.
