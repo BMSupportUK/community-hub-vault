@@ -63,6 +63,8 @@ class EmbeddedVlc {
   const open=()=>{if(s.hold!==hold)return;
    if(still){s.holding=true;this.show(s.hwnd,0);}
    this.api.media_player_stop(s.player); // old time's connection closes before the new one opens
+   // Sound waits for the picture: silent until the new time is shown, then both start together.
+   try{hold.muted=this.api.audio_get_mute(s.player)===1;this.api.audio_set_mute(s.player,1);hold.hushed=true;}catch{}
    try{this.load(s,url,opts);}catch(e){this.release(s);throw e;}
    const started=Date.now();let shownAt=0;
    hold.timer=setInterval(()=>{let frames=0,state=0;try{frames=this.pictureProgress(s.player).videoFrames||0;state=this.api.media_player_get_state(s.player);}catch{}
@@ -77,6 +79,7 @@ class EmbeddedVlc {
  /** Show the video window again and drop the page's still. */
  release(s){const hold=s.hold;if(!hold)return;clearInterval(hold.timer);clearTimeout(hold.wait);s.hold=null;
   if(s.holding){s.holding=false;if(this.lastRows)this.layout(this.lastRows);else this.show(s.hwnd,5);}
+  if(hold.hushed){try{this.api.audio_set_mute(s.player,hold.muted?1:0);}catch{}}
   this.onStill?.(s.index,null);}
  cancelHandoff(index){const s=this.surfaces?.get(index);if(s&&s.hold)this.release(s);}
  load(s,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,kind,name,multi}={}){
