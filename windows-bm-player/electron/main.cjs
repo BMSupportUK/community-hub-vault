@@ -133,7 +133,7 @@ async function refresh(startup=false){
  refreshPromise=refreshInner(startup);try{return await refreshPromise;}finally{refreshPromise=null;}
 }
 async function refreshInner(startup){
- await prepareVpn();
+ await Promise.race([prepareVpn(),new Promise(ok=>setTimeout(ok,30000).unref?.())]);
  const kinds=['live','film','series'];let step=0;const span=60;
  // A saved copy is already on screen: update quietly; only a first start/new login locks the screen.
  const saved=kinds.every(k=>cache.has(k));if(saved)send({type:'catalogues',quiet:true});
