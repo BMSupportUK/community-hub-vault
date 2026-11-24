@@ -612,7 +612,7 @@ public class BackupPlayerActivity extends Activity {
         // OK on the Skip ahead button must press it, not just reveal the controls.
         if (e.getAction() == KeyEvent.ACTION_DOWN && seek != null && seek.shown()
                 && (e.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || e.getKeyCode() == KeyEvent.KEYCODE_ENTER)
-                && (seek.hasFocus() || controller == null || !controller.isVisible())) { seek.click(); return true; }
+                && seek.hasFocus()) { seek.click(); return true; }
         if (e.getAction() == KeyEvent.ACTION_DOWN && mp != null) {
             switch (e.getKeyCode()) {
                 case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE: setPlaying(paused); showControls(); return true;

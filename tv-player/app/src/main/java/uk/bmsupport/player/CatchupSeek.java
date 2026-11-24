@@ -37,6 +37,7 @@ final class CatchupSeek {
         back.setText("⏪ Back 1 min"); back.setAllCaps(false);
         forward.setText(label(0)); forward.setAllCaps(false);
         row.addView(back); row.addView(forward);
+        ring(back); ring(forward);
         commit = () -> {
             int m = take();
             forward.setText(label(0));
@@ -53,6 +54,22 @@ final class CatchupSeek {
         // Holding OK / the button keeps counting up quickly.
         forward.setOnLongClickListener(v -> { for (int i = 0; i < 5; i++) press(1); forward.setText(label(pending));
             ui.removeCallbacks(commit); ui.postDelayed(commit, DEBOUNCE_MS); if (onUse != null) onUse.run(); return true; });
+    }
+    /** A clear white box round the button the remote is on, so you can see where you are. */
+    private static void ring(android.widget.Button b) {
+        float d = b.getResources().getDisplayMetrics().density;
+        android.graphics.drawable.GradientDrawable on = new android.graphics.drawable.GradientDrawable();
+        on.setColor(0xCC0B1A33); on.setCornerRadius(10 * d); on.setStroke((int) (3 * d), 0xFFFFFFFF);
+        android.graphics.drawable.GradientDrawable off = new android.graphics.drawable.GradientDrawable();
+        off.setColor(0x990B1A33); off.setCornerRadius(10 * d); off.setStroke((int) (1 * d), 0x66FFFFFF);
+        android.graphics.drawable.StateListDrawable sl = new android.graphics.drawable.StateListDrawable();
+        sl.addState(new int[]{android.R.attr.state_focused}, on);
+        sl.addState(new int[]{android.R.attr.state_pressed}, on);
+        sl.addState(new int[]{}, off);
+        b.setBackground(sl); b.setTextColor(0xFFFFFFFF); b.setFocusable(true);
+        b.setPadding((int) (16 * d), (int) (8 * d), (int) (16 * d), (int) (8 * d));
+        android.widget.LinearLayout.LayoutParams lp = new android.widget.LinearLayout.LayoutParams(-2, -2);
+        lp.setMargins((int) (6 * d), 0, (int) (6 * d), 0); b.setLayoutParams(lp);
     }
     /** OK/Enter presses whichever button is focused (Fast forward when neither is). */
     void click() { if (back != null && back.isFocused()) back.performClick(); else if (forward != null) forward.performClick(); }
@@ -75,9 +92,9 @@ final class CatchupSeek {
     /** Any key or touch brings the buttons back; they hide again after SHOW_MS without input. */
     void wake() {
         if (row == null) return;
-        boolean was = row.getVisibility() == android.view.View.VISIBLE;
+        // Never take focus here: every press passes through wake(), and grabbing focus stopped the remote
+        // reaching Subtitles, VPN and the other controls.
         row.setVisibility(android.view.View.VISIBLE);
-        if (!was || !hasFocus()) forward.requestFocus();
         ui.removeCallbacks(hide); ui.postDelayed(hide, SHOW_MS);
     }
     boolean shown() { return row != null && row.getParent() != null && row.getVisibility() == android.view.View.VISIBLE; }
