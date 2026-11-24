@@ -36,7 +36,7 @@ function programmes(rows) {
     .filter(p=>Number.isFinite(p.start) && Number.isFinite(p.end) && p.end > p.start);
 }
 function itemFromProvider(kind, p) {
-  return { kind, id:String(p.stream_id ?? p.series_id ?? p.id), name:String(p.name || p.title || 'Untitled'), category:String(p.category_id || ''), poster:String(p.stream_icon || p.cover || ''), ext:p.container_extension || 'mp4', added:Number(p.added || p.last_modified || 0), rating:Number(p.rating || p.rating_5based || 0), archive: kind === 'live' && Number(p.tv_archive) === 1 ? Math.max(1, Number(p.tv_archive_duration) || 1) : 0 };
+  return { kind, id:String(p.stream_id ?? p.series_id ?? p.id), name:String(p.name || p.title || 'Untitled'), category:String(p.category_id || ''), poster:String(p.stream_icon || p.cover || ''), ext:p.container_extension || 'mp4', added:Number(p.added || p.last_modified || 0), rating:Number(p.rating || p.rating_5based || 0), epg: kind === 'live' ? String(p.epg_channel_id || '').trim().toLowerCase() : '', archive: kind === 'live' && Number(p.tv_archive) === 1 ? Math.max(1, Number(p.tv_archive_duration) || 1) : 0 };
 }
 function inactive(lastInput, promptedAt, now) { return promptedAt ? now - promptedAt >= RESPONSE_MS ? 'exit' : 'prompt' : now - lastInput >= IDLE_MS ? 'prompt' : 'active'; }
 module.exports = { adult, progress, resume, sortItems, watchKey, streamUrls, catchupUrl, catchupProgrammes, programmes, itemFromProvider, inactive, IDLE_MS, RESPONSE_MS };

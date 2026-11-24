@@ -114,17 +114,31 @@ async function provider(action='',extra={}){
  if(!response.ok)throw new Error('The service provider could not load this section. Try Refresh.');
  const result=await response.json();deviceLock.requireActive(store);return result;
 }
+// Whole guide in one provider download (xmltv.php); per-channel get_short_epg stays the fallback.
+let guideFile=null,noteFault=()=>{};
+async function loadGuideFile(){
+ const t0=Date.now();guideFile=null;
+ try{gate.require();if(!store.user||!store.dns)return null;
+  const url=new URL('/xmltv.php',store.dns);url.searchParams.set('username',store.user);url.searchParams.set('password',store.pass);
+  const response=await nativeVpn.fetch(url,{headers:{'User-Agent':store.settings?.userAgent||'VLC/3.0.21 LibVLC/3.0.21',...(store.settings?.privateDns===false?{}:{'X-BM-DNS':store.settings?.dnsServer==='google'?'private:google':'private'})},signal:AbortSignal.timeout(180000)});
+  if(!response.ok)throw new Error('status '+response.status);
+  const text=await response.text();const map=require('../xmltv.cjs').parse(text);
+  if(map.size)guideFile={map,at:Date.now(),user:store.user};
+  noteFault('timing guide file '+(Date.now()-t0)+'ms '+Math.round(text.length/1048576)+'MB '+map.size+' channels');
+ }catch(e){noteFault('timing guide file failed after '+(Date.now()-t0)+'ms: '+String(e?.message||e).slice(0,120));}
+ return guideFile;
+}
 async function catalogue(kind){
  if(!['live','film','series'].includes(kind))throw new Error('Unknown section.');
  if(cache.has(kind))return cache.get(kind);
  if(pending.has(kind))return pending.get(kind);
- const task=(async()=>{
+ const task=(async()=>{const t0=Date.now();
  const prefix={live:'live',film:'vod',series:'series'}[kind];
  const categories=await provider('get_'+prefix+'_categories');
  const rows=await provider(kind==='series'?'get_series':'get_'+prefix+'_streams');
  const cats=(Array.isArray(categories)?categories:[]).map(c=>({id:String(c.category_id),name:c.category_name}));
- const items=(Array.isArray(rows)?rows:[]).map(r=>core.itemFromProvider(kind,r)).map(i=>({...i,categoryName:cats.find(c=>c.id===i.category)?.name||''}));
- const result=kind==='live'?require('../hub-split.cjs').split(cats,items):{categories:cats,items};cache.set(kind,result);store.refreshed={...(store.refreshed||{}),[kind]:Date.now()};save();send({type:'state',state:publicState()});return result;
+ const names=new Map(cats.map(c=>[c.id,c.name]));const items=(Array.isArray(rows)?rows:[]).map(r=>core.itemFromProvider(kind,r)).map(i=>({...i,categoryName:names.get(i.category)||''}));
+ const result=kind==='live'?require('../hub-split.cjs').split(cats,items):{categories:cats,items};noteFault('timing '+kind+' '+(Date.now()-t0)+'ms '+items.length+' items');cache.set(kind,result);store.refreshed={...(store.refreshed||{}),[kind]:Date.now()};save();send({type:'state',state:publicState()});return result;
  })();pending.set(kind,task);try{return await task;}finally{pending.delete(kind);}
 }
 async function refresh(startup=false){
@@ -136,11 +150,16 @@ async function refreshInner(startup){
  await prepareVpn();
  const kinds=['live','film','series'];let step=0;const span=60;
  for(const kind of kinds){send({type:'progress',locked:true,message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*span)});cache.delete(kind);await catalogue(kind);step++;}
+ send({type:'progress',locked:false,message:'Updating TV guide…',percent:span});await loadGuideFile();
  send({type:'catalogues',guide:true});return true;
 }
 async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||String(channel.id).length>80)throw new Error('Catch up isn\'t available on this channel.');const r=await provider('get_simple_data_table',{stream_id:String(channel.id)});return core.catchupProgrammes(r.epg_listings,Math.min(30,Number(channel.archive)));}
 // Resolve trusted catalogue names; only saved sports fixtures override provider EPG.
-async function epg(id){const catalog=await catalogue('live');const channel=catalog.items.find(c=>String(c.id)===String(id));const {loadFixtureGuide}=require('../fixture-guide.cjs');const rows=await loadFixtureGuide(channel,site,async()=>{const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return r.epg_listings;});return core.programmes(rows);}
+const channelIndex=new WeakMap();
+function channelById(catalog,id){let m=channelIndex.get(catalog);if(!m){m=new Map(catalog.items.map(c=>[String(c.id),c]));channelIndex.set(catalog,m);}return m.get(String(id));}
+async function epg(id){const catalog=await catalogue('live');const channel=channelById(catalog,id);const file=guideFile&&guideFile.user===store.user?guideFile:null;
+ if(file){const rows=channel?.epg?file.map.get(channel.epg):null;const {loadFixtureGuide}=require('../fixture-guide.cjs');return core.programmes(await loadFixtureGuide(channel,site,async()=>rows||[]));}
+const {loadFixtureGuide}=require('../fixture-guide.cjs');const rows=await loadFixtureGuide(channel,site,async()=>{const r=await provider('get_short_epg',{stream_id:String(id),limit:50});return r.epg_listings;});return core.programmes(rows);}
 function persistProgress(session){
  if(store.unlinked)return;
  if(!['film','episode'].includes(session.item.kind)||!(session.duration>0))return;
@@ -394,7 +413,7 @@ else{
   const faultQueue=[];let faultTimer=null;
   const flushFaults=()=>{faultTimer=null;if(!store.token||store.unlinked||!faultQueue.length)return;const notes=faultQueue.splice(0,20);site({action:'fault_notes',version:app.getVersion(),notes}).then(()=>{store.faultSentAt=Date.now();try{save();}catch{}}).catch(()=>{});if(faultQueue.length)faultTimer=setTimeout(flushFaults,5000);};
   const memNote=()=>{try{return ' | memory MB: '+app.getAppMetrics().map(p=>p.type+'='+Math.round((p.memory?.workingSetSize||0)/1024)).join(', ');}catch{return '';}};
-  const crashLog=m=>{const line=new Date().toISOString()+' '+String(m).slice(0,1800);try{try{if(fs.statSync(faultFile).size>200000)fs.unlinkSync(faultFile);}catch{}fs.appendFileSync(faultFile,line+'\n');}catch{}faultQueue.push(line);if(faultQueue.length>40)faultQueue.splice(0,faultQueue.length-40);if(!faultTimer)faultTimer=setTimeout(flushFaults,3000);};
+  noteFault=m=>crashLog(m);const crashLog=m=>{const line=new Date().toISOString()+' '+String(m).slice(0,1800);try{try{if(fs.statSync(faultFile).size>200000)fs.unlinkSync(faultFile);}catch{}fs.appendFileSync(faultFile,line+'\n');}catch{}faultQueue.push(line);if(faultQueue.length>40)faultQueue.splice(0,faultQueue.length-40);if(!faultTimer)faultTimer=setTimeout(flushFaults,3000);};
   // The last run's notes (including a run that never logged "closed", i.e. the whole app died) are sent once on start.
   try{const lines=fs.readFileSync(faultFile,'utf8').split('\n').filter(Boolean);const sent=Number(store.faultSentAt||0);const fresh=lines.filter(l=>Date.parse(l.slice(0,24))>sent).slice(-15);if(fresh.length){faultQueue.push(...fresh.map(l=>'earlier: '+l));store.faultSentAt=Date.now();try{save();}catch{}}}catch{}
   crashLog('started '+app.getVersion()+' '+process.platform+' '+require('node:os').release()+memNote());
