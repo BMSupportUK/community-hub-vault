@@ -46,8 +46,18 @@ class EmbeddedVlc {
  play(index,url,opts={}){
   this.cancelHandoff(index);
   const s=this.surface(index);s.fill=!!opts.fill;this.api.media_player_stop(s.player);
+  if(opts.kind==='catchup')this.hush(s);
   this.load(s,url,opts);
  }
+ /** Catch up sound waits for the picture: forced silent (libVLC drops a mute set before its sound output exists, so it is
+  *  re-applied every 40ms) until the player has shown a picture, then the wanted volume returns. 10s cap. */
+ hush(s){this.unhush(s,false);const started=Date.now();let shownAt=0;
+  const tick=()=>{let frames=0;try{frames=this.pictureProgress(s.player).videoFrames||0;}catch{}
+   const now=Date.now();if(frames>=1&&!shownAt)shownAt=now;
+   if((shownAt&&now-shownAt>=(s.holding?300:0))||now-started>10000){this.unhush(s,true);return;}
+   try{if(this.api.audio_get_mute(s.player)!==1)this.api.audio_set_mute(s.player,1);}catch{}};
+  s.hush=setInterval(tick,40);s.hush.unref?.();tick();}
+ unhush(s,restore){if(!s.hush)return;clearInterval(s.hush);s.hush=null;if(restore){try{this.api.audio_set_mute(s.player,0);}catch{}this.applyVolume(s);}}
  /** Catch up skip on ONE connection, like other IPTV apps: the current picture is saved as a still and shown by the page
   *  in the pane, the video window is hidden, then the same player closes the old time and opens the new one. Once the new
   *  time has drawn real pictures the window is shown again and the still is dropped, so the screen never goes black.
@@ -63,8 +73,7 @@ class EmbeddedVlc {
   const open=()=>{if(s.hold!==hold)return;
    if(still){s.holding=true;this.show(s.hwnd,0);}
    this.api.media_player_stop(s.player); // old time's connection closes before the new one opens
-   // Sound waits for the picture: silent until the new time is shown, then both start together.
-   try{hold.muted=this.api.audio_get_mute(s.player)===1;this.api.audio_set_mute(s.player,1);hold.hushed=true;}catch{}
+   this.hush(s); // sound waits for the picture
    try{this.load(s,url,opts);}catch(e){this.release(s);throw e;}
    const started=Date.now();let shownAt=0;
    hold.timer=setInterval(()=>{let frames=0,state=0;try{frames=this.pictureProgress(s.player).videoFrames||0;state=this.api.media_player_get_state(s.player);}catch{}
@@ -79,7 +88,6 @@ class EmbeddedVlc {
  /** Show the video window again and drop the page's still. */
  release(s){const hold=s.hold;if(!hold)return;clearInterval(hold.timer);clearTimeout(hold.wait);s.hold=null;
   if(s.holding){s.holding=false;if(this.lastRows)this.layout(this.lastRows);else this.show(s.hwnd,5);}
-  if(hold.hushed){try{this.api.audio_set_mute(s.player,hold.muted?1:0);}catch{}this.applyVolume(s);}
   this.onStill?.(s.index,null);}
  cancelHandoff(index){const s=this.surfaces?.get(index);if(s&&s.hold)this.release(s);}
  load(s,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,kind,name,multi}={}){
@@ -138,7 +146,7 @@ class EmbeddedVlc {
  // Windows sound (WASAPI) is shared by the whole app, so the picked screen owns mute/volume and quiet screens only switch their track off.
  // libVLC ignores this before the stream's sound exists and resets it on new media, so a short timer re-applies it.
  volume(index,value){const s=this.surfaces.get(index);if(!s)return;s.wantVolume=value;this.applyVolume(s);this.keepAudio();}
- applyVolume(s){if(s.wantVolume==null||s.hold?.hushed)return;try{ // a held catch up skip stays silent until its picture shows
+ applyVolume(s){if(s.wantVolume==null||s.hush)return;try{ // a held catch up skip stays silent until its picture shows
   // Windows' normal sound (WASAPI) shares ONE mute/volume across every player in the app. Quiet screens therefore only
   // switch their sound track off and never touch mute/volume; otherwise a quiet screen silenced the picked one.
   if(s.ds){if(this.api.audio_get_track(s.player)===-1&&s.audioId!=null)this.api.audio_set_track(s.player,s.audioId);const m=s.wantVolume<=0?1:0;if(this.api.audio_get_mute(s.player)!==m)this.api.audio_set_mute(s.player,m);const v=Math.max(0,s.wantVolume);if(this.api.audio_get_volume(s.player)!==v)this.api.audio_set_volume(s.player,v);return;}

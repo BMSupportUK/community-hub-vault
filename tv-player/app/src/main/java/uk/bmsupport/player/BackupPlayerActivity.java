@@ -230,7 +230,7 @@ public class BackupPlayerActivity extends Activity {
                     ui.removeCallbacks(retryLive);
                     retryQueued = false;
                     // After a catch up skip the sound stays off until the picture shows (waitPicture turns it on).
-                    if (!hushing) applyBoost();
+                    if (!hushing) applyBoost(); else try { mp.setVolume(0); } catch (Exception ignored) {}
                     ride.playing(android.os.SystemClock.elapsedRealtime());
                     break;
                 case MediaPlayer.Event.ESAdded:
@@ -242,7 +242,6 @@ public class BackupPlayerActivity extends Activity {
                     break;
                 case MediaPlayer.Event.Vout:
                     if (ev.getVoutCount() > 0) ui.postDelayed(dropStill, 150);
-                    if (ev.getVoutCount() > 0 && hushing) { hushUntil = 0; ui.removeCallbacks(waitPicture); ui.postDelayed(waitPicture, 120); }
                     break;
                 case MediaPlayer.Event.TimeChanged:
                     feedStatus.progress(ev.getTimeChanged(), android.os.SystemClock.elapsedRealtime());
@@ -259,7 +258,8 @@ public class BackupPlayerActivity extends Activity {
             }
         });
         // The carried guide preview only holds 1.5s of picture; 4K/UHD needs the full live buffer or the picture freezes while sound carries on.
-        if (carried == null || (isLive() && StreamRecovery.isHeavyName(recoveryName()))) open(); else applyBoost();
+        if (catchup()) startHush(); // first open too: no sound over the black screen before the picture
+        if (carried == null || (isLive() && StreamRecovery.isHeavyName(recoveryName()))) open(); else if (!hushing) applyBoost();
         if (catchup()) showSkipToListed(root);
         ui.post(feedTick);
         ui.postDelayed(reportTick, 60000);
@@ -307,16 +307,21 @@ public class BackupPlayerActivity extends Activity {
         int shown = 0;
         try { org.videolan.libvlc.interfaces.IMedia m = mp.getMedia(); if (m != null) { org.videolan.libvlc.interfaces.IMedia.Stats st = m.getStats(); if (st != null) shown = st.displayedPictures; m.release(); } } catch (Throwable ignored) {}
         if (shown > 0 || android.os.SystemClock.elapsedRealtime() > hushUntil) { hushing = false; applyBoost(); ui.post(dropStill); return; }
-        ui.postDelayed(this, 100);
+        // libVLC ignores a volume set before its sound output exists, so keep forcing silence until the picture is up.
+        try { if (mp.getVolume() != 0) mp.setVolume(0); } catch (Throwable ignored) {}
+        ui.postDelayed(this, 40);
     } };
+    /** Sound waits for the picture: silent from the moment catch up opens until its first picture is drawn (10s cap). */
+    private void startHush() {
+        try { if (mp != null) mp.setVolume(0); } catch (Exception ignored) {}
+        hushUntil = android.os.SystemClock.elapsedRealtime() + 10000; hushing = true;
+        ui.removeCallbacks(waitPicture); ui.postDelayed(waitPicture, 40);
+    }
     private boolean staleCatchupEvent() { return !started && android.os.SystemClock.elapsedRealtime() - cuOpenedAt < 3000; }
     private long cuReached() { return started ? cuSegStart + Math.max(0, mp == null ? 0 : mp.getTime()) / 1000 : cuSegStart; }
     private void catchupOpenAt(long start) {
         holdStill();
-        // Sound waits for the picture: hold it silent until the new time's first picture is drawn.
-        try { mp.setVolume(0); } catch (Exception ignored) {}
-        hushUntil = android.os.SystemClock.elapsedRealtime() + 10000; hushing = true;
-        ui.removeCallbacks(waitPicture); ui.postDelayed(waitPicture, 200);
+        startHush();
         cuSegStart = start; urls[0] = cuUrl(); at = 0; started = false; resume = 0; cuOpenedAt = android.os.SystemClock.elapsedRealtime();
         try { mp.stop(); } catch (Exception ignored) {}
         open();
