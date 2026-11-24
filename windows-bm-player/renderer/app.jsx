@@ -49,7 +49,7 @@ async function keepCatalogues(){const user=stateRef.current?.user;for(const k of
 async function preloadGuide(quiet=false){epgCache.current.invalidate();let ids=[];try{ids=[...new Set((catalogs.current.live?.data?.items||[]).map(c=>c.id))];}catch{}
  const total=ids.length;let done=0,next=0,open=true;
  const show=()=>{if(open)setProgress({locked:!quiet,message:'Loading TV guide… please wait',percent:Math.min(99,60+Math.round(done/Math.max(1,total)*39))});};show();
- const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await epgCache.current.load(id,key=>bm.epg(key));}catch{}done++;show();}};
+ const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await Promise.race([epgCache.current.load(id,key=>bm.epg(key)),new Promise(ok=>setTimeout(ok,25000))]);}catch{}done++;show();}};
  const all=Promise.all(Array.from({length:8},worker)).then(()=>saveGuide());
  await all;open=false;setProgress(null);saveGuide();}
  const [catVersion,setCatVersion]=useState(0);
