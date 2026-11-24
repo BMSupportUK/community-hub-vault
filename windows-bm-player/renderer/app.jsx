@@ -52,6 +52,9 @@ async function preloadGuide(quiet=false){epgCache.current.invalidate();let ids=[
  const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await epgCache.current.load(id,key=>bm.epg(key));}catch{}done++;show();}};
  const all=Promise.all(Array.from({length:8},worker)).then(()=>saveGuide());
  await all;open=false;setProgress(null);saveGuide();}
+ const [catVersion,setCatVersion]=useState(0);
+ // A quiet background update must redraw the list already on screen, keeping the chosen category.
+ useEffect(()=>{if(!catVersion||view!=='browse'||data?.saved)return;const kept=catalogs.current[kind];if(!kept||kept.user!==state?.user)return;setData(hideChosen(filterCatalog(kept.data,adultLocked),state?.settings?.['category_hidden_'+kind]));},[catVersion]);
  const [ratings,setRatings]=useState({}),[voteBusy,setVoteBusy]=useState(false);
  const ratingKey=item=>item.kind+':'+item.name;
  function mergeRatings(rows){setRatings(old=>({...old,...Object.fromEntries(rows.map(r=>[r.kind+':'+r.title,r]))}));}
@@ -118,7 +121,7 @@ async function preloadGuide(quiet=false){epgCache.current.invalidate();let ids=[
   if(event.type==='auto-backup'){bm.swapped({index:event.index,to:event.to.name,reason:'auto'});toast('Channel kept dropping – switched to backup: '+event.to.name);play(event.to,false,undefined,event.eventKey);clearTimeout(window.__bmReturn);const orig=event.original,backupId=event.to.id;window.__bmReturn=setTimeout(()=>{bm.state?.().then?.(st=>{const p=(st?.playing||[])[0];if(p&&String(p.item?.id)===String(backupId)){toast('Trying '+orig.name+' again');play(orig,false,undefined,event.eventKey);}}).catch(()=>{});},600000);return;}
   if(event.type==='alternate-feed')setModal({type:'alternate-feed',auto:!!event.auto,index:event.index,items:event.items,eventKey:event.eventKey});
   if(event.type==='progress')setProgress(event.percent<100?event:null);
-  if(event.type==='catalogues')void keepCatalogues().then(()=>{if(event.guide)return preloadGuide(!!event.quiet);});
+  if(event.type==='catalogues')void keepCatalogues().then(()=>{setCatVersion(v=>v+1);if(event.guide)return preloadGuide(!!event.quiet);});
   if(event.type==='audible'&&Number.isInteger(event.index))setAudibleIdx(event.index);
   if(event.type==='inactive')setInactive(event.seconds);
   if(event.type==='subtitles-found')setModal({type:'subs-found',index:event.index,item:event.item});
