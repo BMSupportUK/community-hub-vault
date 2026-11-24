@@ -28,7 +28,7 @@ function prepareVpn(){if(!vpnReady)vpnReady=nativeVpn.init().then(()=>vpn.sync()
 require('./mac-engine.cjs').setTransport({fetch:(url,options)=>nativeVpn.fetch(url,options),stream:url=>nativeVpn.stream(url)});
 let userVolume=100,audible=0;
 function applyAudio(){if(!engine)return;for(const s of sessions)engine.volume(s.index,s.index===audible?boost.boostedVolume(userVolume,store.settings?.boost):0);}
-function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w,{transport:url=>nativeVpn.stream(url)});}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
+function createEngine(w){const {MacEngine}=require('./mac-engine.cjs'),{BackupSwitch}=require('../backup-switch.cjs'),ua=()=>store.settings?.userAgent;if(MAC){const e=new MacEngine(w,ua);return new BackupSwitch(e,e);}let primary=null;try{const {EmbeddedVlc}=require('./embedded-vlc.cjs');primary=new EmbeddedVlc(w,{transport:url=>nativeVpn.stream(url)});primary.onStill=(index,src)=>send({type:'still',index,src});}catch{}return new BackupSwitch(primary,new MacEngine(w,ua));}
 /** Main player gave up: hand the screen to the BM backup engine (once), keeping a film's place. */
 function toBackup(session){
  if(session.backup||!engine?.useBackup)return false;
@@ -347,8 +347,8 @@ else{
     const minutes=catchupStart.target(session.catchupBase,session.position,value.delta,session.item);
     const item=catchupStart.recording(session.item,minutes);
     const urls=core.streamUrls(store.dns,store.user,store.pass,item);
-    // Keep the picture: handoff holds the old frame until the new time's first frame, then swaps (no black gap).
-    (engine.handoff||engine.play).call(engine,index,urls[0],{kind:'catchup',name:session.item.name,multi:sessions.length>1,live:false,resume:0,buffer:recovery.bufferMs(store.settings?.buffer)});
+    // One connection, like other IPTV apps: the last picture is held as a still while the same player opens the new time.
+    engine.reopenHeld(index,urls[0],{kind:'catchup',name:session.item.name,multi:sessions.length>1,live:false,resume:0,buffer:recovery.bufferMs(store.settings?.buffer)});
     Object.assign(session,{urls,urlIndex:0,catchupGeneration:(session.catchupGeneration||0)+1,catchupBase:(item.start-session.item.start)/1000,position:0,duration:0,paused:false,ready:false,failed:false,since:Date.now(),stallAt:0,reconnects:0,retryAt:0,stallTimes:[],stillSince:0,lastPos:undefined});
     store.catchupStarts={...store.catchupStarts,[key({kind:'live',id:session.item.id})]:catchupStart.learned(minutes)};save();applyAudio();
    }

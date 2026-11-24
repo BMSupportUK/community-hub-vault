@@ -8,7 +8,7 @@ test('catch-up skip keeps the picture window and opens finite recordings, advanc
  const session={index:0,item,catchupBase:120,position:0};
  const calls=[],store={dns:'https://example.test',user:'test',pass:'fixture'},saved=[];
  let command;
- vm.runInNewContext(handler,{register:(name,fn)=>{command=fn;},sessions:[session],engine:{stop:i=>calls.push(['stop',i]),play:(i,url,options)=>calls.push(['play',url,options])},core,catchupStart,store,key:i=>core.watchKey(store.dns,store.user,i.kind,i.id),recovery:{bufferMs:()=>3000},save:()=>saved.push(JSON.stringify(store.catchupStarts)),applyAudio:()=>{},send:()=>{},publicState:()=>({})});
+ vm.runInNewContext(handler,{register:(name,fn)=>{command=fn;},sessions:[session],engine:{stop:i=>calls.push(["stop",i]),reopenHeld:(i,url,options)=>calls.push(['play',url,options])},core,catchupStart,store,key:i=>core.watchKey(store.dns,store.user,i.kind,i.id),recovery:{bufferMs:()=>3000},save:()=>saved.push(JSON.stringify(store.catchupStarts)),applyAudio:()=>{},send:()=>{},publicState:()=>({})});
  command({index:0,action:'catchupSkip',delta:120});
  command({index:0,action:'catchupSkip',delta:120});
  expect(calls.map(c=>c[0])).toEqual(['play','play']);
@@ -25,7 +25,7 @@ test('catch-up skip keeps the picture window and opens finite recordings, advanc
  const handler=source.slice(source.indexOf("  register('control',value=>{"),source.indexOf("  register('settings',async value=>{"));
  const item={kind:'catchup',id:'7',name:'Test show',start:Date.UTC(2026,10,14,10),end:Date.UTC(2026,10,14,11)};
  const session={index:0,item,catchupBase:120,position:0},calls=[],store={dns:'https://example.test',user:'test',pass:'fixture'};let command;
- vm.runInNewContext(handler,{register:(n,fn)=>{command=fn;},sessions:[session],engine:{stop:()=>{},play:(i,url)=>calls.push(url)},core,catchupStart,store,key:i=>'k',recovery:{bufferMs:()=>3000},save:()=>{},applyAudio:()=>{},send:()=>{},publicState:()=>({})});
+ vm.runInNewContext(handler,{register:(n,fn)=>{command=fn;},sessions:[session],engine:{stop:()=>{},reopenHeld:(i,url)=>calls.push(url)},core,catchupStart,store,key:i=>'k',recovery:{bufferMs:()=>3000},save:()=>{},applyAudio:()=>{},send:()=>{},publicState:()=>({})});
  command({index:0,action:'catchupSkip',delta:300});
  expect(calls[0]).toContain('/2026-11-14:10-07/7.ts');
  command({index:0,action:'catchupSkip',delta:45});

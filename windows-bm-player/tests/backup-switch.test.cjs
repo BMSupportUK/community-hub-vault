@@ -37,3 +37,12 @@ test('films and episodes ask both players to fill the screen', () => {
   s.stop(0); s.play(0, 'x');
   expect(seen).toEqual([['main', true], ['backup', true], ['main', false]]);
 });
+
+test('catch up skip reaches the main player\'s one-connection hold, and the backup engine just reopens',()=>{
+ const {BackupSwitch}=require('../backup-switch.cjs');const calls=[];
+ const p={reopenHeld:(i,u)=>calls.push(['hold',i,u]),play:(i,u)=>calls.push(['play',i,u]),stop:()=>{}};
+ const b={playBackup:(i,u)=>calls.push(['backup',i,u]),stop:()=>{}};
+ const e=new BackupSwitch(p,b);
+ e.reopenHeld(0,'a');expect(calls.at(-1)).toEqual(['hold',0,'a']);
+ e.useBackup(0,'x');e.reopenHeld(0,'b');expect(calls.at(-1)).toEqual(['backup',0,'b']);
+});

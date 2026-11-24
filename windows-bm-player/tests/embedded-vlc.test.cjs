@@ -79,34 +79,38 @@ test('a screen started alone, then joined by a second screen, is heard again whe
  engine.close();
 });
 
-test('catch up skip keeps the old picture paused until the new time shows its first frame',async()=>{
- const calls=[];let frames=0,id=10n;
+test('catch up skip holds a still and reopens on the same player, so only one provider connection is used',async()=>{
+ const calls=[];let frames=0,id=10n;const fs=require('node:fs');
  const koffi={load:()=>({func:(...args)=>{const name=args[0]==='__stdcall'?args[1]:args[0];return (...values)=>{
   calls.push({name,values});
   if(name==='GetClientRect'){values[1].writeInt32LE(1280,8);values[1].writeInt32LE(900,12);return true;}
   if(['libvlc_media_player_new','CreateWindowExW'].includes(name))return ++id;
   if(['libvlc_new','libvlc_media_new_location','libvlc_media_player_get_media'].includes(name))return 1n;
   if(name==='libvlc_media_get_stats'){values[1].writeInt32LE(frames,32);return 1;}
+  if(name==='libvlc_video_take_snapshot'){fs.writeFileSync(values[2],'jpg');return 0;}
   return 0;};}})};
  const handle=Buffer.alloc(8);handle.writeBigUInt64LE(42n);
  const old=process.env.VLC_PLUGIN_PATH;
  try{
   const engine=new EmbeddedVlc({getNativeWindowHandle:()=>handle},{koffi,root:'/tmp/test-vlc'});
-  engine.play(0,'https://example.invalid/a.ts');const first=engine.surfaces.get(0).player,firstWin=engine.surfaces.get(0).hwnd;
+  const stills=[];engine.onStill=(i,src)=>stills.push([i,src]);
+  engine.play(0,'https://example.invalid/a.ts');const first=engine.surfaces.get(0).player,win=engine.surfaces.get(0).hwnd;
   engine.layout([{index:0,x:0,y:0,width:1,height:1,visible:true}]);
-  engine.handoff(0,'https://example.invalid/b.ts');const waiting=engine.surfaces.get(0).pending.hwnd;
-  // The new time loads in a full-size window directly behind the frozen picture, never a 1x1 hidden one.
-  expect(calls.some(c=>c.name==='SetWindowPos'&&c.values[0]===waiting&&c.values[1]===firstWin&&c.values[4]===1280&&c.values[5]===900)).toBe(true);
+  const players=calls.filter(c=>c.name==='libvlc_media_player_new').length;
+  engine.reopenHeld(0,'https://example.invalid/b.ts');
+  expect(stills[0]).toEqual([0,'data:image/jpeg;base64,'+Buffer.from('jpg').toString('base64')]);
   await new Promise(r=>setTimeout(r,250));
+  // Same player and window: the old time is stopped before the new one opens (never two connections at once).
+  expect(calls.filter(c=>c.name==='libvlc_media_player_new').length).toBe(players);
   expect(engine.surfaces.get(0).player).toBe(first);
-  expect(calls.some(c=>c.name==='libvlc_media_player_set_pause'&&c.values[0]===first&&c.values[1]===1)).toBe(true);
-  expect(calls.some(c=>c.name==='DestroyWindow')).toBe(false);
-  frames=5;await new Promise(r=>setTimeout(r,150));
-  expect(engine.surfaces.get(0).player).toBe(first); // first pictures get a moment to finish drawing before the swap
-  await new Promise(r=>setTimeout(r,450));
-  expect(engine.surfaces.get(0).player).not.toBe(first);
-  expect(engine.surfaces.get(0).hwnd).toBe(waiting);
-  expect(calls.some(c=>c.name==='libvlc_media_player_release'&&c.values[0]===first)).toBe(true);
+  const names=calls.map(c=>c.name);const lastStop=names.lastIndexOf('libvlc_media_player_stop'),lastPlay=names.lastIndexOf('libvlc_media_player_play');
+  expect(lastStop).toBeGreaterThan(-1);expect(lastStop).toBeLessThan(lastPlay);
+  expect(calls.some(c=>c.name==='ShowWindow'&&c.values[0]===win&&c.values[1]===0)).toBe(true);
+  expect(engine.surfaces.get(0).holding).toBe(true);
+  frames=5;await new Promise(r=>setTimeout(r,600));
+  expect(engine.surfaces.get(0).holding).toBe(false);
+  expect(stills.at(-1)).toEqual([0,null]);
+  expect(calls.at(-1)&&calls.some(c=>c.name==='DestroyWindow')).toBe(false);
   engine.close();
  }finally{if(old===undefined)delete process.env.VLC_PLUGIN_PATH;else process.env.VLC_PLUGIN_PATH=old;}
 });

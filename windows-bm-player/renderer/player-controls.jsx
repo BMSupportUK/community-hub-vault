@@ -8,16 +8,24 @@ function CatchupJump({command}){
  const press=step=>{total.current+=step;setPending(total.current);clearTimeout(timer.current);timer.current=setTimeout(()=>{const minutes=total.current;total.current=0;setPending(0);if(minutes)command('catchupSkip',{delta:minutes*60});},1500);};
  return <><button aria-label="Back one minute" title="Back one minute" onClick={()=>press(-1)}>⏪ Back 1 min</button><button aria-label="Fast forward one minute" title="Fast forward – press again to add a minute" onClick={()=>press(1)}>⏩ Fast forward</button>{pending!==0&&<span className="playback-time" role="status">{pending>0?'+':'−'}{Math.abs(pending)} min</span>}</>;
 }
+// Films/episodes: quick presses add up from the last target (not the stale reported time) and seek once, 400ms after the last press.
+function useSkip(p,command){
+ const target=useRef(null),timer=useRef(null);
+ useEffect(()=>()=>clearTimeout(timer.current),[]);
+ return delta=>{const from=target.current??p.position;target.current=controls.skipPosition(from,p.duration,delta);clearTimeout(timer.current);
+  timer.current=setTimeout(()=>{const seconds=target.current;target.current=null;if(seconds!=null)command('seek',{seconds});},400);};
+}
 export function PlayerControls({p,bm,actions,volume,onVolume}){
  const [tracks,setTracks]=useState({audio:[],subtitles:[]}),[rate,setRate]=useState(1);
  useEffect(()=>{let active=true;const load=()=>bm.control({index:p.index,action:'tracks'}).then(t=>{if(active&&t)setTracks(t);}).catch(()=>{});load();const id=setInterval(load,5000);return()=>{active=false;clearInterval(id);};},[p.index,p.item.id,p.backup]);
  const command=(action,value={})=>bm.control({index:p.index,action,...value});
+ const skip=useSkip(p,command);
  return <div className="playback-controls">
  <div className="transport-controls">
  {p.item.kind==='catchup'&&<CatchupJump command={command}/>}
- {controls.canSkip(p.item.kind)&&<button aria-label="Rewind 10 seconds" title="Rewind 10 seconds" disabled={!p.seekable} onClick={()=>command('seek',{seconds:controls.skipPosition(p.position,p.duration,-10)})}>↶ 10</button>}
+ {controls.canSkip(p.item.kind)&&<button aria-label="Rewind 10 seconds" title="Rewind 10 seconds" disabled={!p.seekable} onClick={()=>skip(-10)}>↶ 10</button>}
  <button aria-label={p.paused?'Resume playback':'Pause playback'} onClick={()=>command('pause')}>{p.paused?'▶':'Ⅱ'}</button>
- {controls.canSkip(p.item.kind)&&<button aria-label="Forward 10 seconds" title="Forward 10 seconds" disabled={!p.seekable} onClick={()=>command('seek',{seconds:controls.skipPosition(p.position,p.duration,10)})}>10 ↷</button>}
+ {controls.canSkip(p.item.kind)&&<button aria-label="Forward 10 seconds" title="Forward 10 seconds" disabled={!p.seekable} onClick={()=>skip(10)}>10 ↷</button>}
  {p.seekable&&p.duration>0&&<input type="range" aria-label="Playback position" min="0" max={p.duration} value={p.position||0} onChange={e=>command('seek',{seconds:Number(e.target.value)})}/>}
  <span className="playback-time">{time(p.position)}{p.duration>0?' / '+time(p.duration):''}</span>
  <input type="range" aria-label="Volume" min="0" max="100" value={volume} onChange={e=>onVolume(Number(e.target.value))}/>

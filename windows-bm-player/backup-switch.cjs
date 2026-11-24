@@ -17,6 +17,11 @@ class BackupSwitch {
     if (this.usingBackup(i)) { if (!this.canBackup()) throw new Error('No player available.'); return this.b.playBackup(i, url, o); }
     return this.p.play(i, url, o);
   }
+  /** Catch up skip: the main player holds its last picture on one connection; the backup <video> keeps its own poster still. */
+  reopenHeld(i, url, o = {}) {
+    if (this.usingBackup(i) || !this.p?.reopenHeld) return this.play(i, url, o);
+    return this.p.reopenHeld(i, url, { ...o, fill: !!this.fills.get(i) });
+  }
   useBackup(i, url, o = {}) {
     o = { ...o, fill: !!this.fills.get(i) };
     if (!this.canBackup() || this.on.has(i)) return false;

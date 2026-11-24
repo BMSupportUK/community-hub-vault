@@ -1,5 +1,5 @@
 import React,{useEffect,useRef} from 'react';
-export function VideoSurface({index,visible=true}){
+export function VideoSurface({index,visible=true,still=null}){
  const ref=useRef(null);
  useEffect(()=>{
   let frame,last='';
@@ -14,5 +14,5 @@ export function VideoSurface({index,visible=true}){
   return()=>{observer.disconnect();cancelAnimationFrame(frame);window.removeEventListener('resize',update);window.removeEventListener('scroll',onScroll,true);window.bm.surface([]).catch(()=>{});};
  },[index,visible]);
  const MacVideo=typeof window!=='undefined'?window.__bmMacVideo:null;
- return <div className="video-surface" ref={ref} data-video-index={index} data-video-visible={visible} aria-label="In-app video">{MacVideo&&<MacVideo index={index}/>}</div>;
+ return <div className="video-surface" ref={ref} data-video-index={index} data-video-visible={visible} aria-label="In-app video">{still&&<img className="video-still" src={still} alt=""/>}{MacVideo&&<MacVideo index={index}/>}</div>;
 }
