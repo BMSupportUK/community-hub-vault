@@ -138,7 +138,9 @@ async function refreshInner(startup){
  // A saved copy is already on screen: update quietly; only a first start/new login locks the screen.
  const saved=kinds.every(k=>cache.has(k));if(saved)send({type:'catalogues',quiet:true});
  const tell=()=>send({type:'progress',locked:!saved,message:'Updating playlists ('+step+' of 3)',percent:Math.round(step/3*span)});tell();
- await Promise.all(kinds.map(kind=>catalogue(kind,true).then(()=>{step++;tell();})));
+ // Every list has a hard deadline (VPN start-up included) so the Updating note can never sit at 0% forever; a saved copy stays on screen if one fails.
+ const deadline=kind=>Promise.race([catalogue(kind,true),new Promise((_,no)=>setTimeout(()=>no(new Error('The service provider took too long to send the playlists. Try Refresh.')),150000).unref?.())]);
+ try{await Promise.all(kinds.map(kind=>deadline(kind).then(()=>{step++;tell();})));}catch(e){send({type:'progress',message:'Could not update playlists.',percent:100});if(saved){send({type:'notice',message:'Playlists could not update just now – showing your saved copy. Try Refresh.'});return false;}throw e;}
  keepSaved();send({type:'catalogues',guide:true,quiet:saved});return true;
 }
 async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||String(channel.id).length>80)throw new Error('Catch up isn\'t available on this channel.');const r=await provider('get_simple_data_table',{stream_id:String(channel.id)});return core.catchupProgrammes(r.epg_listings,Math.min(30,Number(channel.archive)));}
