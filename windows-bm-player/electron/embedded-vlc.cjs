@@ -43,8 +43,34 @@ class EmbeddedVlc {
   this.api.video_set_mouse_input(player,0);this.api.video_set_key_input(player,0);
   const s={hwnd,player,index};this.surfaces.set(index,s);return s;
  }
- play(index,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,fill=false,kind,name,multi}={}){
-  const s=this.surface(index);s.fill=!!fill;this.api.media_player_stop(s.player);
+ play(index,url,opts={}){
+  this.cancelHandoff(index);
+  const s=this.surface(index);s.fill=!!opts.fill;this.api.media_player_stop(s.player);
+  this.load(s,url,opts);
+ }
+ /** Catch up skip: the old picture stays on screen (paused) while a hidden second player opens the new time; it swaps in on its first frame, so the screen never goes black. */
+ handoff(index,url,opts={}){
+  const s=this.surfaces.get(index);if(!s)return this.play(index,url,opts);
+  this.cancelHandoff(index);
+  const hwnd=this.create(0,'STATIC','BM Player video',0x40000000|0x04000000|0x02000000,0,0,1,1,this.parent,null,null,null);
+  if(!hwnd)return this.play(index,url,opts);
+  const player=this.api.media_player_new(this.instance);
+  if(!player){this.destroy(hwnd);return this.play(index,url,opts);}
+  this.api.media_player_set_hwnd(player,hwnd);this.api.video_set_mouse_input(player,0);this.api.video_set_key_input(player,0);
+  const t={hwnd,player,index,handoff:true,fill:s.fill,decodeContext:s.decodeContext,ds:false,audioId:s.audioId,wantVolume:s.wantVolume};
+  this.api.media_player_set_pause(s.player,1);
+  try{this.load(t,url,{...opts,kind:undefined});}catch(e){this.api.media_player_release(player);this.destroy(hwnd);return this.play(index,url,opts);}
+  const started=Date.now();
+  t.timer=setInterval(()=>{let frames=0;try{frames=this.pictureProgress(player).videoFrames||0;}catch{}
+   if(frames<=0&&Date.now()-started<20000)return;
+   clearInterval(t.timer);s.pending=null;
+   try{this.api.media_player_stop(s.player);this.api.media_player_release(s.player);}catch{}
+   const oldHwnd=s.hwnd;s.hwnd=hwnd;s.player=player;s.ds=t.ds;
+   if(this.lastRows)this.layout(this.lastRows);this.destroy(oldHwnd);this.applyVolume(s);
+  },100);t.timer.unref?.();s.pending=t;
+ }
+ cancelHandoff(index){const s=this.surfaces?.get(index);const t=s&&s.pending;if(!t)return;clearInterval(t.timer);s.pending=null;try{this.api.media_player_stop(t.player);this.api.media_player_release(t.player);}catch{}this.destroy(t.hwnd);}
+ load(s,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,kind,name,multi}={}){
   if(kind!==undefined)s.decodeContext={kind,name,multi:!!multi};
   // Multi-screen panes use DirectSound per player (as up to 0.4.129): each pane keeps its own mute/volume, so switching
   // the picked screen never depends on re-enabling a switched-off live sound track (that left the re-picked screen silent).
@@ -65,9 +91,10 @@ class EmbeddedVlc {
   }finally{this.api.media_release(media);}
   if(this.api.media_player_play(s.player)<0)throw new Error('This stream could not start.');
   // A reconnect or swap on a screen keeps its sound choice; only a brand-new screen starts silent (screen 1 audible).
-  this.volume(index,s.wantVolume!=null?s.wantVolume:index===0?100:0);
+  if(!s.handoff)this.volume(s.index??0,s.wantVolume!=null?s.wantVolume:(s.index??0)===0?100:0);
  }
  layout(rows){
+  this.lastRows=rows;
   const rect=Buffer.alloc(16);if(!this.client(this.parent,rect))return;
   const width=rect.readInt32LE(8),height=rect.readInt32LE(12);
   const shown=new Set();
@@ -118,7 +145,7 @@ class EmbeddedVlc {
  setAudioTrack(index,id){const s=this.surfaces.get(index);if(s&&this.trackRows(index,'audio').some(t=>t.id===id)){s.audioId=id;this.api.audio_set_track(s.player,id);}}
  setSubtitleTrack(index,id){const s=this.surfaces.get(index);if(s&&(id===-1||this.trackRows(index,'subtitles').some(t=>t.id===id)))this.api.video_set_spu(s.player,id);}
  speed(index,rate){const s=this.surfaces.get(index);if(s)this.api.media_player_set_rate(s.player,rate);}
- stop(index){const s=this.surfaces.get(index);if(!s)return;this.api.media_player_stop(s.player);this.api.media_player_release(s.player);this.destroy(s.hwnd);this.surfaces.delete(index);}
+ stop(index){this.cancelHandoff(index);const s=this.surfaces.get(index);if(!s)return;this.api.media_player_stop(s.player);this.api.media_player_release(s.player);this.destroy(s.hwnd);this.surfaces.delete(index);}
  close(){if(this.audioTimer){clearInterval(this.audioTimer);this.audioTimer=null;}for(const index of [...this.surfaces.keys()])this.stop(index);if(this.instance){this.api.release(this.instance);this.instance=null;}}
 }
 module.exports={EmbeddedVlc};

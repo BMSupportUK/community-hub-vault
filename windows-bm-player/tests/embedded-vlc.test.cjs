@@ -78,3 +78,29 @@ test('a screen started alone, then joined by a second screen, is heard again whe
  engine.volume(0,100);engine.volume(1,0);expect([shared,mute[b],track[a]??1]).toEqual([0,1,1]);
  engine.close();
 });
+
+test('catch up skip keeps the old picture paused until the new time shows its first frame',async()=>{
+ const calls=[];let frames=0,id=10n;
+ const koffi={load:()=>({func:(...args)=>{const name=args[0]==='__stdcall'?args[1]:args[0];return (...values)=>{
+  calls.push({name,values});
+  if(name==='GetClientRect'){values[1].writeInt32LE(1280,8);values[1].writeInt32LE(900,12);return true;}
+  if(['libvlc_media_player_new','CreateWindowExW'].includes(name))return ++id;
+  if(['libvlc_new','libvlc_media_new_location','libvlc_media_player_get_media'].includes(name))return 1n;
+  if(name==='libvlc_media_get_stats'){values[1].writeInt32LE(frames,32);return 1;}
+  return 0;};}})};
+ const handle=Buffer.alloc(8);handle.writeBigUInt64LE(42n);
+ const old=process.env.VLC_PLUGIN_PATH;
+ try{
+  const engine=new EmbeddedVlc({getNativeWindowHandle:()=>handle},{koffi,root:'/tmp/test-vlc'});
+  engine.play(0,'https://example.invalid/a.ts');const first=engine.surfaces.get(0).player;
+  engine.handoff(0,'https://example.invalid/b.ts');
+  await new Promise(r=>setTimeout(r,250));
+  expect(engine.surfaces.get(0).player).toBe(first);
+  expect(calls.some(c=>c.name==='libvlc_media_player_set_pause'&&c.values[0]===first&&c.values[1]===1)).toBe(true);
+  expect(calls.some(c=>c.name==='DestroyWindow')).toBe(false);
+  frames=5;await new Promise(r=>setTimeout(r,250));
+  expect(engine.surfaces.get(0).player).not.toBe(first);
+  expect(calls.some(c=>c.name==='libvlc_media_player_release'&&c.values[0]===first)).toBe(true);
+  engine.close();
+ }finally{if(old===undefined)delete process.env.VLC_PLUGIN_PATH;else process.env.VLC_PLUGIN_PATH=old;}
+});

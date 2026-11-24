@@ -347,8 +347,8 @@ else{
     const minutes=catchupStart.target(session.catchupBase,session.position,value.delta,session.item);
     const item=catchupStart.recording(session.item,minutes);
     const urls=core.streamUrls(store.dns,store.user,store.pass,item);
-    // Keep the picture window: engine.stop destroys it and the fresh one never gets a screen position (black screen).
-    engine.play(index,urls[0],{kind:'catchup',name:session.item.name,multi:sessions.length>1,live:false,resume:0,buffer:recovery.bufferMs(store.settings?.buffer)});
+    // Keep the picture: handoff holds the old frame until the new time's first frame, then swaps (no black gap).
+    (engine.handoff||engine.play).call(engine,index,urls[0],{kind:'catchup',name:session.item.name,multi:sessions.length>1,live:false,resume:0,buffer:recovery.bufferMs(store.settings?.buffer)});
     Object.assign(session,{urls,urlIndex:0,catchupGeneration:(session.catchupGeneration||0)+1,catchupBase:(item.start-session.item.start)/1000,position:0,duration:0,paused:false,ready:false,failed:false,since:Date.now(),stallAt:0,reconnects:0,retryAt:0,stallTimes:[],stillSince:0,lastPos:undefined});
     store.catchupStarts={...store.catchupStarts,[key({kind:'live',id:session.item.id})]:catchupStart.learned(minutes)};save();applyAudio();
    }
