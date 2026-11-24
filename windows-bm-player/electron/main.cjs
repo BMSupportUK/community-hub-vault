@@ -44,7 +44,7 @@ let sportsSnapshot=null;
 let sessions=[],awake=null,pollBusy=false,pollStarted=0,checkBusy=false,engine=null;
 let lastSystemIdle=0,refreshPromise=null;
 const page=path.join(__dirname,'../dist/index.html');
-const cache=new Map(),pending=new Map();const catStore=require('../catalogue-store.cjs');let catFile='';const catKey=()=>catStore.keyFor(store.dns,store.user);function dropSaved(){if(catFile)catStore.drop(fs,catFile);}function keepSaved(){if(!catFile||!['live','film','series'].every(k=>cache.has(k))||!safeStorage.isEncryptionAvailable())return;catStore.save(fs,catFile,catKey(),{live:cache.get('live'),film:cache.get('film'),series:cache.get('series')},s=>safeStorage.encryptString(s));}
+const cache=new Map(),pending=new Map();
 function save(){ if(store.unlinked)deviceLock.wipeStore(store);if(!safeStorage.isEncryptionAvailable())throw new Error(PLATFORM.name+' credential protection unavailable.'); fs.writeFileSync(file,safeStorage.encryptString(JSON.stringify(store))); }
 function send(data){ if(store.unlinked&&!['state','unlinked'].includes(data.type))return;if(win&&!win.isDestroyed())win.webContents.send('player:event',data); }
 function key(item){return core.watchKey(store.dns||'',store.user||'',item.kind,item.id);}
@@ -73,7 +73,7 @@ async function site(body){
 }
 // Revoked installations keep only a persistent lock, never a fresh linking code.
 let unlinking=false;
-async function unlinked(){if(unlinking||store.unlinked)return;unlinking=true;try{deviceLock.wipeStore(store);gate.lock();linkVerified=false;pinPassed=false;linkCode=null;major=[];announcement=null;sportsSnapshot=null;cache.clear();dropSaved();pending.clear();save();send({type:'unlinked'});send({type:'state',state:publicState()});await stopAll().catch(()=>{});nativeVpn.close();void vpn.close().catch(()=>{});await win?.webContents.session.clearStorageData().catch(()=>{});deviceLock.wipeStore(store);save();}finally{unlinking=false;}}
+async function unlinked(){if(unlinking||store.unlinked)return;unlinking=true;try{deviceLock.wipeStore(store);gate.lock();linkVerified=false;pinPassed=false;linkCode=null;major=[];announcement=null;sportsSnapshot=null;cache.clear();pending.clear();save();send({type:'unlinked'});send({type:'state',state:publicState()});await stopAll().catch(()=>{});nativeVpn.close();void vpn.close().catch(()=>{});await win?.webContents.session.clearStorageData().catch(()=>{});deviceLock.wipeStore(store);save();}finally{unlinking=false;}}
 async function getCode(){if(!store.token){const r=await site({action:'register',platform:PLATFORM.id,name:'BM Player '+PLATFORM.name});store.token=r.device_token;save();}const r=await site({action:'code'});linkCode=r.code;send({type:'state',state:publicState()});return publicState();}
 let major=[],majorBusy=false;
 async function fetchMajor(){if(majorBusy||!store.token)return;majorBusy=true;try{const r=await site({action:'major_announcements'});if(r&&Array.isArray(r.items)){const next=r.items.slice(0,30).map(i=>({id:String(i.id),title:String(i.title||'').slice(0,120),body:String(i.body||'').slice(0,4000),created_at:String(i.created_at||''),image_url:typeof i.image_url==='string'&&/^https:\/\//.test(i.image_url)?i.image_url:null}));if(JSON.stringify(next)!==JSON.stringify(major)){major=next;send({type:'state',state:publicState()});}}}catch{}finally{majorBusy=false;}}
@@ -94,10 +94,10 @@ async function poll(){
   checkin.setSlow(r.slow);maintenance=r.maintenance?.enabled?r.maintenance.message:null;
   if(maintenance)await stopAll();
   let changed=false;
-  if(r.credentials){gate.restore();store.unlockedFor=store.token;await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();dropSaved();}
+  if(r.credentials){gate.restore();store.unlockedFor=store.token;await stopAll();store.user=r.credentials.username;store.pass=r.credentials.password;store.account=null;excessSince=0;excessReported=false;changed=true;cache.clear();}
   if(gate.restoreLinked(store,r))changed=true;
   if(store.user&&gate.unlocked&&!pinPassed)await checkPin();
-  if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();dropSaved();}
+  if(r.dns&&r.dns!==store.dns){store.dns=r.dns;changed=true;cache.clear();}
   if(changed){save();if(store.user&&gate.unlocked&&pinPassed)refreshAtStartup();}
   if(store.user&&gate.unlocked)syncFavourites().catch(()=>{});
   send({type:'state',state:publicState()});refreshAtStartup();
@@ -114,9 +114,9 @@ async function provider(action='',extra={}){
  if(!response.ok)throw new Error('The service provider could not load this section. Try Refresh.');
  const result=await response.json();deviceLock.requireActive(store);return result;
 }
-async function catalogue(kind,fresh=false){
+async function catalogue(kind){
  if(!['live','film','series'].includes(kind))throw new Error('Unknown section.');
- if(!fresh&&cache.has(kind))return cache.get(kind);
+ if(cache.has(kind))return cache.get(kind);
  if(pending.has(kind))return pending.get(kind);
  const task=(async()=>{
  const prefix={live:'live',film:'vod',series:'series'}[kind];
@@ -133,16 +133,10 @@ async function refresh(startup=false){
  refreshPromise=refreshInner(startup);try{return await refreshPromise;}finally{refreshPromise=null;}
 }
 async function refreshInner(startup){
- await Promise.race([prepareVpn(),new Promise(ok=>setTimeout(ok,30000).unref?.())]);
+ await prepareVpn();
  const kinds=['live','film','series'];let step=0;const span=60;
- // A saved copy is already on screen: update quietly; only a first start/new login locks the screen.
- const saved=kinds.every(k=>cache.has(k));if(saved)send({type:'catalogues',quiet:true});
- const tell=()=>send({type:'progress',locked:!saved,message:'Updating playlists ('+step+' of 3)',percent:Math.round(step/3*span)});tell();
- // Every list has a hard deadline (VPN start-up included) so the Updating note can never sit at 0% forever; a saved copy stays on screen if one fails.
- const deadline=kind=>Promise.race([catalogue(kind,true),new Promise((_,no)=>setTimeout(()=>no(new Error('The service provider took too long to send the playlists. Try Refresh.')),150000).unref?.())]);
- // One list at a time, like before 0.4.135: six requests at once made many providers stall or refuse them.
- try{for(const kind of kinds){await deadline(kind);step++;tell();}}catch(e){send({type:'progress',message:'Could not update playlists.',percent:100});if(saved){send({type:'notice',message:'Playlists could not update just now – showing your saved copy. Try Refresh.'});return false;}throw e;}
- keepSaved();send({type:'catalogues',guide:true,quiet:saved});return true;
+ for(const kind of kinds){send({type:'progress',locked:true,message:'Updating '+{live:'Live TV',film:'Films',series:'Series'}[kind],percent:Math.round(step/3*span)});cache.delete(kind);await catalogue(kind);step++;}
+ send({type:'catalogues',guide:true});return true;
 }
 async function catchup(channel){if(!channel||!(Number(channel.archive)>0)||String(channel.id).length>80)throw new Error('Catch up isn\'t available on this channel.');const r=await provider('get_simple_data_table',{stream_id:String(channel.id)});return core.catchupProgrammes(r.epg_listings,Math.min(30,Number(channel.archive)));}
 // Resolve trusted catalogue names; only saved sports fixtures override provider EPG.
@@ -312,9 +306,7 @@ else{
  app.whenReady().then(async()=>{
   file=path.join(app.getPath('userData'),'player-encrypted.bin');
   if(fs.existsSync(file)){try{store=JSON.parse(safeStorage.decryptString(fs.readFileSync(file)));}catch{store={};}}
-  catFile=path.join(app.getPath('userData'),'playlists-encrypted.bin');
-  if(store.unlinked){deviceLock.wipeStore(store);save();dropSaved();}
-  else{const kept=catStore.load(fs,catFile,catKey(),b=>safeStorage.decryptString(b));if(kept)for(const k of ['live','film','series'])if(kept[k])cache.set(k,kept[k]);}
+  if(store.unlinked){deviceLock.wipeStore(store);save();}
   recovery.loadHeavy(store.heavyChannels);
   store.recent=(store.recent||[]).filter(i=>!core.adult(i.categoryName));
   win=new BrowserWindow({title:'BM Player · '+PLATFORM.name,show:false,width:1280,height:820,minWidth:920,minHeight:650,autoHideMenuBar:true,...(MAC?{}:{icon:path.join(__dirname,'../build.ico')}),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
