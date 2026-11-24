@@ -6,3 +6,4 @@
 - When swapping only `Resources/app.asar` into an existing release, bump both Info.plist version keys and rewrite `ElectronAsarIntegrity` with SHA-256 of the archive's header JSON (bytes 16..16+uint32@12), then re-sign the bundle with rcodesign; `zip -y` must keep the framework symlinks.
 - Without Apple Developer ID signing, customers have to right-click and choose Open the first time; keep that step on the download card until notarised releases exist.
 - The backup converter lives in the shared mac-engine.cjs (also staged into Windows builds); keep its ffmpeg at Resources/app.asar.unpacked/tools/ffmpeg/ffmpeg so it can run.
+- Finite reopens (catch up Forward/Back) set the last frame as the <video> poster until the new time plays, so a skip never shows black.

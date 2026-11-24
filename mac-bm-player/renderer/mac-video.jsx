@@ -47,6 +47,10 @@ function destroy(index) {
 function start(index) {
   const cmd = commands.get(index), video = elements.get(index);
   if (!cmd || !video || cmd.action !== 'play') return;
+  // Catch up Forward/Back reopens the recording at a new time: keep the last frame as a still until the new time plays, never black.
+  if (cmd.live === false && video.readyState >= 2 && video.videoWidth) {
+    try { const c = document.createElement('canvas'); c.width = video.videoWidth; c.height = video.videoHeight; c.getContext('2d').drawImage(video, 0, 0); video.poster = c.toDataURL('image/jpeg', 0.85); video.addEventListener('playing', () => video.removeAttribute('poster'), { once: true }); } catch {}
+  }
   destroy(index);
   video.style.visibility = 'visible';
   video.dataset.failed = '';
