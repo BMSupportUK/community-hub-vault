@@ -15,6 +15,8 @@ import java.util.List;
 public final class PlayerApplication extends Application implements Application.ActivityLifecycleCallbacks {
     private static PlayerApplication instance;
     private boolean revoking;
+    /** Relinking ends the unlink, so a later unlink in the same session shows the unlinked screen again. */
+    static void relinked() { PlayerApplication app = instance; if (app != null) app.ui.post(() -> app.revoking = false); }
     static void unlinked() {
         DeviceLock.revoke();
         PlayerApplication app = instance;

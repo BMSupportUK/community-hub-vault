@@ -18,7 +18,7 @@ public final class UnlinkedActivity extends Activity {
         android.widget.Button relink = new android.widget.Button(this);
         relink.setText("Link this device again");
         relink.setOnClickListener(v -> {
-            DeviceLock.relink();
+            DeviceLock.relink(); PlayerApplication.relinked();
             startActivity(new android.content.Intent(this, MainActivity.class).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK));
             finish();
         });
