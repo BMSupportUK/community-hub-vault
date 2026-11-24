@@ -1,7 +1,7 @@
 const {test,expect}=require('bun:test');
 const fs=require('node:fs'),vm=require('node:vm');
 const core=require('../core.cjs'),catchupStart=require('../catchup-start.cjs');
-test('catch-up command stops then opens finite recordings, advances repeatedly and saves channel starts',()=>{
+test('catch-up skip keeps the picture window and opens finite recordings, advances repeatedly and saves channel starts',()=>{
  const source=fs.readFileSync(require.resolve('../electron/main.cjs'),'utf8');
  const handler=source.slice(source.indexOf("  register('control',value=>{"),source.indexOf("  register('settings',async value=>{"));
  const item={kind:'catchup',id:'7',name:'Test show',start:Date.UTC(2026,10,14,10),end:Date.UTC(2026,10,14,11)};
@@ -11,10 +11,10 @@ test('catch-up command stops then opens finite recordings, advances repeatedly a
  vm.runInNewContext(handler,{register:(name,fn)=>{command=fn;},sessions:[session],engine:{stop:i=>calls.push(['stop',i]),play:(i,url,options)=>calls.push(['play',url,options])},core,catchupStart,store,key:i=>core.watchKey(store.dns,store.user,i.kind,i.id),recovery:{bufferMs:()=>3000},save:()=>saved.push(JSON.stringify(store.catchupStarts)),applyAudio:()=>{},send:()=>{},publicState:()=>({})});
  command({index:0,action:'catchupSkip',delta:120});
  command({index:0,action:'catchupSkip',delta:120});
- expect(calls.map(c=>c[0])).toEqual(['stop','play','stop','play']);
- expect(calls[1][1]).toContain('/2026-11-14:10-04/7.ts');
- expect(calls[3][1]).toContain('/2026-11-14:10-06/7.ts');
- expect(calls[3][2].live).toBe(false);
+ expect(calls.map(c=>c[0])).toEqual(['play','play']);
+ expect(calls[0][1]).toContain('/2026-11-14:10-04/7.ts');
+ expect(calls[1][1]).toContain('/2026-11-14:10-06/7.ts');
+ expect(calls[1][2].live).toBe(false);
  expect(session.catchupBase).toBe(360);
  expect(session.catchupGeneration).toBe(2);
  expect(Object.values(JSON.parse(saved[1]))).toEqual([6]);
