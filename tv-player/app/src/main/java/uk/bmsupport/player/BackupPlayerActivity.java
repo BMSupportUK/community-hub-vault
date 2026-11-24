@@ -229,7 +229,8 @@ public class BackupPlayerActivity extends Activity {
                     reconnect.recovered();
                     ui.removeCallbacks(retryLive);
                     retryQueued = false;
-                    applyBoost();
+                    // After a catch up skip the sound stays off until the picture shows (waitPicture turns it on).
+                    if (!hushing) applyBoost();
                     ride.playing(android.os.SystemClock.elapsedRealtime());
                     break;
                 case MediaPlayer.Event.ESAdded:
@@ -241,6 +242,7 @@ public class BackupPlayerActivity extends Activity {
                     break;
                 case MediaPlayer.Event.Vout:
                     if (ev.getVoutCount() > 0) ui.postDelayed(dropStill, 150);
+                    if (ev.getVoutCount() > 0 && hushing) { hushUntil = 0; ui.removeCallbacks(waitPicture); ui.postDelayed(waitPicture, 120); }
                     break;
                 case MediaPlayer.Event.TimeChanged:
                     feedStatus.progress(ev.getTimeChanged(), android.os.SystemClock.elapsedRealtime());
@@ -298,12 +300,13 @@ public class BackupPlayerActivity extends Activity {
         } catch (Throwable ignored) { }
     }
     private long hushUntil;
+    private boolean hushing;
     /** Checks every 100ms whether the reopened recording has drawn a picture, then lets sound and picture go together. */
     private final Runnable waitPicture = new Runnable() { @Override public void run() {
         if (mp == null) return;
         int shown = 0;
         try { org.videolan.libvlc.interfaces.IMedia m = mp.getMedia(); if (m != null) { org.videolan.libvlc.interfaces.IMedia.Stats st = m.getStats(); if (st != null) shown = st.displayedPictures; m.release(); } } catch (Throwable ignored) {}
-        if (shown > 0 || android.os.SystemClock.elapsedRealtime() > hushUntil) { applyBoost(); ui.post(dropStill); return; }
+        if (shown > 0 || android.os.SystemClock.elapsedRealtime() > hushUntil) { hushing = false; applyBoost(); ui.post(dropStill); return; }
         ui.postDelayed(this, 100);
     } };
     private boolean staleCatchupEvent() { return !started && android.os.SystemClock.elapsedRealtime() - cuOpenedAt < 3000; }
@@ -312,7 +315,7 @@ public class BackupPlayerActivity extends Activity {
         holdStill();
         // Sound waits for the picture: hold it silent until the new time's first picture is drawn.
         try { mp.setVolume(0); } catch (Exception ignored) {}
-        hushUntil = android.os.SystemClock.elapsedRealtime() + 10000;
+        hushUntil = android.os.SystemClock.elapsedRealtime() + 10000; hushing = true;
         ui.removeCallbacks(waitPicture); ui.postDelayed(waitPicture, 200);
         cuSegStart = start; urls[0] = cuUrl(); at = 0; started = false; resume = 0; cuOpenedAt = android.os.SystemClock.elapsedRealtime();
         try { mp.stop(); } catch (Exception ignored) {}

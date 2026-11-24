@@ -79,7 +79,7 @@ class EmbeddedVlc {
  /** Show the video window again and drop the page's still. */
  release(s){const hold=s.hold;if(!hold)return;clearInterval(hold.timer);clearTimeout(hold.wait);s.hold=null;
   if(s.holding){s.holding=false;if(this.lastRows)this.layout(this.lastRows);else this.show(s.hwnd,5);}
-  if(hold.hushed){try{this.api.audio_set_mute(s.player,hold.muted?1:0);}catch{}}
+  if(hold.hushed){try{this.api.audio_set_mute(s.player,hold.muted?1:0);}catch{}this.applyVolume(s);}
   this.onStill?.(s.index,null);}
  cancelHandoff(index){const s=this.surfaces?.get(index);if(s&&s.hold)this.release(s);}
  load(s,url,{buffer=8000,resume=0,subtitles=null,maxHeight=0,kind,name,multi}={}){
@@ -138,7 +138,7 @@ class EmbeddedVlc {
  // Windows sound (WASAPI) is shared by the whole app, so the picked screen owns mute/volume and quiet screens only switch their track off.
  // libVLC ignores this before the stream's sound exists and resets it on new media, so a short timer re-applies it.
  volume(index,value){const s=this.surfaces.get(index);if(!s)return;s.wantVolume=value;this.applyVolume(s);this.keepAudio();}
- applyVolume(s){if(s.wantVolume==null)return;try{
+ applyVolume(s){if(s.wantVolume==null||s.hold?.hushed)return;try{ // a held catch up skip stays silent until its picture shows
   // Windows' normal sound (WASAPI) shares ONE mute/volume across every player in the app. Quiet screens therefore only
   // switch their sound track off and never touch mute/volume; otherwise a quiet screen silenced the picked one.
   if(s.ds){if(this.api.audio_get_track(s.player)===-1&&s.audioId!=null)this.api.audio_set_track(s.player,s.audioId);const m=s.wantVolume<=0?1:0;if(this.api.audio_get_mute(s.player)!==m)this.api.audio_set_mute(s.player,m);const v=Math.max(0,s.wantVolume);if(this.api.audio_get_volume(s.player)!==v)this.api.audio_set_volume(s.player,v);return;}
