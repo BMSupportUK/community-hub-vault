@@ -31,7 +31,7 @@ const resumable=p=>p?.position>0&&p?.duration>0&&p.position<p.duration*.95;
 let previewTapAt=0;
 const previewTaps=()=>{const t=Date.now();if(t-previewTapAt<500){previewTapAt=0;return true;}previewTapAt=t;return false;};
 function App(){
- const [intro,setIntro]=useState(true),[linkGo,setLinkGo]=useState(false);
+ const resumed=location.hash==='#resume';const [intro,setIntro]=useState(!resumed),[linkGo,setLinkGo]=useState(resumed);
  const [vpn,setVpn]=useState(null),[vpnOpen,setVpnOpen]=useState(false);
  const vpnCommand=async value=>{const next=await bm.vpnCommand(value);setVpn(next);return next;};
  const epgCache=useRef(null);if(!epgCache.current)epgCache.current=createGuideCache();
@@ -44,13 +44,13 @@ function App(){
  useEffect(()=>{window.addEventListener('beforeunload',saveGuide);return()=>window.removeEventListener('beforeunload',saveGuide);},[]);
  const cachedEpg=id=>Promise.resolve(epgCache.current.peek(id)||[]);
 // Startup and manual refresh load every guide row behind the locked screen, without a time limit.
-// Startup/refresh already downloaded the playlists: hold them here so opening Live TV, Films or Series never shows "Loading playlist…" again.
-async function keepCatalogues(){const user=stateRef.current?.user;for(const k of ['live','film','series']){try{const d=await bm.catalog(k);if(d)catalogs.current[k]={preloaded:true,stamp:stateRef.current?.refreshed?.[k]||0,user,data:d};}catch{}}}
+// After an update the renderer keeps only Live TV; Films/Series stay in the main process cache (holding all three crashed the screen on big playlists).
+async function keepCatalogues(){const user=stateRef.current?.user;for(const k of ['live']){try{const d=await bm.catalog(k);if(d)catalogs.current[k]={preloaded:true,stamp:stateRef.current?.refreshed?.[k]||0,user,data:d};}catch{}}}
 async function preloadGuide(){epgCache.current.invalidate();let ids=[];try{ids=[...new Set((catalogs.current.live?.data?.items||[]).map(c=>c.id))];}catch{}
  const total=ids.length;let done=0,next=0,open=true;
  const show=()=>{if(open)setProgress({locked:true,message:'Loading TV guide… please wait',percent:Math.min(99,60+Math.round(done/Math.max(1,total)*39))});};show();
  const worker=async()=>{while(next<ids.length){const id=ids[next++];try{await epgCache.current.load(id,key=>bm.epg(key));}catch{}done++;show();}};
- const all=Promise.all(Array.from({length:8},worker)).then(()=>saveGuide());
+ const all=Promise.all(Array.from({length:8},worker));
  await all;open=false;setProgress(null);saveGuide();}
  const [ratings,setRatings]=useState({}),[voteBusy,setVoteBusy]=useState(false);
  const ratingKey=item=>item.kind+':'+item.name;

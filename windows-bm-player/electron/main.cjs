@@ -403,7 +403,7 @@ else{
   win.webContents.on('responsive',()=>crashLog('screen responding again'));
   setTimeout(()=>crashLog('running 2 min'+memNote()),120000).unref?.();
   let reloads=0;
-  win.webContents.on('render-process-gone',(_e,d)=>{crashLog('screen stopped: '+d.reason+' '+d.exitCode+memNote());if(reloads++<3&&!win.isDestroyed())setTimeout(()=>{if(!win.isDestroyed())win.loadFile(page);},1000);});
+  win.webContents.on('render-process-gone',(_e,d)=>{crashLog('screen stopped: '+d.reason+' '+d.exitCode+memNote());if(reloads++<3&&!win.isDestroyed())setTimeout(()=>{if(!win.isDestroyed())win.loadFile(page,{hash:'resume'});},1000);});
   win.webContents.on('unresponsive',()=>crashLog('screen not responding'));
   win.webContents.on('did-fail-load',(_e,c,d)=>crashLog('screen failed to load: '+c+' '+d));
   win.webContents.on('console-message',(e,level,message,line,source)=>{const lv=e&&e.level!==undefined?e.level:level;if(lv==='error'||lv>=3)crashLog('screen error: '+(e&&e.message!==undefined?e.message:message)+' @'+(e&&e.sourceId!==undefined?e.sourceId:source)+':'+(e&&e.lineNumber!==undefined?e.lineNumber:line));});
