@@ -46,6 +46,7 @@ final class CatchupSeek {
             int p = press(v == forward ? 1 : -1);
             forward.setText(label(p));
             ui.removeCallbacks(commit); ui.postDelayed(commit, DEBOUNCE_MS);
+            wake();
             if (onUse != null) onUse.run();
         };
         back.setOnClickListener(l); forward.setOnClickListener(l);
@@ -56,5 +57,27 @@ final class CatchupSeek {
     /** OK/Enter presses whichever button is focused (Fast forward when neither is). */
     void click() { if (back != null && back.isFocused()) back.performClick(); else if (forward != null) forward.performClick(); }
     boolean hasFocus() { return row != null && (forward.isFocused() || back.isFocused()); }
-    void cancel() { if (commit != null) ui.removeCallbacks(commit); }
+    void cancel() { if (commit != null) ui.removeCallbacks(commit); if (ui != null) ui.removeCallbacks(hide); }
+
+    /** Same 3.5-second input timer as the Windows player's controls. */
+    static final long SHOW_MS = 3500;
+    private final Runnable hide = () -> { if (row != null && pending == 0) row.setVisibility(android.view.View.GONE); else if (row != null) wake(); };
+    /** Sit at the bottom of the player, just above the playback bar, like Windows. */
+    void attach(android.widget.FrameLayout root) {
+        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(-2, -2,
+                android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL);
+        lp.bottomMargin = (int) (110 * root.getResources().getDisplayMetrics().density);
+        root.addView(row, lp);
+        forward.requestFocus();
+        wake();
+    }
+    /** Any key or touch brings the buttons back; they hide again after SHOW_MS without input. */
+    void wake() {
+        if (row == null) return;
+        boolean was = row.getVisibility() == android.view.View.VISIBLE;
+        row.setVisibility(android.view.View.VISIBLE);
+        if (!was || !hasFocus()) forward.requestFocus();
+        ui.removeCallbacks(hide); ui.postDelayed(hide, SHOW_MS);
+    }
+    boolean shown() { return row != null && row.getParent() != null && row.getVisibility() == android.view.View.VISIBLE; }
 }

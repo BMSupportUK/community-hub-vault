@@ -349,22 +349,16 @@ public class PlayerActivity extends Activity {
     private void showSkipToListed() {
         final long listed = getIntent().getLongExtra("catchup_listed", 0);
         if (rootView == null || listed <= 0) return;
-        final android.view.View[] box = new android.view.View[1];
-        final Runnable hide = () -> { if (box[0] != null && box[0].getParent() != null) rootView.removeView(box[0]); };
-        final CatchupSeek seek = new CatchupSeek(this, minutes -> {
+        cuSeek = new CatchupSeek(this, minutes -> {
             long reached = cuSegStart + (player == null ? 0 : Math.max(0, player.getCurrentPosition()) / 1000);
             long to = CatchupStart.jump(reached, minutes, listed, cuEnd);
             catchupOpenAt(to);
             String id = getIntent().getStringExtra("catchup_id");
             if (id != null) prefs(this).edit().putInt(CatchupStart.learnKey(id), CatchupStart.learned(to, listed)).apply();
-        }, () -> { ui.removeCallbacks(hide); ui.postDelayed(hide, 20000); });
-        final android.view.View b = seek.row; box[0] = b;
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP | Gravity.END);
-        lp.topMargin = 40; lp.rightMargin = 40;
-        rootView.addView(b, lp);
-        seek.forward.requestFocus();
-        ui.postDelayed(hide, 20000);
+        }, null);
+        cuSeek.attach(rootView);
     }
+    private CatchupSeek cuSeek;
 
     private void catchupResume() {
         if (player == null || isFinishing()) return;
@@ -1291,6 +1285,7 @@ public class PlayerActivity extends Activity {
 
     @Override public void onUserInteraction() {
         super.onUserInteraction();
+        if (cuSeek != null) cuSeek.wake();
         lastPressAt = android.os.SystemClock.elapsedRealtime();
         PlayerApplication.interaction(this);
     }

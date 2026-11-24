@@ -311,7 +311,7 @@ public class BackupPlayerActivity extends Activity {
         cuRetries = 0;
         long to = CatchupStart.jump(cuReached(), minutes, getIntent().getLongExtra("catchup_listed", cuSegStart), cuEnd);
         catchupOpenAt(to);
-        if (skipBtn != null && skipBtn.getParent() != null) { learnCatchupStart(to); ui.removeCallbacks(hideSkip); ui.postDelayed(hideSkip, 20000); }
+        if (skipBtn != null && skipBtn.getParent() != null) { learnCatchupStart(to); seek.wake(); }
     }
     /** The provider closed the recording early or it failed: reopen at the minute reached; after 8 tries use the main player. */
     private void catchupResume() {
@@ -337,17 +337,13 @@ public class BackupPlayerActivity extends Activity {
     private android.view.View skipBtn;
     private CatchupSeek seek;
     private FrameLayout skipRoot;
-    private final Runnable hideSkip = () -> { if (skipBtn != null && skipBtn.getParent() != null) skipRoot.removeView(skipBtn); };
+    private final Runnable hideSkip = () -> { if (seek != null) seek.wake(); };
     private void showSkipToListed(FrameLayout root) {
         final long listed = getIntent().getLongExtra("catchup_listed", 0);
         if (listed <= 0) return;
-        seek = new CatchupSeek(this, this::catchupJump, () -> { ui.removeCallbacks(hideSkip); ui.postDelayed(hideSkip, 20000); });
+        seek = new CatchupSeek(this, this::catchupJump, null);
         skipBtn = seek.row; skipRoot = root;
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2, Gravity.TOP | Gravity.END);
-        lp.topMargin = 90; lp.rightMargin = 40;
-        root.addView(seek.row, lp);
-        seek.forward.requestFocus();
-        ui.postDelayed(hideSkip, 20000);
+        seek.attach(root);
     }
     /** Remember where this channel's programmes really start, so its next catch up opens there. */
     private void learnCatchupStart(long start) {
@@ -614,7 +610,7 @@ public class BackupPlayerActivity extends Activity {
             if (liveDrawer.shown) return super.dispatchKeyEvent(e);
         }
         // OK on the Skip ahead button must press it, not just reveal the controls.
-        if (e.getAction() == KeyEvent.ACTION_DOWN && skipBtn != null && skipBtn.getParent() != null
+        if (e.getAction() == KeyEvent.ACTION_DOWN && seek != null && seek.shown()
                 && (e.getKeyCode() == KeyEvent.KEYCODE_DPAD_CENTER || e.getKeyCode() == KeyEvent.KEYCODE_ENTER)
                 && (seek.hasFocus() || controller == null || !controller.isVisible())) { seek.click(); return true; }
         if (e.getAction() == KeyEvent.ACTION_DOWN && mp != null) {
@@ -641,7 +637,7 @@ public class BackupPlayerActivity extends Activity {
     }
 
     @Override public void onUserInteraction() {
-        super.onUserInteraction(); lastPressAt = android.os.SystemClock.elapsedRealtime(); PlayerApplication.interaction(this);
+        super.onUserInteraction(); if (seek != null) seek.wake(); lastPressAt = android.os.SystemClock.elapsedRealtime(); PlayerApplication.interaction(this);
     }
 
     @Override protected void onPause() {
