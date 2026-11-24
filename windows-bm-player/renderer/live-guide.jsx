@@ -22,7 +22,7 @@ const GuideRow=memo(function GuideRow({ch,n,on,rows,listed,start,now,axisWidth,g
  const axis=guideAxis.guideAxis(start,start+WINDOW,[],gridWidth);
  const shown=listed.filter(p=>p.end>start&&p.start<start+WINDOW);
  return <div className="lg-row" data-ch={ch.id} style={{width:axisWidth+240}}>
-    <div className={'lg-ch'+(on?' on':'')}><button onClick={()=>h.pick(ch,null)} onFocus={()=>h.focusCh(ch)}><ChannelLogo channel={ch}/><span className="channel-label"><ChannelName>{channelLabel(ch.name,n)}</ChannelName>{query.trim()&&<small className="lg-search-category" title={category}>{category||'Uncategorised'}</small>}</span></button>{ch.archive>0&&<button className="catchup-clock" title={'Catch up on '+ch.name} aria-label={'Catch up on '+ch.name} onClick={()=>h.catchup(ch)}>🕘</button>}</div>
+    <div className={'lg-ch'+(on?' on':'')}><button onClick={()=>h.pick(ch,null)} onFocus={()=>h.focusCh(ch)}><ChannelLogo channel={ch}/><span className="channel-label"><ChannelName>{channelLabel(ch.name,n)}</ChannelName>{query.trim()&&<small className="lg-search-category" title={category}>{category||'Uncategorised'}</small>}</span></button></div>
     <div className="lg-line">
      {now>=start&&now<start+WINDOW&&<i className="lg-now" style={{left:axis.x(now)}}/>}
      {shown.map(p=>{const live=p.start<=now&&p.end>now,eligible=guideActions.reminderEligible(p,now),set=h.isSet(ch,p);return <div key={p.id} className={'lg-prog'+(live&&on?' on':'')} style={{left:axis.x(Math.max(start,p.start)),width:axis.x(Math.min(start+WINDOW,p.end))-axis.x(Math.max(start,p.start))}} onMouseEnter={()=>h.focus(ch,p)}>
@@ -61,7 +61,7 @@ export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,categ
   if(action==='reminder'){onReminder(ch,p);return;}
   if(action==='none')return;
   if(action==='preview'){onPreview(ch);return;}
-  if(action==='ended'){if(ch.archive>0)onCatchup(ch);else toast('This programme has ended.');return;}
+  if(action==='ended'){toast('This programme has ended. Catch up is on the home screen.');return;}
   onChoose(ch);
  }
  const live=shownProg&&shownProg.start<=now&&shownProg.end>now;

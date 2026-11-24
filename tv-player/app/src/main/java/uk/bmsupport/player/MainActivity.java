@@ -348,6 +348,41 @@ public class MainActivity extends Activity {
             new java.util.concurrent.LinkedBlockingDeque<Runnable>() { @Override public boolean offer(Runnable r) { return offerFirst(r); } });
     private final java.util.Set<String> multiAsked = java.util.Collections.newSetFromMap(new java.util.concurrent.ConcurrentHashMap<>());
 
+    /** Home-screen Catch up: categories holding catch-up channels, then those channels, then the archive. */
+    private void pickCatchupChannel() {
+        if (liveChannels == null || multiCats == null) {
+            final AlertDialog wait = findingDialog();
+            io.execute(() -> {
+                try {
+                    if (liveChannels == null) {
+                        JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
+                        List<Item> l = new ArrayList<>();
+                        for (int i = 0; i < a.length(); i++) l.add(liveItem(a.getJSONObject(i)));
+                        liveChannels = l;
+                    }
+                    JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
+                    List<String[]> rows = new ArrayList<>();
+                    for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); if (!hideAdult(o.optString("category_name"))) rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
+                    multiCats = CategoryOrder.liveNavigation(rows);
+                    ui.post(() -> { try { wait.dismiss(); } catch (Exception ignored) {} if ("home".equals(screen)) pickCatchupChannel(); });
+                } catch (Exception ex) { ui.post(() -> { try { wait.dismiss(); } catch (Exception ignored) {} Toast.makeText(this, "Couldn't load your channels", Toast.LENGTH_LONG).show(); }); }
+            });
+            return;
+        }
+        List<String[]> cats = new ArrayList<>();
+        for (String[] c : multiCats) {
+            if ("*".equals(c[0])) continue;
+            for (Item it : liveChannels) if (it.archiveDays > 0 && c[0].equals(it.category)) { cats.add(c); break; }
+        }
+        if (cats.isEmpty()) { Toast.makeText(this, "None of your channels have catch up", Toast.LENGTH_LONG).show(); return; }
+        resultList("⏰ Catch up – pick a category", cats.size(), i -> text(cats.get(i)[1], 18, TEXT, false), i -> {
+            List<Item> chs = new ArrayList<>();
+            for (Item it : liveChannels) if (it.archiveDays > 0 && cats.get(i)[0].equals(it.category)) chs.add(it);
+            resultList("⏰ " + cats.get(i)[1], chs.size(), r -> text(chs.get(r).name + "  ·  " + chs.get(r).archiveDays + (chs.get(r).archiveDays == 1 ? " day" : " days"), 17, TEXT, false),
+                    r -> showCatchup(chs.get(r), this::showHome), null, null, "Close", null);
+        }, null, null, "Close", null);
+    }
+
     /** Multi-screen picker: category, then channels with what's on now – no full guide grid, so it opens fast. */
     private void pickMultiChannel(int n, TextView label) {
         final int session = multiSession;
@@ -1511,6 +1546,7 @@ public class MainActivity extends Activity {
 
         LinearLayout small = row();
         small.addView(smallButton("🏆 Sports guide", v -> askSportsMode()), smallWeight("🏆 Sports guide"));
+        small.addView(smallButton("⏰ Catch up", v -> pickCatchupChannel()), smallWeight("⏰ Catch up"));
         small.addView(smallButton("★ Favourites", v -> showSaved("fav", "Favourites")), smallWeight("★ Favourites"));
         small.addView(smallButton("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), smallWeight("⟲ Recently watched"));
         small.addView(smallButton("⚙ Settings", v -> showSettings()), smallWeight("⚙ Settings"));
@@ -2536,8 +2572,7 @@ public class MainActivity extends Activity {
         }
         String playLabel = "live".equals(it.kind) ? "Full Screen" : "Play";
         String[] opts = "film".equals(it.kind) ? new String[]{playLabel, fav, "☆ Vote"} : new String[]{playLabel, fav};
-        final int catchupAt = "live".equals(it.kind) && it.archiveDays > 0 ? opts.length : -1;
-        if (catchupAt >= 0) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[catchupAt] = "🕘 Catch up"; }
+        final int catchupAt = -1; // Catch up lives on the home screen, not the guide.
         final String returnCategory = liveCatId;
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
@@ -5122,7 +5157,7 @@ public class MainActivity extends Activity {
             int catAt = CategoryMemory.indexOf(catRows, cat[0]);
             if (catAt >= 0) { catList.setSelection(catAt); final int keepCat = catAt; catList.post(() -> catList.setSelection(keepCat)); }
             List<String> names = new ArrayList<>(); List<Boolean> cu = new ArrayList<>(); List<String> logos = new ArrayList<>();
-            for (Item it : shownCh) { names.add(it.name); cu.add(it.archiveDays > 0); logos.add(it.poster == null ? "" : it.poster); }
+            for (Item it : shownCh) { names.add(it.name); cu.add(false); logos.add(it.poster == null ? "" : it.poster); }
             grid.setChannels(names, cu, logos);
             // Phones keep the guide hidden until View EPG, so nothing loaded until it opened; fetch now like boxes do.
             if (phoneLive) grid.post(() -> grid.warm(20));
@@ -5224,7 +5259,7 @@ public class MainActivity extends Activity {
                         progTime.setText(clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : "") + (left.isEmpty() ? "" : "  ·  " + left));
                         boxBar.setVisibility(live2 ? View.VISIBLE : View.GONE);
                         if (live2) boxBar.setProgress((int) ((now - p.st) * 100 / Math.max(1, p.en - p.st)));
-                        boxDesc.setText(p.desc == null || p.desc.isEmpty() ? (ch.archiveDays > 0 && on ? "Catch up available in the play menu" : "") : p.desc);
+                        boxDesc.setText(p.desc == null || p.desc.isEmpty() ? "" : p.desc);
                         GuideGridView.Prog nx = null;
                         List<GuideGridView.Prog> lst = guideCache.get(ch.id);
                         if (lst != null) for (GuideGridView.Prog q : lst) if (q.st >= (p.en > 0 ? p.en : p.st + 1)) { nx = q; break; }
@@ -5236,7 +5271,6 @@ public class MainActivity extends Activity {
                         dateLbl.setText(new java.text.SimpleDateFormat("EEE, d MMM, " + ("12".equals(prefs.getString("time_format", "24")) ? "h:mm a" : "HH:mm"), java.util.Locale.UK).format(new java.util.Date()));
                     } else
                     progTime.setText(ch.name + "  ·  " + clock(p.st) + (p.en > 0 ? " – " + clock(p.en) : "")
-                            + (ch.archiveDays > 0 && on ? (live ? "   ·  🕘 Catch up in play menu" : "   ·  🕘 ◀ for Catch up") : "")
                             + (on ? "   ·  On now – OK to watch" : MainActivity.this.hasReminder(ch.id, p.st) ? "   ·  ⏰ Reminder set – OK to remove" : "   ·  OK to set a reminder"));
                 }
                 if (live) return; // Live TV never starts a preview on highlight.
