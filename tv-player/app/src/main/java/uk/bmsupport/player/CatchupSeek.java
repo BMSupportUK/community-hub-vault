@@ -61,7 +61,8 @@ final class CatchupSeek {
 
     /** Same 3.5-second input timer as the Windows player's controls. */
     static final long SHOW_MS = 3500;
-    private final Runnable hide = () -> { if (row != null && pending == 0) row.setVisibility(android.view.View.GONE); else if (row != null) wake(); };
+    private final Runnable hide = this::autoHide;
+    private void autoHide() { if (row == null) return; if (pending == 0) row.setVisibility(android.view.View.GONE); else wake(); }
     /** Sit at the bottom of the player, just above the playback bar, like Windows. */
     void attach(android.widget.FrameLayout root) {
         android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(-2, -2,
