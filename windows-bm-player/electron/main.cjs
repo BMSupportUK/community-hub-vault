@@ -396,6 +396,14 @@ else{
     if(choice.response!==1)return null;
     broadbandBusy=true;try{broadbandResult=await broadband.run();poll().catch(()=>{});return{ping:broadbandResult.ping,download:broadbandResult.down/1000,upload:broadbandResult.up/1000};}finally{broadbandBusy=false;}
   });
+  // A crashed or broken screen must never sit white: note why in a small log and reload it.
+  const crashLog=m=>{try{const f=path.join(app.getPath('userData'),'bm-player-log.txt');try{if(fs.statSync(f).size>200000)fs.unlinkSync(f);}catch{}fs.appendFileSync(f,new Date().toISOString()+' '+String(m).slice(0,2000)+'\n');}catch{}};
+  let reloads=0;
+  win.webContents.on('render-process-gone',(_e,d)=>{crashLog('screen stopped: '+d.reason+' '+d.exitCode);if(reloads++<3&&!win.isDestroyed())setTimeout(()=>{if(!win.isDestroyed())win.loadFile(page);},1000);});
+  win.webContents.on('unresponsive',()=>crashLog('screen not responding'));
+  win.webContents.on('did-fail-load',(_e,c,d)=>crashLog('screen failed to load: '+c+' '+d));
+  win.webContents.on('console-message',(_e,level,message,line,source)=>{if(level>=3)crashLog('screen error: '+message+' @'+source+':'+line);});
+  process.on('uncaughtException',e=>crashLog('main error: '+(e&&e.stack||e)));
   await win.loadFile(page);
   setInterval(()=>{if(store.user&&gate.unlocked&&pinPassed)vpn.health().catch(()=>{});},15000);
   checkin.every(()=>{if(store.user&&gate.unlocked&&pinPassed)return vpn.sync().catch(()=>{});},()=>60000,30000);

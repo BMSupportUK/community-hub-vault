@@ -249,7 +249,9 @@ function MajorAnnouncements(){
 // Announcements wait until the app itself is on screen (after the opening film and sign-in).
 function useInApp(){const [ok,setOk]=useState(!!window.__bmInApp);useEffect(()=>{const f=()=>setOk(!!window.__bmInApp);window.addEventListener('bm-inapp',f);return()=>window.removeEventListener('bm-inapp',f);},[]);return ok;}
 function setInApp(v){if(!!window.__bmInApp!==v){window.__bmInApp=v;window.dispatchEvent(new Event('bm-inapp'));}}
-createRoot(document.getElementById('root')).render(<><App/><Announcement/><MajorAnnouncements/></>);
+// A screen error must never leave a blank white window: show what broke and offer a reload.
+class ScreenGuard extends React.Component{constructor(p){super(p);this.state={error:null};}static getDerivedStateFromError(error){return{error};}componentDidCatch(error,info){console.error('BM screen error: '+(error?.stack||error)+' '+(info?.componentStack||'').slice(0,800));}render(){if(!this.state.error)return this.props.children;return <main className="link-screen"><img src="logo.png" width="90"/><h1>Something went wrong</h1><p className="muted">{String(this.state.error?.message||this.state.error).slice(0,300)}</p><button className="primary" onClick={()=>location.reload()}>Reload BM Player</button></main>;}}
+createRoot(document.getElementById('root')).render(<ScreenGuard><App/><Announcement/><MajorAnnouncements/></ScreenGuard>);
 const heroCache=new Map();
 /** Films/Series top panel (matches Android): backdrop, title, rating · year · length · genre, cast, director, plot. */
 function SeriesPage({series,ratingLabel,bar,back,actions,onPlay}){
