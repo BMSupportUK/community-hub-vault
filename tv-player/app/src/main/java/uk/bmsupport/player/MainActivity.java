@@ -2024,7 +2024,7 @@ public class MainActivity extends Activity {
                 @Override public void failed() { status.setText("Preview unavailable – press OK to play full screen"); }
             });
             if (vlcPreview != null) return;
-            preview = PlayerActivity.build(this, false, it.name + " " + categoryName(it));
+            preview = PlayerActivity.build(this, false, it.name + " " + categoryName(it), PlayerActivity.stockPlayer(it.kind, false, it.name, categoryName(it)));
             previewView = view;
             view.setPlayer(preview);
             onStage(preview, view); // TV boxes: picture on the window-level stage so full screen never moves it
