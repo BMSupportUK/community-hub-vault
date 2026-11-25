@@ -351,7 +351,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/moderation", label: "Access Requests", icon: Shield, show: isAdmin, extra: <ModerationPendingBadge /> },
     { to: "/shifts", key: "my-shift", label: "My shift", icon: CalendarClock, show: true, shiftMenu: true },
     { to: ADMIN_CUSTOMERS_LINK.to as string, key: "admin-customers", label: "Customers", icon: ShieldCheck, show: isAdmin, search: ADMIN_CUSTOMERS_LINK.search as Record<string, string> },
-    { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge /> },
+    { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge rail /> },
     { to: "/send-to-app", label: "Link Device", icon: Tv, show: true },
   ] : portalUnlocked ? [
     // Shop and Download App & Install guides sit in the Customer Portal header.

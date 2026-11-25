@@ -9,7 +9,7 @@ type OrderRow = { status: string; paid_at: string | null; manual_pay_method: str
  * status (awaiting payment, account setup) — mirrors the workflow tabs on
  * the shop orders screen.
  */
-export function PendingOrdersBadge() {
+export function PendingOrdersBadge({ rail = false }: { rail?: boolean } = {}) {
   const [newCount, setNewCount] = useState(0);
   const [awaitingCount, setAwaitingCount] = useState(0);
   const [setupCount, setSetupCount] = useState(0);
@@ -88,7 +88,9 @@ export function PendingOrdersBadge() {
 
   const yellowTitle = `Awaiting payment: ${awaitingCount} · Account setup: ${setupCount}`;
   return (
-    <span className="ml-1 inline-flex items-center gap-1 align-middle">
+    // On the narrow side rail two circles side by side spill past the rail
+    // edge and get clipped, so stack them on the icon's right-hand corners.
+    <span className={rail ? "flex flex-col items-end gap-0.5" : "ml-1 inline-flex items-center gap-1 align-middle"}>
       {newCount > 0 && (
         <span
           aria-label={`${newCount} new orders`}
