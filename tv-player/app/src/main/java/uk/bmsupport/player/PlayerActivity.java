@@ -158,6 +158,7 @@ public class PlayerActivity extends Activity {
     static ExoPlayer build(Context c, boolean catchup, String channelName) { return build(c, catchup, channelName, false); }
     /** cleanStart: wait for a full keyframe before decoding (looped VIP/24/7 channels jam MediaTek chips when started mid-picture). */
     static ExoPlayer build(Context c, boolean catchup, String channelName, boolean cleanStart) {
+        if (cleanStart && !catchup) return buildStock(c);
         SharedPreferences p = prefs(c);
         DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
                 .setUserAgent(p.getString("ua", UA))
@@ -236,6 +237,35 @@ public class PlayerActivity extends Activity {
         return x;
     }
 
+
+    /** Looped VIP / 24/7 live channels get a stock Media3 player, set up like other IPTV apps that play
+     *  them: Media3's own video renderer, its own decoder feeding, TS reading, buffering and live speed.
+     *  Every Media3 live open on MediaTek boxes with our tuned set-up froze after 1-9 pictures (sound
+     *  playing), while a plain Media3 app played the same channels. Only the user agent, the FFmpeg sound
+     *  decoder, the fixed display rate and the short release wait are kept. */
+    static boolean stockPlayer(String kind, boolean catchup, String name, String category) {
+        return "live".equals(kind) && !catchup && UhdChannel.looped(name, category);
+    }
+    static ExoPlayer buildStock(Context c) {
+        SharedPreferences p = prefs(c);
+        DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
+                .setUserAgent(p.getString("ua", UA))
+                .setAllowCrossProtocolRedirects(true);
+        DefaultRenderersFactory renderers = new DefaultRenderersFactory(c)
+                .setEnableDecoderFallback(true)
+                .setExtensionRendererMode("software".equals(p.getString("decoder", "hardware"))
+                        ? DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON);
+        ExoPlayer x = new ExoPlayer.Builder(c, renderers)
+                .setMediaSourceFactory(new DefaultMediaSourceFactory(c).setDataSourceFactory(http))
+                .setReleaseTimeoutMs(400).setDetachSurfaceTimeoutMs(400)
+                .build();
+        x.setVideoChangeFrameRateStrategy(androidx.media3.common.C.VIDEO_CHANGE_FRAME_RATE_STRATEGY_OFF);
+        SoundBoost.attach(c, x);
+        synchronized (STOCK) { STOCK.put(x, Boolean.TRUE); }
+        return x;
+    }
+    private static final java.util.Map<ExoPlayer, Boolean> STOCK = new java.util.WeakHashMap<>();
+    static boolean isStock(ExoPlayer x) { synchronized (STOCK) { return STOCK.containsKey(x); } }
 
     private static final java.util.Map<ExoPlayer, HighLevelAvcRenderer> VIDEO = new java.util.WeakHashMap<>();
     static HighLevelAvcRenderer videoRenderer(ExoPlayer x) { synchronized (VIDEO) { return VIDEO.get(x); } }
@@ -972,7 +1002,7 @@ public class PlayerActivity extends Activity {
         if (everReady) link.reconnected(linkNow);
         MediaItem mi = item(liveUrls[urlAt]);
         // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
-        if ("live".equals(kind()) && StreamRecovery.overrideLiveOffset(liveUrls[urlAt])) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
+        if ("live".equals(kind()) && !loopPlain() && StreamRecovery.overrideLiveOffset(liveUrls[urlAt])) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
                 .setTargetOffsetMs(StreamRecovery.liveTargetMs(recoveryName())).setMinOffsetMs(StreamRecovery.liveTargetMs(recoveryName()) / 2).build()).build();
         float[] sp = "live".equals(kind()) && !loopPlain() ? StreamRecovery.hlsLiveSpeeds(liveUrls[urlAt], recoveryName()) : null;
         // HLS keeps the provider's hold-back (no offset) but may slow a touch rather than stall when segments arrive late.
@@ -1079,7 +1109,7 @@ public class PlayerActivity extends Activity {
     }
 
     /** Looped on-demand live channels (VIP / 24/7 categories) play plain in Media3: no drift jumps or speed easing. */
-    private boolean loopPlain() { return "live".equals(kind()) && UhdChannel.looped(getIntent().getStringExtra("content_name"), getIntent().getStringExtra("report_category")); }
+    private boolean loopPlain() { return stockPlayer(kind(), getIntent().hasExtra("catchup_prefix"), getIntent().getStringExtra("content_name"), getIntent().getStringExtra("report_category")); }
     private String recoveryName() { return "live".equals(kind()) ? getIntent().getStringExtra("recovery_name") == null ? getIntent().getStringExtra("content_name") : getIntent().getStringExtra("recovery_name") : ""; }
     private void reportBuffer(long ms, boolean reconnected, boolean freeze, String cause) {
         String u = liveUrls.length > urlAt ? liveUrls[urlAt] : "";
@@ -1088,7 +1118,8 @@ public class PlayerActivity extends Activity {
         androidx.media3.common.Format vf = player == null ? null : player.getVideoFormat();
         String d = activeDecoder + (dc == null ? "" : " r" + dc.renderedOutputBufferCount + " d" + dc.droppedBufferCount
                 + " q" + dc.queuedInputBufferCount + " s" + dc.skippedInputBufferCount) + VideoDecodePolicy.describe(vf)
-                + (player != null && videoRenderer(player) != null ? videoRenderer(player).stats() : "");
+                + (player != null && videoRenderer(player) != null ? videoRenderer(player).stats() : "")
+                + (player != null && isStock(player) ? " stock" : "");
         String decoder = d.substring(0, Math.min(120, d.length()));
         BufferReporter.record(this, kind(), getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"), ms, reconnected, freeze, cause, fmt, decoder, StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
     }
