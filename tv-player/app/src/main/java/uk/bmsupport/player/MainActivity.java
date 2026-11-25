@@ -2426,7 +2426,7 @@ public class MainActivity extends Activity {
 
     private boolean isPhone() { return getResources().getConfiguration().smallestScreenWidthDp < 600; }
 
-    private final java.util.Map<String, JSONObject> heroInfo = new java.util.HashMap<>();
+    private static final java.util.Map<String, JSONObject> heroInfo = new java.util.HashMap<>();
 
     /** Films/Series top panel: backdrop on the right, details on the left; details load once per title (cached). */
     private final class MediaHero {
@@ -4808,13 +4808,14 @@ public class MainActivity extends Activity {
 
     // ---------- full TV guide (Sky-style grid) ----------
     private final java.util.concurrent.ExecutorService guideIo = java.util.concurrent.Executors.newFixedThreadPool(6);
-    private final java.util.Map<String, List<GuideGridView.Prog>> guideCache = new java.util.LinkedHashMap<String, List<GuideGridView.Prog>>(64, 0.75f, true) {
+    // Static: Fire OS rebuilds the main screen after playback; listings and fetch times must survive it or every row reloads.
+    private static final java.util.Map<String, List<GuideGridView.Prog>> guideCache = new java.util.LinkedHashMap<String, List<GuideGridView.Prog>>(64, 0.75f, true) {
         @Override protected boolean removeEldestEntry(java.util.Map.Entry<String, List<GuideGridView.Prog>> e) { return size() > 400; }
     };
-    private final java.util.Map<String, Long> guideFetchedAt = new java.util.HashMap<>();
-    private final java.util.Set<String> guideFullFetched = new java.util.HashSet<>();
-    private final java.util.Map<String, Long> guideCoveredTo = new java.util.HashMap<>();
-    private String guideScope = null;
+    private static final java.util.Map<String, Long> guideFetchedAt = new java.util.HashMap<>();
+    private static final java.util.Set<String> guideFullFetched = new java.util.HashSet<>();
+    private static final java.util.Map<String, Long> guideCoveredTo = new java.util.HashMap<>();
+    private static String guideScope = null;
     private java.io.File guideFile() {
         String scope = SecureLogin.field(prefs, "dns").replaceAll("/+$", "") + "\n" + SecureLogin.field(prefs, "user");
         return new java.io.File(new java.io.File(getCacheDir(), "guide"), Integer.toHexString(scope.hashCode()) + ".json");
