@@ -819,7 +819,7 @@ public class PlayerActivity extends Activity {
             // The short black/still gap between programme and adverts is not a freeze.
             if (playing && frames >= 0 && frames == afLastFrames && !advertGrace()) afTicks++; else afTicks = 0;
             afLastFrames = frames;
-            if (loopPlain() ? afTicks >= StreamRecovery.PLAIN_FREEZE_TICKS : StreamRecovery.frozen(afTicks, recoveryName())) {
+            if (StreamRecovery.frozen(afTicks, recoveryName())) {
                 afTicks = 0; afLastFrames = -1;
                 reportBuffer(StreamRecovery.FREEZE_TICKS * 1000L, true, true, null);
                 if ("live".equals(kind())) { recoverFrozenLive(); return; } else reconnect();
