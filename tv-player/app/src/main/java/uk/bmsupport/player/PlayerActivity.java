@@ -819,7 +819,7 @@ public class PlayerActivity extends Activity {
             // The short black/still gap between programme and adverts is not a freeze.
             if (playing && frames >= 0 && frames == afLastFrames && !advertGrace()) afTicks++; else afTicks = 0;
             afLastFrames = frames;
-            if (StreamRecovery.frozen(afTicks, recoveryName())) {
+            if (loopPlain() ? afTicks >= StreamRecovery.PLAIN_FREEZE_TICKS : StreamRecovery.frozen(afTicks, recoveryName())) {
                 afTicks = 0; afLastFrames = -1;
                 reportBuffer(StreamRecovery.FREEZE_TICKS * 1000L, true, true, null);
                 if ("live".equals(kind())) { recoverFrozenLive(); return; } else reconnect();
@@ -828,7 +828,7 @@ public class PlayerActivity extends Activity {
                 // Picture running but no sound for 5s: reopen the channel to pick the audio back up.
                 reportBuffer(LiveReconnect.SILENT_MS, true, false, "audio_drop");
                 reconnect(true); return;
-            } else if (playing && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset(), defaultLiveOffset(), recoveryName())) {
+            } else if (playing && !loopPlain() && player.isCurrentMediaItemLive() && StreamRecovery.drifted(player.getCurrentLiveOffset(), defaultLiveOffset(), recoveryName())) {
                 player.seekToDefaultPosition();
             }
             ui.postDelayed(this, 1000);
@@ -972,7 +972,7 @@ public class PlayerActivity extends Activity {
         // Live sits a few seconds behind the edge so short provider cut-outs play through from the buffer.
         if ("live".equals(kind()) && StreamRecovery.overrideLiveOffset(liveUrls[urlAt])) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
                 .setTargetOffsetMs(StreamRecovery.liveTargetMs(recoveryName())).setMinOffsetMs(StreamRecovery.liveTargetMs(recoveryName()) / 2).build()).build();
-        float[] sp = "live".equals(kind()) ? StreamRecovery.hlsLiveSpeeds(liveUrls[urlAt], recoveryName()) : null;
+        float[] sp = "live".equals(kind()) && !loopPlain() ? StreamRecovery.hlsLiveSpeeds(liveUrls[urlAt], recoveryName()) : null;
         // HLS keeps the provider's hold-back (no offset) but may slow a touch rather than stall when segments arrive late.
         if (sp != null) mi = mi.buildUpon().setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
                 .setMinPlaybackSpeed(sp[0]).setMaxPlaybackSpeed(sp[1]).build()).build();
@@ -1076,6 +1076,8 @@ public class PlayerActivity extends Activity {
         synchronized (StreamRecovery.HEAVY) { prefs(c).edit().putString("heavy_channels", String.join("\n", StreamRecovery.HEAVY)).apply(); }
     }
 
+    /** Looped on-demand live channels (VIP / 24/7 categories) play plain in Media3: no drift jumps or speed easing. */
+    private boolean loopPlain() { return "live".equals(kind()) && UhdChannel.looped(getIntent().getStringExtra("content_name"), getIntent().getStringExtra("report_category")); }
     private String recoveryName() { return "live".equals(kind()) ? getIntent().getStringExtra("recovery_name") == null ? getIntent().getStringExtra("content_name") : getIntent().getStringExtra("recovery_name") : ""; }
     private void reportBuffer(long ms, boolean reconnected, boolean freeze, String cause) {
         String u = liveUrls.length > urlAt ? liveUrls[urlAt] : "";

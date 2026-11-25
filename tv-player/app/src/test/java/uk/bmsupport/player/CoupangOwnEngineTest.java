@@ -12,13 +12,13 @@ public class CoupangOwnEngineTest {
         assertTrue(PlayerActivity.backupFirst("live", false, false, "BBC One", "UK | Free to air"));
         assertTrue(PlayerActivity.backupFirst("live", false, false, "Sky Sports Main Event", "Sports"));
     }
-    @Test public void loopedChannelsStayOnBackupEngine() {
-        assertTrue(PlayerActivity.backupFirst("live", false, false, "VIP Cinema 4", "VIP Cinema"));
-        assertTrue(PlayerActivity.backupFirst("live", false, false, "24/7 Friends", "24/7 Movies/Series"));
-        assertTrue(PlayerActivity.backupFirst("live", false, false, "UK: Box Sets 2", "Box Sets"));
-        assertTrue(PlayerActivity.backupFirst("live", false, false, "Sky Store Premier 1", "VIP Sky Store Premier"));
-        assertTrue(PlayerActivity.backupFirst("live", false, false, "Kids Corner 1", "VIP Kids Corner"));
-        assertTrue(PlayerActivity.backupFirst("live", false, false, "Bollywood 4", "24/7 Bollywood"));
+    @Test public void loopedChannelsOpenInTheMainEngine() {
+        assertFalse(PlayerActivity.backupFirst("live", false, false, "VIP Cinema 4", "VIP Cinema"));
+        assertFalse(PlayerActivity.backupFirst("live", false, false, "24/7 Friends", "24/7 Movies/Series"));
+        assertFalse(PlayerActivity.backupFirst("live", false, false, "UK: Box Sets 2", "Box Sets"));
+        assertFalse(PlayerActivity.backupFirst("live", false, false, "Sky Store Premier 1", "VIP Sky Store Premier"));
+        assertFalse(PlayerActivity.backupFirst("live", false, false, "Kids Corner 1", "VIP Kids Corner"));
+        assertFalse(PlayerActivity.backupFirst("live", false, false, "Bollywood 4", "24/7 Bollywood"));
     }
     @Test public void coupangCatchUpUnchanged() {
         assertTrue(PlayerActivity.backupFirst("catchup", true, false, "Coupang Play 3", "Sports Pass"));

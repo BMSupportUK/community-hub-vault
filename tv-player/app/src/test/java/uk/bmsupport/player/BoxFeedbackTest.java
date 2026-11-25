@@ -67,7 +67,7 @@ public class BoxFeedbackTest {
         assertEquals("3",CategoryOrder.apply(rows,prefs.getString(CategoryOrder.key(prefs,"live"),"[]")).get(1)[0]);
         assertEquals(2,CategoryOrder.visible(rows,CategoryOrder.hidden(prefs,"live")).size());
     }
-    @Test public void supportedLiveChannelMenuOpensThatChannelsCatchup() throws Exception {
+    @Test public void liveChannelMenuHasNoCatchup() throws Exception {
         MainActivity a=activity();
         MainActivity.Item channel=new MainActivity.Item("live","42","BBC One","ts","news");
         channel.archiveDays=7;
@@ -75,11 +75,8 @@ public class BoxFeedbackTest {
         ListView menu=ShadowAlertDialog.getLatestAlertDialog().getListView();
         int catchup=-1;
         for(int i=0;i<menu.getCount();i++)if("🕘 Catch up".equals(menu.getItemAtPosition(i).toString()))catchup=i;
-        assertTrue(catchup>=0);
-        menu.performItemClick(null,catchup,catchup);
-        Field screen=MainActivity.class.getDeclaredField("screen");screen.setAccessible(true);
-        assertEquals("catchup",screen.get(a));
-        assertTrue(a.getWindow().getDecorView().findViewById(android.R.id.content) instanceof ViewGroup);
+        // Catch up lives only on the home-screen button; play menus never offer it.
+        assertEquals(-1,catchup);
     }
     @Test public void channelsWithoutArchiveAndFilmsDoNotOfferCatchup() throws Exception {
         MainActivity a=activity();
