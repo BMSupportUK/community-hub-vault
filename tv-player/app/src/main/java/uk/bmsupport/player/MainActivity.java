@@ -2295,31 +2295,13 @@ public class MainActivity extends Activity {
         if (!hasFullList(kind)) updatePlaylists(java.util.Collections.singletonList(kind), true);
         else if (plQueued.contains(kind)) showPlaylistDialog();
         epg.setText("Loading " + title + "…");
-        plIo.execute(() -> {
+        // Own queue, not the playlist download queue, so opening a section never waits behind a download.
+        openIo.execute(() -> {
             try {
-                JSONArray a = orderedCategories(kind, new JSONArray(cachedGet(kind, catAction, "")));
-                java.util.Map<String, String> catName = new java.util.HashMap<>();
-                List<String[]> rows = new ArrayList<>();
-                if (kind.equals("live")) rows.add(new String[]{"*", "All"});
-                for (int i = 0; i < a.length(); i++) {
-                    JSONObject o = a.getJSONObject(i);
-                    String cid = o.optString("category_id"), cn = o.optString("category_name");
-                    catName.put(cid, cn);
-                    if (hideAdult(cn)) continue;
-                    rows.add(new String[]{cid, cn});
-                }
-                List<Item> full = listAction.equals(listActionFor(kind)) ? parsedList(kind, false) : null;
-                if (full == null) full = parseItems(kind, new JSONArray(cachedGet(kind, listAction, "")), null);
-                java.util.Map<String, List<Item>> groups = new java.util.HashMap<>();
-                List<Item> everything = new ArrayList<>();
-                for (Item base : full) {
-                    String cid = base.category == null ? "" : base.category;
-                    String cn = catName.containsKey(cid) ? catName.get(cid) : "";
-                    if (hideAdult(cn)) continue;
-                    Item it = base.copyAs(cn);
-                    everything.add(it);
-                    if (!cid.isEmpty()) { List<Item> g = groups.get(cid); if (g == null) groups.put(cid, g = new ArrayList<>()); g.add(it); }
-                }
+                Object[] sec = sectionData(kind, catAction, listAction);
+                @SuppressWarnings("unchecked") final List<String[]> rows = (List<String[]>) sec[0];
+                @SuppressWarnings("unchecked") final java.util.Map<String, List<Item>> groups = (java.util.Map<String, List<Item>>) sec[1];
+                @SuppressWarnings("unchecked") final List<Item> everything = (List<Item>) sec[2];
                 List<String> names = new ArrayList<>();
                 for (String[] r : rows) names.add(r[1]);
                 ui.post(() -> {
@@ -2512,6 +2494,43 @@ public class MainActivity extends Activity {
         String after = f.lastModified() + ":" + f.length() + ":" + SecureLogin.field(prefs, "user");
         synchronized (parsedLists) { parsedLists.put(key, new Object[]{after.equals(stamp) ? stamp : "", l}); }
         return l;
+    }
+    /** Section categories + items grouped by category, built once per saved list/category order/adult state and
+     *  kept for the whole app process, so opening Films, Series or Live TV after the startup update is instant. */
+    private static final java.util.concurrent.ExecutorService openIo = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private static final java.util.Map<String, Object[]> sections = new java.util.HashMap<>();
+    private Object[] sectionData(String kind, String catAction, String listAction) throws Exception {
+        JSONArray a = orderedCategories(kind, new JSONArray(cachedGet(kind, catAction, "")));
+        java.util.Map<String, String> catName = new java.util.HashMap<>();
+        List<String[]> rows = new ArrayList<>();
+        if (kind.equals("live")) rows.add(new String[]{"*", "All"});
+        StringBuilder sig = new StringBuilder();
+        for (int i = 0; i < a.length(); i++) {
+            JSONObject o = a.getJSONObject(i);
+            String cid = o.optString("category_id"), cn = o.optString("category_name");
+            catName.put(cid, cn);
+            boolean adult = hideAdult(cn);
+            sig.append(cid).append(adult ? '-' : '+').append(cn).append('\n');
+            if (adult) continue;
+            rows.add(new String[]{cid, cn});
+        }
+        boolean whole = listAction.equals(listActionFor(kind));
+        List<Item> full = whole ? parsedList(kind, false) : null;
+        String key = kind + "|" + (whole ? System.identityHashCode(full) : -1) + "|" + sig.toString().hashCode() + "|" + sig.length();
+        if (whole) synchronized (sections) { Object[] hit = sections.get(kind); if (hit != null && key.equals(hit[0])) return new Object[]{rows, hit[1], hit[2]}; }
+        if (full == null) full = parseItems(kind, new JSONArray(cachedGet(kind, listAction, "")), null);
+        java.util.Map<String, List<Item>> groups = new java.util.HashMap<>();
+        List<Item> everything = new ArrayList<>();
+        for (Item base : full) {
+            String cid = base.category == null ? "" : base.category;
+            String cn = catName.containsKey(cid) ? catName.get(cid) : "";
+            if (hideAdult(cn)) continue;
+            Item it = base.copyAs(cn);
+            everything.add(it);
+            if (!cid.isEmpty()) { List<Item> g = groups.get(cid); if (g == null) groups.put(cid, g = new ArrayList<>()); g.add(it); }
+        }
+        if (whole) synchronized (sections) { sections.put(kind, new Object[]{key, groups, everything}); }
+        return new Object[]{rows, groups, everything};
     }
     private List<Item> liveList() throws Exception { return parsedList("live", true); }
     private List<Item> copies(List<Item> base) { List<Item> l = new ArrayList<>(base.size()); for (Item b : base) l.add(b.copyAs(b.category)); return l; }
@@ -4166,19 +4185,28 @@ public class MainActivity extends Activity {
                     prefs.edit().putLong("refreshed_" + kind, System.currentTimeMillis()).apply();
                     // Read the fresh list now so the first visit to the guide, Films or Series opens instantly.
                     plSet("Preparing " + name + "…");
-                    try { parsedList(kind, kind.equals("live")); } catch (Throwable ignored) {}
+                    prepareSection(kind);
                     steps++; plStepDone();
                     ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText(n + " " + what + " · updated now"); });
                 } catch (Exception e) {
                     ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText("Couldn't update. Try again."); });
                     // Update failed: still get the list already saved on the device ready for an instant first open.
-                    try { parsedList(kind, kind.equals("live")); } catch (Throwable ignored) {}
+                    prepareSection(kind);
                 } finally {
                     while (steps++ < 2) plStepDone();
                     ui.post(() -> plQueued.remove(kind));
                 }
             });
         }
+    }
+
+    /** Startup: read the list and build exactly what the section screen shows, so the first open needs no work. */
+    private void prepareSection(String kind) {
+        try {
+            String catA = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
+            if (kind.equals("live")) { liveList(); ui.post(this::warmGuide); }
+            else sectionData(kind, catA, listActionFor(kind));
+        } catch (Throwable ignored) {}
     }
 
     private void plSet(String msg) { plMsg = msg; ui.post(this::renderPlaylistProgress); }
@@ -4864,6 +4892,45 @@ public class MainActivity extends Activity {
         if (!f.getName().equals(guideScope) || text.isEmpty()) return;
         guideIo.execute(() -> { if (DeviceLock.locked()) return; try { f.getParentFile().mkdirs(); java.nio.file.Files.write(f.toPath(), text.getBytes("UTF-8")); } catch (Exception ignored) {} });
     }
+    /** Startup: programmes for the channels the guide opens on are fetched straight after the Live TV list,
+     *  so the first guide visit shows them instead of "Loading programmes…". */
+    private static boolean guideWarmed;
+    private void warmGuide() {
+        if (guideWarmed || guideIo.isShutdown() || DeviceLock.locked()) return;
+        guideWarmed = true;
+        restoreGuide();
+        final long win = guideWindowSecs();
+        guideIo.execute(() -> {
+            try {
+                JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
+                List<String[]> rows = new ArrayList<>();
+                for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); if (!hideAdult(o.optString("category_name"))) rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
+                String[] start = CategoryOrder.liveDefault(CategoryOrder.liveNavigation(rows), null);
+                if (start == null) return;
+                int n = 0;
+                for (Item it : liveList()) {
+                    if (!start[0].equals(it.category)) continue;
+                    if (n++ >= 40) break;
+                    guideIo.execute(() -> {
+                        long now = System.currentTimeMillis() / 1000;
+                        List<GuideGridView.Prog> got = null; boolean full = false;
+                        JSONArray fixtures = fixtureListings(it);
+                        if (fixtures != null) { got = GuideListings.parse(fixtures, now); full = true; }
+                        else try { got = GuideListings.parse(new JSONObject(Net.get(api("get_short_epg") + "&stream_id=" + it.id + "&limit=30")).optJSONArray("epg_listings"), now); } catch (Exception ignored) {}
+                        if (got == null) return;
+                        final List<GuideGridView.Prog> res = got; final boolean gotFull = full;
+                        ui.post(() -> {
+                            if (guideFetchedAt.containsKey(it.id)) return; // the open guide already fetched it
+                            long t = System.currentTimeMillis() / 1000;
+                            guideFetchedAt.put(it.id, t); guideCoveredTo.put(it.id, t + win);
+                            if (gotFull) guideFullFetched.add(it.id);
+                            guideCache.put(it.id, res);
+                        });
+                    });
+                }
+            } catch (Throwable ignored) {}
+        });
+    }
     private long guideWindowSecs() { return getResources().getConfiguration().smallestScreenWidthDp < 600 ? 10800 : 7200; }
 
     /** Channels down the left, time across the top; OK on a programme on now watches it, on a future one sets/removes a reminder. */
@@ -5334,7 +5401,7 @@ public class MainActivity extends Activity {
                 showCatchup(ch, live ? () -> browse("live") : MainActivity.this::showTvGuide);
             }
         });
-        io.execute(() -> {
+        openIo.execute(() -> {
             try {
                 JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
                 liveChannels = liveList(); // cached per saved list, so a refreshed list is picked up
