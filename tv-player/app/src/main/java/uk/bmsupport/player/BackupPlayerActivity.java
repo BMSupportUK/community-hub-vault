@@ -241,7 +241,7 @@ public class BackupPlayerActivity extends Activity {
                     updateFeedNote();
                     break;
                 case MediaPlayer.Event.Vout:
-                    if (ev.getVoutCount() > 0) ui.postDelayed(dropStill, 150);
+                    if (ev.getVoutCount() > 0) { vout = true; if (!hushing) ui.postDelayed(dropStill, 150); }
                     break;
                 case MediaPlayer.Event.TimeChanged:
                     feedStatus.progress(ev.getTimeChanged(), android.os.SystemClock.elapsedRealtime());
@@ -301,20 +301,28 @@ public class BackupPlayerActivity extends Activity {
     }
     private long hushUntil;
     private boolean hushing;
+    private int hushedTrack = -1;
+    private boolean vout;
     /** Checks every 100ms whether the reopened recording has drawn a picture, then lets sound and picture go together. */
     private final Runnable waitPicture = new Runnable() { @Override public void run() {
         if (mp == null) return;
         int shown = 0;
         try { org.videolan.libvlc.interfaces.IMedia m = mp.getMedia(); if (m != null) { org.videolan.libvlc.interfaces.IMedia.Stats st = m.getStats(); if (st != null) shown = st.displayedPictures; m.release(); } } catch (Throwable ignored) {}
-        if (shown > 0 || android.os.SystemClock.elapsedRealtime() > hushUntil) { hushing = false; applyBoost(); ui.post(dropStill); return; }
-        // libVLC ignores a volume set before its sound output exists, so keep forcing silence until the picture is up.
+        if ((shown > 0 && vout) || android.os.SystemClock.elapsedRealtime() > hushUntil) {
+            hushing = false;
+            try { if (hushedTrack >= 0 && mp.getAudioTrack() == -1) mp.setAudioTrack(hushedTrack); } catch (Throwable ignored) {}
+            hushedTrack = -1; keepAudio(); applyBoost(); ui.post(dropStill); return;
+        }
+        // libVLC ignores a volume set before its sound output exists (and Fire TV passthrough ignores volume altogether),
+        // so switch the sound track off as well as forcing silence until the picture is up.
         try { if (mp.getVolume() != 0) mp.setVolume(0); } catch (Throwable ignored) {}
+        try { int cur = mp.getAudioTrack(); if (cur >= 0) { hushedTrack = cur; mp.setAudioTrack(-1); } } catch (Throwable ignored) {}
         ui.postDelayed(this, 40);
     } };
     /** Sound waits for the picture: silent from the moment catch up opens until its first picture is drawn (10s cap). */
     private void startHush() {
         try { if (mp != null) mp.setVolume(0); } catch (Exception ignored) {}
-        hushUntil = android.os.SystemClock.elapsedRealtime() + 10000; hushing = true;
+        hushUntil = android.os.SystemClock.elapsedRealtime() + 15000; hushing = true; vout = false;
         ui.removeCallbacks(waitPicture); ui.postDelayed(waitPicture, 40);
     }
     private boolean staleCatchupEvent() { return !started && android.os.SystemClock.elapsedRealtime() - cuOpenedAt < 3000; }
@@ -558,7 +566,7 @@ public class BackupPlayerActivity extends Activity {
     }
 
     private void keepAudio() {
-        if (mp == null || wantedAudio == null) return;
+        if (mp == null || wantedAudio == null || hushing) return;
         MediaPlayer.TrackDescription[] t = mp.getAudioTracks();
         if (t == null) return;
         int[] ids = new int[t.length]; String[] names = new String[t.length];
