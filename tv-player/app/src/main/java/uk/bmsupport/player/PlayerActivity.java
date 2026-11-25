@@ -155,7 +155,9 @@ public class PlayerActivity extends Activity {
     static ExoPlayer build(Context c, boolean catchup) {
         return build(c, catchup, null);
     }
-    static ExoPlayer build(Context c, boolean catchup, String channelName) {
+    static ExoPlayer build(Context c, boolean catchup, String channelName) { return build(c, catchup, channelName, false); }
+    /** cleanStart: wait for a full keyframe before decoding (looped VIP/24/7 channels jam MediaTek chips when started mid-picture). */
+    static ExoPlayer build(Context c, boolean catchup, String channelName, boolean cleanStart) {
         SharedPreferences p = prefs(c);
         DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory()
                 .setUserAgent(p.getString("ua", UA))
@@ -166,7 +168,7 @@ public class PlayerActivity extends Activity {
                 .setConstantBitrateSeekingEnabled(true)
                 // Catch up recordings start mid-picture; waiting for a full keyframe avoids the blocky
                 // smeared picture phones showed when decoding began from a partial frame.
-                .setTsExtractorFlags(VideoDecodePolicy.cleanKeyframes(catchup, channelName) ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+                .setTsExtractorFlags((cleanStart || VideoDecodePolicy.cleanKeyframes(catchup, channelName)) ? DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
                         : DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES | DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS);
         // Jammed-chip channels go to the backup engine, never software decoding (full HD runs in slow motion on boxes).
         boolean sw = VideoDecodePolicy.preferSoftware(catchup, p.getString("decoder", "hardware"), channelName);
@@ -490,7 +492,7 @@ public class PlayerActivity extends Activity {
         carried = getIntent().getBooleanExtra("carried", false) && !getIntent().hasExtra("catchup_prefix")
                 ? PreviewHandoff.take(getIntent().getStringExtra("content_id")) : null;
         loadHeavy(this);
-        player = carried != null ? carried : build(this, getIntent().hasExtra("catchup_prefix"), recoveryName());
+        player = carried != null ? carried : build(this, getIntent().hasExtra("catchup_prefix"), recoveryName(), loopPlain());
         final int subs = getIntent().getIntExtra("subtitles", -1);
         if (subs == 0 || subs == 1) player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                 .setTrackTypeDisabled(androidx.media3.common.C.TRACK_TYPE_TEXT, subs == 0)
