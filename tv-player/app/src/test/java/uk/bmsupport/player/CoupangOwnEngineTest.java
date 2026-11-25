@@ -19,6 +19,9 @@ public class CoupangOwnEngineTest {
         assertFalse(PlayerActivity.backupFirst("live", false, false, "Sky Store Premier 1", "VIP Sky Store Premier"));
         assertFalse(PlayerActivity.backupFirst("live", false, false, "Kids Corner 1", "VIP Kids Corner"));
         assertFalse(PlayerActivity.backupFirst("live", false, false, "Bollywood 4", "24/7 Bollywood"));
+        // Real provider names: Sky Store sits in "UK I Sky Store Premier" with no VIP marker.
+        assertFalse(PlayerActivity.backupFirst("live", false, false, "Sky Store Premiere | 1 |", "UK I Sky Store Premier"));
+        assertFalse(PlayerActivity.backupFirst("live", false, false, "Movie Premiere ᴴᴰ", "VIP | Cinema Collection"));
     }
     @Test public void coupangCatchUpUnchanged() {
         assertTrue(PlayerActivity.backupFirst("catchup", true, false, "Coupang Play 3", "Sports Pass"));

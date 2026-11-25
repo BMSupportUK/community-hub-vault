@@ -16,7 +16,7 @@ final class UhdChannel {
         if (is(name) || StreamRecovery.plainLive(name)) return false;
         String both = ((name == null ? "" : name) + " " + (category == null ? "" : category)).trim();
         if (both.isEmpty()) return false;
-        return both.matches("(?i).*(\\bVIP\\b|cinema|24\\s*/\\s*7|24-7|\\b247\\b|box\\s*sets?|boxset|\\bloop).*");
+        return both.matches("(?i).*(\\bVIP\\b|cinema|sky\\s*store|netflix|amazon\\s*prime|kids\\s*corner|bollywood|24\\s*/\\s*7|24-7|\\b247\\b|box\\s*sets?|boxset|\\bloop).*");
     }
     static boolean is(String name) {
         if (name == null) return false;
