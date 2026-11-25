@@ -157,6 +157,11 @@ public class MainActivity extends Activity {
             this.kind = kind; this.id = id; this.name = name; this.ext = ext; this.category = category;
         }
         @Override public String toString() { return name; }
+        Item copyAs(String cat) {
+            Item c = new Item(kind, id, name, ext, cat);
+            c.poster = poster; c.seriesId = seriesId; c.url = url; c.added = added; c.rating = rating; c.pos = pos; c.archiveDays = archiveDays;
+            c.epNum = epNum; c.epTitle = epTitle; return c;
+        }
         JSONObject toJson() {
             JSONObject o = new JSONObject();
             try { o.put("kind", kind).put("id", id).put("name", name).put("ext", ext).put("category", category).put("poster", poster).put("seriesId", seriesId); } catch (Exception ignored) {}
@@ -355,10 +360,7 @@ public class MainActivity extends Activity {
             io.execute(() -> {
                 try {
                     if (liveChannels == null) {
-                        JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
-                        List<Item> l = new ArrayList<>();
-                        for (int i = 0; i < a.length(); i++) l.add(liveItem(a.getJSONObject(i)));
-                        liveChannels = l;
+                        liveChannels = liveList();
                     }
                     JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
                     List<String[]> rows = new ArrayList<>();
@@ -392,10 +394,7 @@ public class MainActivity extends Activity {
             io.execute(() -> {
                 try {
                     if (liveChannels == null) {
-                        JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
-                        List<Item> l = new ArrayList<>();
-                        for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
-                        liveChannels = l;
+                        liveChannels = liveList();
                     }
                     JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
                     List<String[]> rows = new ArrayList<>();
@@ -635,7 +634,7 @@ public class MainActivity extends Activity {
         io.execute(() -> {
             Item hit = null;
             try {
-                List<Item> all = parseItems(kind, new JSONArray(cachedGet(kind, listActionFor(kind), "")), null);
+                List<Item> all = copies(parsedList(kind, false));
                 hit = WatchRequest.find(all, id, title);
             } catch (Exception ignored) {}
             final Item f = hit;
@@ -2309,15 +2308,15 @@ public class MainActivity extends Activity {
                     if (hideAdult(cn)) continue;
                     rows.add(new String[]{cid, cn});
                 }
-                JSONArray full = new JSONArray(cachedGet(kind, listAction, ""));
+                List<Item> full = listAction.equals(listActionFor(kind)) ? parsedList(kind, false) : null;
+                if (full == null) full = parseItems(kind, new JSONArray(cachedGet(kind, listAction, "")), null);
                 java.util.Map<String, List<Item>> groups = new java.util.HashMap<>();
                 List<Item> everything = new ArrayList<>();
-                for (int i = 0; i < full.length(); i++) {
-                    JSONObject o = full.getJSONObject(i);
-                    String cid = o.optString("category_id");
+                for (Item base : full) {
+                    String cid = base.category == null ? "" : base.category;
                     String cn = catName.containsKey(cid) ? catName.get(cid) : "";
                     if (hideAdult(cn)) continue;
-                    Item it = itemFrom(kind, o, cn, i);
+                    Item it = base.copyAs(cn);
                     everything.add(it);
                     if (!cid.isEmpty()) { List<Item> g = groups.get(cid); if (g == null) groups.put(cid, g = new ArrayList<>()); g.add(it); }
                 }
@@ -2496,6 +2495,26 @@ public class MainActivity extends Activity {
         it.pos = pos;
         return it;
     }
+
+    /** Parsed full lists kept for the whole app process, keyed by the saved file's stamp: Fire OS rebuilds the
+     *  main screen after playback, and re-reading tens of MB of JSON each time made every section "load" again. */
+    private static final java.util.Map<String, Object[]> parsedLists = new java.util.HashMap<>();
+    private List<Item> parsedList(String kind, boolean live) throws Exception {
+        String key = (live ? "L:" : "B:") + kind;
+        java.io.File f = cacheFile(kind, listActionFor(kind));
+        String stamp = f.lastModified() + ":" + f.length() + ":" + SecureLogin.field(prefs, "user");
+        synchronized (parsedLists) { Object[] hit = parsedLists.get(key); if (hit != null && stamp.equals(hit[0])) return (List<Item>) hit[1]; }
+        JSONArray a = new JSONArray(cachedGet(kind, listActionFor(kind), ""));
+        List<Item> l = new ArrayList<>(a.length());
+        for (int i = 0; i < a.length(); i++) { JSONObject o = a.optJSONObject(i); if (o != null) l.add(live ? liveItem(o) : itemFrom(kind, o, null, i)); }
+        l = java.util.Collections.unmodifiableList(l);
+        // Stamp taken after reading so a list replaced mid-parse is re-read next time.
+        String after = f.lastModified() + ":" + f.length() + ":" + SecureLogin.field(prefs, "user");
+        synchronized (parsedLists) { parsedLists.put(key, new Object[]{after.equals(stamp) ? stamp : "", l}); }
+        return l;
+    }
+    private List<Item> liveList() throws Exception { return parsedList("live", true); }
+    private List<Item> copies(List<Item> base) { List<Item> l = new ArrayList<>(base.size()); for (Item b : base) l.add(b.copyAs(b.category)); return l; }
 
     private List<Item> parseItems(String kind, JSONArray a, String category) throws Exception {
         List<Item> l = new ArrayList<>();
@@ -3258,7 +3277,7 @@ public class MainActivity extends Activity {
         Toast.makeText(this, "Searching…", Toast.LENGTH_SHORT).show();
         io.execute(() -> {
             try {
-                List<Item> all = parseItems(kind, new JSONArray(cachedGet(kind, listActionFor(kind), "")), null);
+                List<Item> all = copies(parsedList(kind, false));
                 String w = want.toLowerCase(java.util.Locale.UK);
                 List<Item> hits = new ArrayList<>();
                 for (Item it : all) if (it.name != null && (kind.equals("live") ? LiveSearch.matches(it.name, want) : it.name.toLowerCase(java.util.Locale.UK).contains(w))) hits.add(it);
@@ -5313,12 +5332,7 @@ public class MainActivity extends Activity {
         io.execute(() -> {
             try {
                 JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
-                if (liveChannels == null) {
-                    JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
-                    List<Item> l = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
-                    liveChannels = l;
-                }
+                liveChannels = liveList(); // cached per saved list, so a refreshed list is picked up
                 List<String[]> rows = new ArrayList<>();
                 java.util.Set<String> adultIds = new java.util.HashSet<>();
                 for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); if (hideAdult(o.optString("category_name"))) { adultIds.add(o.optString("category_id")); continue; } rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
@@ -5965,10 +5979,7 @@ public class MainActivity extends Activity {
             List<String> l = new ArrayList<>(); List<Item> t = new ArrayList<>();
             try {
                 if (liveChannels == null) {
-                    JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
-                    List<Item> pl = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) pl.add(liveItem(a.getJSONObject(i)));
-                    liveChannels = pl;
+                    liveChannels = liveList();
                 }
                 buildSportsRows(e, aliases, liveChannels, l, t);
             } catch (Exception ex) { l.clear(); t.clear(); l.add("Couldn't load your channels – check your login in Settings"); t.add(null); }
@@ -6160,10 +6171,7 @@ public class MainActivity extends Activity {
             final AlertDialog wait = findingDialog();
             io.execute(() -> {
                 try {
-                    JSONArray a = new JSONArray(cachedGet("live", "get_live_streams", ""));
-                    List<Item> l = new ArrayList<>();
-                    for (int i = 0; i < a.length(); i++) { JSONObject o = a.getJSONObject(i); l.add(liveItem(o)); }
-                    liveChannels = l;
+                    liveChannels = liveList();
                     ui.post(() -> { dismissQuietly(wait); pickSportsChannel(e, aliases, retry); });
                 } catch (Exception ex) { ui.post(() -> { dismissQuietly(wait); Toast.makeText(this, "Couldn't load your channels – check your login in Settings", Toast.LENGTH_LONG).show(); }); }
             });
