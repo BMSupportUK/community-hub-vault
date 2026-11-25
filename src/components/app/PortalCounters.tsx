@@ -77,7 +77,7 @@ export function PortalCounters({ staff, staffName = "" }: { staff: boolean; staf
           return <StaffTicketsButton key={label} staffId={user.id} staffName={staffName} placement="below" readOnly={!hasAny(["admin", "management", "staff"])} tile={(u) => body(value, label, Icon, u > 0)} />;
         }
         if (label === "Orders waiting" && canOrders) {
-          return <StaffOrdersButton key={label} tile={() => body(value, label, Icon)} />;
+          return <StaffOrdersButton key={label} tile={(count) => body(count, label, Icon)} />;
         }
         return (
           <Link key={label} to={to as never} search={search as never} className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2.5 py-2 text-white transition-colors hover:bg-white/20">
