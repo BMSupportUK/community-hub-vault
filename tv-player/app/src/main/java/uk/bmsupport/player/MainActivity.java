@@ -4241,7 +4241,8 @@ public class MainActivity extends Activity {
         List<String> due = startupPlaylists.claim(linkVerified && hasLogin() && unlocked && PlayerApplication.pinPassed && !maintenance);
         if (!due.isEmpty()) updatePlaylists(due, true);
     }
-    private final StartupPlaylists startupPlaylists = new StartupPlaylists();
+    // Process-wide: Fire OS often rebuilds the main screen after playback, which must not re-download every list.
+    private static final StartupPlaylists startupPlaylists = new StartupPlaylists();
     private void finishStartupUpdateCheck() {
         startupPlaylists.allowAfterUpdate();
         if (!isFinishing() && !isDestroyed()) autoUpdatePlaylists();
