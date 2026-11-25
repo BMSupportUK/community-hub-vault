@@ -4164,10 +4164,15 @@ public class MainActivity extends Activity {
                     writeCache(kind, catActionFor(kind), cats);
                     writeCache(kind, listActionFor(kind), list);
                     prefs.edit().putLong("refreshed_" + kind, System.currentTimeMillis()).apply();
+                    // Read the fresh list now so the first visit to the guide, Films or Series opens instantly.
+                    plSet("Preparing " + name + "…");
+                    try { parsedList(kind, kind.equals("live")); } catch (Throwable ignored) {}
                     steps++; plStepDone();
                     ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText(n + " " + what + " · updated now"); });
                 } catch (Exception e) {
                     ui.post(() -> { TextView s = tileStatus.get(kind); if (s != null) s.setText("Couldn't update. Try again."); });
+                    // Update failed: still get the list already saved on the device ready for an instant first open.
+                    try { parsedList(kind, kind.equals("live")); } catch (Throwable ignored) {}
                 } finally {
                     while (steps++ < 2) plStepDone();
                     ui.post(() -> plQueued.remove(kind));
