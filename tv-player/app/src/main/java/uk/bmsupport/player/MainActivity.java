@@ -4204,7 +4204,7 @@ public class MainActivity extends Activity {
     private void prepareSection(String kind) {
         try {
             String catA = kind.equals("live") ? "get_live_categories" : kind.equals("film") ? "get_vod_categories" : "get_series_categories";
-            if (kind.equals("live")) { liveList(); ui.post(this::warmGuide); }
+            if (kind.equals("live")) { liveList(); sectionData(kind, catA, listActionFor(kind)); ui.post(this::warmGuide); }
             else sectionData(kind, catA, listActionFor(kind));
         } catch (Throwable ignored) {}
     }
