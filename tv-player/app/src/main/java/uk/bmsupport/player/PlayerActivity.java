@@ -685,21 +685,9 @@ public class PlayerActivity extends Activity {
     }
     private void coverUntilFirstFrame(FrameLayout root) {
         if (carried != null) { uncovered = true; return; }
-        // Loading picture: family watching TV with popcorn and "Channel Loading" (sound muted underneath).
+        // Plain black until the first picture: no loading image, sound held off underneath.
         FrameLayout cover = new FrameLayout(this);
         cover.setBackgroundColor(0xFF000000);
-        android.widget.ImageView art = new android.widget.ImageView(this);
-        art.setImageResource(R.drawable.channel_loading);
-        art.setScaleType(android.widget.ImageView.ScaleType.CENTER_CROP);
-        cover.addView(art, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-        TextView msg = new TextView(this);
-        msg.setText("Channel Loading…");
-        msg.setTextSize(30); msg.setTypeface(Typeface.DEFAULT_BOLD); msg.setTextColor(0xFFFFFFFF);
-        msg.setShadowLayer(12, 0, 2, 0xCC000000);
-        msg.setBackgroundColor(0x99000000); msg.setPadding(48, 18, 48, 18);
-        FrameLayout.LayoutParams mlp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        mlp.bottomMargin = 90;
-        cover.addView(msg, mlp);
         loadingCover = cover;
         root.addView(cover, 1, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         player.setVolume(0f);
