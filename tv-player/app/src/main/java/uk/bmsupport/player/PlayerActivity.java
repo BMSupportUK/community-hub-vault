@@ -506,8 +506,8 @@ public class PlayerActivity extends Activity {
         linkLp.topMargin = 16;
         root.addView(linkNote, linkLp);
         ui.post(linkTick);
-        // Films and series always fill the screen (Zoom); live TV and catch up keep their own shape.
-        if (PlayerControls.canSkip(kind())) { view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM); ui.postDelayed(barWatch, 3000); }
+        // Films and series show the whole picture (Fit): Zoom cropped wide films' sides off on TVs.
+        if (PlayerControls.canSkip(kind())) { view.setResizeMode(androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_FIT); ui.postDelayed(barWatch, 3000); }
         view.setControllerVisibilityListener((PlayerView.ControllerVisibilityListener) vis -> {
             ctrlRow.setVisibility(vis);
             if (vis == android.view.View.VISIBLE) lastPressAt = android.os.SystemClock.elapsedRealtime();

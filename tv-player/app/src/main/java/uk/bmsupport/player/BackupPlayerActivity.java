@@ -205,8 +205,8 @@ public class BackupPlayerActivity extends Activity {
             root.removeView(layout);
             layout = (VLCVideoLayout) carriedStage.picture;
         } else mp.attachViews(layout, null, false, false);
-        // Films and series fill the screen (zoom, like the main player); live TV and catch up keep their shape.
-        if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind"))) mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_FIT_SCREEN);
+        // Films and series show the whole picture (best fit, like the main player); zoom cropped wide films.
+        if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind"))) mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_BEST_FIT);
         else {
             // Live/catch up: always show the whole picture. A preview surface carried to full screen keeps its small
             // size until told otherwise, which cut the picture off on phones, so refit whenever the screen size changes.
