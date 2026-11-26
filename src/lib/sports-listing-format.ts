@@ -587,7 +587,10 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
   // Channel-first rows with qualifiers after the fixture:
   // "HBO Max UK 1 | Page - Selby Shenzhen Open | Round 3" → channel first,
   // every later segment belongs to the event name.
-  if (parts.length >= 3 && isLikelyChannelLabel(parts[0]!) && !parts.slice(1).some((p) => isLikelyChannelLabel(p))) {
+  // HBO Max rows always carry one channel first; qualifiers such as
+  // "UECL Matchday 4" look like channel numbers but belong to the event name.
+  const hboFirst = /^HBO\s*Max\b/i.test(parts[0] ?? "") && !parts.slice(1).some((p) => /^HBO\s*Max\b/i.test(p));
+  if (parts.length >= 2 && isLikelyChannelLabel(parts[0]!) && (hboFirst || (parts.length >= 3 && !parts.slice(1).some((p) => isLikelyChannelLabel(p))))) {
     return {
       date: eventDate,
       time: normalizeTime(`${time} ${zone}`),
