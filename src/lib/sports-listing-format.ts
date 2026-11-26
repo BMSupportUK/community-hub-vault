@@ -1271,6 +1271,12 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       const month = ["January","February","March","April","May","June","July","August","September","October","November","December"][Number(m) - 1];
       return month && Number(d) >= 1 && Number(d) <= 31 ? `${Number(d)} ${month}\n${row}` : all;
     });
+  // Flo Hockey "Flo Hockey 003: A vs B (Home) | 2026-11-26 01:15 PM EST" —
+  // channel colon title, then an ISO date + zoned clock after a pipe.
+  raw = raw.replace(
+    /^([ \t]*[A-Za-z][A-Za-z0-9 +&'.-]*?\d{1,3})[ \t]*:[ \t]*(.+?)[ \t]*\|[ \t]*(\d{4}-\d{2}-\d{2})[ \t]+(\d{1,2}:\d{2}[ \t]*(?:AM|PM)?)[ \t]*(GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CEST)[ \t]*$/gim,
+    "$1 | $2 // $5 $3 $4",
+  );
   // Boxing "Ringwalk Approx 9:30pm UK" is a note, not a second event —
   // its clock must never split the fight from its channels.
   raw = raw.replace(/^[ \t*`_]*(?:main\s+event\s+)?ring\s*-?\s*walks?\b[^\n]*$/gim, "");

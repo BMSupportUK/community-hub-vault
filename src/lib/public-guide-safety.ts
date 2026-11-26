@@ -15,7 +15,7 @@ export function safePublicEventTitle(event: SportsListingEvent): boolean {
     /^(?:[A-Za-z]{1,6}\d{1,3}|(?:channel|WF|NFL|NBA|NHL|MLB|MLS|WNBA|EFL)\s*\d{1,3})(?:\s+(?:HD|UHD|FHD|4K))?$/i.test(title) ||
     /^under team channels$/i.test(title) ||
     /\b(?:https?:\/\/|www\.|t\.me\/|discord\.gg\/|@everyone|@here)\b/i.test(title) ||
-    /^(?:join|subscribe|follow|visit|click|download|contact|message|dm|use our|check out|watch live|all times|source:|posted by)\b/i.test(title)
+    /^(?:join|subscribe|follow|visit|click|download|contact|message|dm\s+(?:me|us|for|to)\b|use our|check out|watch live|all times|source:|posted by)\b/i.test(title)
   ) return false;
   return !event.channels.some((channel) => channel.trim().toLowerCase() === title.toLowerCase());
 }
