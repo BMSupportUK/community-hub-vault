@@ -1,4 +1,5 @@
 # Windows BM Player renderer rules
+- Movie selections use the full-page MediaHero mode and existing play/resume commands, not the item modal, so description and controls share one destination with preserved browse state.
 - Guide rows are memoised GuideRow components with stable handlers, and VideoSurface only reports a changed position from scrolls that move it, so hover/focus and scrolling never redraw the whole guide or flood the main process.
 - Multi-screen channel picking uses renderer/multi-picker.jsx (categories + channels with "Now" only, listings loaded per visible row through the shared EPG cache), never the full guide grid; "＋ Add screen" on a single live channel switches to two screens without stopping the playing one. Android's pickMultiChannel mirrors this with category then channel resultList rows.
 - Speed: the guide is saved to local storage only after a full load and on exit (never on a timer, which froze the window stringifying the whole guide); never use CSS content-visibility on guide rows or posters (made scrolling worse on Windows).

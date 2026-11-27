@@ -1,4 +1,5 @@
 # tv-player activity rules
+- Movie selections use showFilm with cached MediaHero metadata and existing playback commands; Back restores the retained poster view so category and scroll selection are not reset.
 - VPN Settings and playback use VpnServerList for lowest-raw-traffic-first rows with numeric readings and relative bars; bars compare listed servers, never imply an undocumented capacity percentage.
 - Upcoming programme selections and their reminder icons confirm reminder changes before preview routing; current programmes/channel labels retain normal playback behaviour.
 - Channel/preview EPG shares FixtureGuide: non-official sports/club feeds first read saved website fixtures, authoritative responses bypass provider expansion, ordinary/unmatched channels use provider short/full-day tables. Category entry never calls country-refresh endpoints.

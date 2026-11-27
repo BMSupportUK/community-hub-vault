@@ -2588,6 +2588,7 @@ public class MainActivity extends Activity {
 
     private void open(Item it) {
         if (it.kind.equals("series")) { showSeries(it); return; }
+        if (it.kind.equals("film")) { showFilm(it); return; }
         String fav = isSaved("fav", it) ? "Remove from favourites" : "Add to favourites";
         String key = watchKey(it.kind, it.id);
         long pos = prefs.getLong(key + ":position", 0), dur = prefs.getLong(key + ":duration", 0);
@@ -2625,10 +2626,7 @@ public class MainActivity extends Activity {
     }
 
     private AlertDialog.Builder itemDialog(Item it) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        if ("film".equals(it.kind)) builder.setCustomTitle(filmDetails(it));
-        else builder.setTitle(it.name);
-        return builder;
+        return new AlertDialog.Builder(this).setTitle(it.name);
     }
 
     private AlertDialog compactDialog(AlertDialog dialog) {
@@ -2657,10 +2655,55 @@ public class MainActivity extends Activity {
         return c;
     }
 
-    private View filmDetails(Item it) {
-        MediaHero h = new MediaHero(); h.show(it);
-        h.view.setPadding(dp(8), dp(8), dp(8), dp(4));
-        return h.view;
+    private void showFilm(Item it) {
+        ViewGroup content = findViewById(android.R.id.content);
+        View previous = content.getChildAt(0);
+        Runnable previousBack = back;
+        Runnable returnToPosters = () -> {
+            if (previous != null) setContentView(previous);
+            else browse("film");
+            back = previousBack;
+        };
+        back = returnToPosters;
+        android.widget.FrameLayout frame = new android.widget.FrameLayout(this);
+        frame.setBackgroundColor(BG);
+        MediaHero h = new MediaHero();
+        h.view.removeView(h.backdrop);
+        frame.addView(h.backdrop, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        View shade = new View(this);
+        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
+                new int[]{BG, Color.argb(170, Color.red(BG), Color.green(BG), Color.blue(BG)), Color.TRANSPARENT}));
+        frame.addView(shade, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+        scroll.setFillViewport(true);
+        LinearLayout root = column(); root.setPadding(dp(28), dp(18), dp(28), dp(18));
+        scroll.addView(root);
+        frame.addView(scroll, new android.widget.FrameLayout.LayoutParams(-1, -1));
+        Button close = button("← Movies", v -> returnToPosters.run());
+        root.addView(close);
+        h.title.setSingleLine(false); h.title.setTextSize(30); h.title.setEllipsize(null);
+        h.meta.setSingleLine(false); h.meta.setEllipsize(null);
+        h.people.setMaxLines(Integer.MAX_VALUE); h.people.setEllipsize(null);
+        h.plot.setMaxLines(Integer.MAX_VALUE); h.plot.setEllipsize(null);
+        int width = isPhone() ? -1 : (int) (getResources().getDisplayMetrics().widthPixels * 0.65f);
+        root.addView(h.view, new LinearLayout.LayoutParams(width, -2));
+        h.show(it);
+        String key = watchKey(it.kind, it.id);
+        long position = prefs.getLong(key + ":position", 0), duration = prefs.getLong(key + ":duration", 0);
+        if (WatchProgress.resumable(position, duration)) {
+            root.addView(button("▶ Continue watching · " + WatchProgress.percent(position, duration) + "%",
+                    v -> startPlayback(it, defaultVlc(), position)));
+        }
+        root.addView(button(position > 0 ? "▶ Play from beginning" : "▶ Play", v -> startPlayback(it, defaultVlc(), 0)));
+        root.addView(button(isSaved("fav", it) ? "★ Remove favourite" : "☆ Add favourite", v -> {
+            toggleSaved("fav", it);
+            ((Button) v).setText(isSaved("fav", it) ? "★ Remove favourite" : "☆ Add favourite");
+        }));
+        root.addView(button("☆ Vote", v -> showVote(it)));
+        if (platform().equals("phone")) root.addView(button("📺 Cast to TV", v -> castToTv(it)));
+        setContentView(frame);
+        close.requestFocus();
+        scroll.post(() -> scroll.scrollTo(0, 0));
     }
 
     /** Phone: find DLNA smart TVs on the same Wi-Fi and send this item's stream to the chosen one. */
