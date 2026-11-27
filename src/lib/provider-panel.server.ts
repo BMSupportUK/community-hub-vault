@@ -1,5 +1,14 @@
 // Server only: signs in to the Xtream reseller panel (behind HTTP basic auth) and creates or extends lines.
-const BASE = "https://footballfantasy26.com";
+import { DEFAULT_PANEL_URL, normalisePanelUrl } from "./provider-panel-url";
+
+async function panelBase(): Promise<string> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.from("app_settings").select("value").eq("key", "provider_panel_url").maybeSingle();
+    const v = (data?.value as { url?: string } | null)?.url;
+    return (v && normalisePanelUrl(v)) || DEFAULT_PANEL_URL;
+  } catch { return DEFAULT_PANEL_URL; }
+}
 const MEMBER_ID = "767"; // BoroMedia reseller
 
 function creds() {
@@ -10,13 +19,13 @@ function creds() {
 
 class Panel {
   private cookies = new Map<string, string>();
-  constructor(private auth: string) {}
+  constructor(private auth: string, private base: string) {}
   private store(r: Response) {
     const list = (r.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie?.() ?? [];
     for (const c of list) { const [kv] = c.split(";"); const i = kv.indexOf("="); if (i > 0) this.cookies.set(kv.slice(0, i).trim(), kv.slice(i + 1)); }
   }
   async req(path: string, body?: URLSearchParams) {
-    const r = await fetch(BASE + path, {
+    const r = await fetch(this.base + path, {
       method: body ? "POST" : "GET",
       redirect: "manual",
       headers: {
@@ -36,7 +45,7 @@ class Panel {
 
 export async function panelLogin() {
   const { u, p } = creds();
-  const panel = new Panel("Basic " + btoa(`${u}:${p}`));
+  const panel = new Panel("Basic " + btoa(`${u}:${p}`), await panelBase());
   await panel.req("/login.php");
   const r = await panel.req("/login.php", new URLSearchParams({ username: u, password: p, referrer: "" }));
   if (!(r.status === 302 && /reseller|dashboard/.test(r.location))) throw new Error("Couldn't sign in to the provider panel — check the saved panel login");

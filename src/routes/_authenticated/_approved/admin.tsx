@@ -32,6 +32,7 @@ import { RemoteSignOutCard } from "@/components/app/RemoteSignOutCard";
 import { AndroidApkUploadCard } from "@/components/app/AndroidApkUploadCard";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import { InvoiceTemplateCard } from "@/components/app/InvoiceTemplateCard";
+import { ProviderPanelUrlCard } from "@/components/app/ProviderPanelUrlCard";
 import { RailOrderEditor } from "@/components/app/RailOrderEditor";
 import { TvRemoteSessions } from "@/components/app/TvRemoteSessions";
 import { FaqsAdmin } from "@/components/app/FaqsAdmin";
@@ -788,7 +789,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
           <HeaderLinksCard />
         </div>
       ) : tab === "invoice-template" ? (
-        <div className="max-w-3xl">
+        <div className="max-w-3xl space-y-4">
+          {isAdminOnly && <ProviderPanelUrlCard />}
           <InvoiceTemplateCard />
         </div>
       ) : tab === "sign-out-devices" && canSeePins ? (
