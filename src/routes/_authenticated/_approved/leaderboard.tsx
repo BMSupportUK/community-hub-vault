@@ -220,13 +220,13 @@ export function LeaderboardPage({ admin = false }: { admin?: boolean } = {}) {
       </header>
 
       <div className="px-4 py-5 sm:px-8 sm:py-6">
-        <ReferralCreditPanel />
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid h-auto w-full grid-cols-1 gap-1 bg-purple-950/60 p-1 border border-purple-500/30 min-[360px]:grid-cols-2 sm:gap-0 ${admin ? "sm:grid-cols-2 sm:max-w-md" : "sm:grid-cols-3 sm:max-w-2xl"}`}>
+          <TabsList className={`grid h-auto w-full grid-cols-1 gap-1 bg-purple-950/60 p-1 border border-purple-500/30 min-[360px]:grid-cols-2 sm:gap-0 ${admin ? "sm:grid-cols-2 sm:max-w-md" : "sm:grid-cols-4 sm:max-w-3xl"}`}>
             {!admin && <>
             <TabsTrigger value="welcome" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Welcome</TabsTrigger>
             <TabsTrigger value="leaderboard" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Leaderboard</TabsTrigger>
             <TabsTrigger value="invites" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">My Invites</TabsTrigger>
+            <TabsTrigger value="credit" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Referral credit</TabsTrigger>
             </>}
             {isAdmin && (
               <>
@@ -235,6 +235,10 @@ export function LeaderboardPage({ admin = false }: { admin?: boolean } = {}) {
               </>
             )}
           </TabsList>
+
+          <TabsContent value="credit" className="mt-6">
+            <ReferralCreditPanel />
+          </TabsContent>
 
           <TabsContent value="welcome" className="mt-6">
             <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] sm:p-10">
