@@ -62,13 +62,40 @@ class Panel {
   }
 }
 
-export async function panelLogin() {
+// Sign in to the panel as rarely as possible: one session is reused for 20 minutes,
+// and after a refused sign-in no new attempt is made for 15 minutes, so the panel
+// never sees repeated logins that look like password guessing.
+let cached: { panel: Panel; base: string; at: number } | null = null;
+let refusedUntil = 0;
+let pending: Promise<Panel> | null = null;
+const SESSION_MS = 20 * 60_000, REFUSED_WAIT_MS = 15 * 60_000;
+
+async function freshLogin(base: string) {
   const { u, p } = creds();
-  const panel = new Panel("Basic " + btoa(`${u}:${p}`), await panelBase());
+  const panel = new Panel("Basic " + btoa(`${u}:${p}`), base);
   await panel.req("/login.php");
   const r = await panel.req("/login.php", new URLSearchParams({ username: u, password: p, referrer: "" }));
-  if (!(r.status === 302 && /reseller|dashboard/.test(r.location))) throw new Error("Couldn't sign in to the provider panel — check the saved panel login");
+  if (!(r.status === 302 && /reseller|dashboard/.test(r.location))) {
+    refusedUntil = Date.now() + REFUSED_WAIT_MS;
+    throw new Error("Couldn't sign in to the provider panel — check the saved panel login");
+  }
+  cached = { panel, base, at: Date.now() };
   return panel;
+}
+
+export async function panelLogin() {
+  const base = await panelBase();
+  if (cached && cached.base === base && Date.now() - cached.at < SESSION_MS) {
+    // Cheap check that the saved session is still signed in before reusing it.
+    const r = await cached.panel.req("/user_reseller.php").catch(() => null);
+    if (r && !(r.status === 302 && /login/i.test(r.location))) return cached.panel;
+    cached = null;
+  }
+  if (Date.now() < refusedUntil) {
+    throw new Error("The provider panel refused the last sign-in. Waiting a few minutes before trying again so the account isn't flagged.");
+  }
+  if (!pending) pending = freshLogin(base).finally(() => { pending = null; });
+  return pending;
 }
 
 const attr = (tag: string, name: string) => new RegExp(`${name}="([^"]*)"`).exec(tag)?.[1] ?? "";
