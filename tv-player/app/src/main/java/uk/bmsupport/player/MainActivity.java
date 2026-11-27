@@ -2599,7 +2599,7 @@ public class MainActivity extends Activity {
             final boolean cast2 = platform().equals("phone");
             if (cast2) { o2 = java.util.Arrays.copyOf(o2, o2.length + 1); o2[o2.length - 1] = "📺 Cast to TV"; }
             final int cast2At = o2.length - 1;
-            compactDialog(new AlertDialog.Builder(this).setTitle(it.name).setItems(o2, (d, w) -> {
+            compactDialog(itemDialog(it).setItems(o2, (d, w) -> {
                 if (cast2 && w == cast2At) castToTv(it);
                 else if (w == 0) startPlayback(it, defaultVlc(), pos);
                 else if (w == 1) startPlayback(it, defaultVlc(), 0);
@@ -2615,13 +2615,20 @@ public class MainActivity extends Activity {
         final boolean cast = platform().equals("phone");
         if (cast) { opts = java.util.Arrays.copyOf(opts, opts.length + 1); opts[opts.length - 1] = "📺 Cast to TV"; }
         final int castAt = opts.length - 1;
-        compactDialog(new AlertDialog.Builder(this).setTitle(it.name).setItems(opts, (d, w) -> {
+        compactDialog(itemDialog(it).setItems(opts, (d, w) -> {
             if (w == catchupAt) showCatchup(it, () -> showTvGuide(returnCategory, true));
             else if (cast && w == castAt) castToTv(it);
             else if (w == 0) play(it, defaultVlc());
             else if (w == 1) toggleSaved("fav", it);
             else showVote(it);
         }).create());
+    }
+
+    private AlertDialog.Builder itemDialog(Item it) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        if ("film".equals(it.kind)) builder.setCustomTitle(filmDetails(it));
+        else builder.setTitle(it.name);
+        return builder;
     }
 
     private AlertDialog compactDialog(AlertDialog dialog) {
