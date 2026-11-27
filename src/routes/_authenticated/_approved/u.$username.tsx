@@ -38,6 +38,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
+import { getMyStaffPinStatus } from "@/lib/staff-pin.functions";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>): { tab?: string; edit?: 1 } => ({
@@ -1682,6 +1684,9 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
   const { user } = useAuth();
   const isDemo = useIsDemoAccount();
   const [hasPin, setHasPin] = useState<boolean | null>(null);
+  const pinStatus = useServerFn(getMyStaffPinStatus);
+  const [pinError, setPinError] = useState(false);
+  const [pinRetry, setPinRetry] = useState(0);
   const [unlocked, setUnlocked] = useState(false);
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [dns, setDns] = useState<DnsRow[]>([]);
@@ -1692,9 +1697,13 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
 
   useEffect(() => {
     if (!user) return;
-    supabase.from("vault_pins").select("user_id").eq("user_id", user.id).maybeSingle()
-      .then(({ data }) => setHasPin(!!data));
-  }, [user]);
+    let active = true;
+    setHasPin(null);
+    setPinError(false);
+    void pinStatus().then(result => { if (active) setHasPin(result.hasPin); })
+      .catch(() => { if (active) setPinError(true); });
+    return () => { active = false; };
+  }, [user?.id, pinStatus, pinRetry]);
 
   useEffect(() => {
     if (!unlocked) return;
@@ -1755,6 +1764,8 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
       {!unlocked ? (
         <RevealGate
           hasPin={hasPin}
+          pinError={pinError}
+          onRetry={() => setPinRetry(n => n + 1)}
           onUnlocked={() => setUnlocked(true)}
           onPinSet={() => setHasPin(true)}
         />
@@ -1891,7 +1902,7 @@ function FieldRow({ icon: Icon, label, value, onCopy, copied }: { icon: any; lab
   );
 }
 
-function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; onUnlocked: () => void; onPinSet: () => void }) {
+function RevealGate({ hasPin, pinError, onRetry, onUnlocked, onPinSet }: { hasPin: boolean | null; pinError: boolean; onRetry: () => void; onUnlocked: () => void; onPinSet: () => void }) {
   const { user } = useAuth();
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
@@ -1921,6 +1932,7 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
     try { localStorage.setItem(`reveal-method:${user.id}`, method); } catch {}
   }, [method, user?.id]);
 
+  if (pinError) return <div role="alert" className="grid justify-items-center gap-3 py-6 text-muted-foreground"><p>Couldn't check your existing PIN.</p><Button variant="outline" onClick={onRetry}>Try again</Button></div>;
   if (hasPin === null) return <div className="grid place-items-center py-6 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
 
   if (!hasPin) {

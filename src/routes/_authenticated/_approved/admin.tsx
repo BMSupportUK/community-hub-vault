@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, Globe, Clock, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, CircleHelp, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop, ReceiptText, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { vpnCredits, panelCreditsFn } from "@/lib/vpn-admin.functions";
 import { useApplicationAccess } from "@/lib/admin-unlock";
 import { revokeDashboardAccess, unlockDashboardFactor } from "@/lib/application-access.functions";
-import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
+import { unlockWithStaffPin, requestStaffPinReset, getMyStaffPinStatus } from "@/lib/staff-pin.functions";
 import { ADMIN_CUSTOMERS_LINK, adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
@@ -98,6 +99,9 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   const { user, roles } = useAuth();
   const isFz = zone === "fanzone";
   const [hasPin, setHasPin] = useState<boolean | null>(null);
+  const pinStatus = useServerFn(getMyStaffPinStatus);
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [pinRetry, setPinRetry] = useState(0);
   const access = useApplicationAccess(user?.id);
   const revoke = useServerFn(revokeDashboardAccess);
   const unlocked = access.dashboard && !!access.dashboardUntil && Date.parse(access.dashboardUntil) > Date.now();
@@ -111,11 +115,19 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
 
   useEffect(() => {
     if (!user) return;
+    let active = true;
+    setHasPin(null);
+    setPinError(null);
     (async () => {
-      const { data } = await supabase.from("vault_pins").select("user_id").eq("user_id", user.id).maybeSingle();
-      setHasPin(!!data);
+      try {
+        const result = await pinStatus();
+        if (active) setHasPin(result.hasPin);
+      } catch {
+        if (active) setPinError("Couldn't check your existing staff PIN.");
+      }
     })();
-  }, [user]);
+    return () => { active = false; };
+  }, [user?.id, pinStatus, pinRetry]);
 
   const lockNow = () => {
     void revoke().finally(() => window.dispatchEvent(new Event("bm-access-change")));
@@ -185,7 +197,12 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
         </div>
 
 
-        {hasPin === null ? (
+        {pinError ? (
+          <div role="alert" className="grid justify-items-center gap-3 py-16 text-muted-foreground">
+            <p>{pinError}</p>
+            <Button variant="outline" onClick={() => setPinRetry(n => n + 1)}><RefreshCw className="size-4" /> Try again</Button>
+          </div>
+        ) : hasPin === null ? (
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
         ) : !unlocked ? (
           <SecurityGate

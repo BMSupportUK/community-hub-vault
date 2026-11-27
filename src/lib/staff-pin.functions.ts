@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { canRevokeStaffPins, canManageStaffPins, isStaffPinHolder } from "@/lib/staff-pin-admin-access";
+import { existingPinStatus } from "./staff-pin-status";
 
 // Staff PINs are issued by admins, stored encrypted + hashed in the database,
 // and only ever checked or revealed on the server after re-confirming the
@@ -57,6 +58,16 @@ export const unlockWithStaffPin = createServerFn({ method: "POST" })
     const until = new Date(Date.now() + 60 * 60_000).toISOString();
     await grantApplicationAccess(supabaseAdmin, context.userId, context.claims["session_id"], "dashboard", until);
     return { ok: true, until };
+  });
+
+/** A failed read is not evidence that a PIN is missing. Never return its hash. */
+export const getMyStaffPinStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin.from("vault_pins")
+      .select("user_id").eq("user_id", context.userId).maybeSingle();
+    return { hasPin: existingPinStatus(data, error) };
   });
 
 export const revealMyStaffPin = createServerFn({ method: "POST" })

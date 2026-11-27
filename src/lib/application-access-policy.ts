@@ -5,7 +5,7 @@ export const applicationAccessSchema = z.object({
   dashboardUntil: z.string().nullable(), portalUntil: z.string().nullable(),
 });
 export type ApplicationAccess = z.infer<typeof applicationAccessSchema>;
-const SCREEN_RECOVERY = new Set(`getApplicationAccess screenAccess verifyScreenLockPassword getScreenLockAdminAccess requestMyPortalCode unlockMyPortalCode requestPortalCode redeemPortalCode requestMfaReset listMyMfaFactors customerAccountSwitchStatus returnToAdminAccount`.split(" "));
+const SCREEN_RECOVERY = new Set(`getApplicationAccess screenAccess verifyScreenLockPassword getScreenLockAdminAccess getMyStaffPinStatus requestMyPortalCode unlockMyPortalCode requestPortalCode redeemPortalCode requestMfaReset listMyMfaFactors customerAccountSwitchStatus returnToAdminAccount`.split(" "));
 const DASHBOARD_ACTIONS = new Set(`vpnCredits panelCreditsFn backfillVpnDetection providerSetupLine getProviderPanelUrlHint saveProviderPanelUrl listStaffPinRequests listStaffPins issueStaffPin revokeStaffPin startCustomerAccountSwitch adminCustomerSwitch adminSwitchToCustomer`.split(" "));
 const PORTAL_ACTIONS = new Set(`readPortalCredentials requestPortalPinReset sendTicketTempPin openGuide openPlayerUserGuide getGuideVideoUrl createTicketEnablerPin getTicketEnablerPinStatus getTicketEnablerLoggedIn createOrderEnablerPin getOrderEnablerPinStatus getDirectInstallPin createDirectInstallPin createDirectInstallLink startDirectInstallSession getDirectInstallProgress`.split(" "));
 export function applicationActionAllowed(access: ApplicationAccess, name: string) {
