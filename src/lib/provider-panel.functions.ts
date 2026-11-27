@@ -33,7 +33,14 @@ export const providerSetupLine = createServerFn({ method: "POST" })
     const { data: prev } = await supabaseAdmin.from("order_provisioning").select("*").eq("order_id", data.orderId).maybeSingle();
     if (prev?.status === "done") return { ok: true, username: String(prev.panel_username), password: String(prev.panel_password ?? ""), exp: String(prev.exp_date ?? ""), again: true };
     if (prev && prev.status !== "failed") return { ok: false, error: "This order is already being set up on the panel. Wait a minute and try again." };
-    if (prev && data.kind === "renew" && prev.panel_line_id) return { ok: false, error: `An earlier renewal of ${prev.panel_username} may have gone through (${prev.error ?? "unknown error"}). Check the line on the panel and confirm by hand.` };
+    // A failed renewal may only be retried when the line still shows the expiry it had before that attempt.
+    let renewBefore = "";
+    if (prev && data.kind === "renew" && prev.panel_line_id) {
+      const pp = await import("@/lib/provider-panel.server");
+      const now = (await pp.readLine(await pp.panelLogin(), String(prev.panel_line_id))).exp;
+      if (!prev.exp_date || !now || now !== String(prev.exp_date)) return { ok: false, error: `An earlier renewal of ${prev.panel_username} may have gone through. Check the line on the panel and confirm by hand.` };
+      renewBefore = now;
+    }
     if (prev) {
       const { data: claimed } = await supabaseAdmin.from("order_provisioning").update({ status: "working", error: null, updated_at: new Date().toISOString() }).eq("order_id", data.orderId).eq("status", "failed").select("order_id");
       if (!claimed?.length) return { ok: false, error: "This order is already being set up on the panel." };
@@ -72,7 +79,9 @@ export const providerSetupLine = createServerFn({ method: "POST" })
       } else {
         const id = await pp.panelFindLine(panel, data.username!);
         if (!id) throw new Error(`Couldn't find ${data.username} on the provider panel.`);
-        await save({ status: "submitted", panel_username: data.username, panel_line_id: id });
+        // Remember the expiry before buying, so a failed attempt can be safely retried later.
+        const before = renewBefore || (await pp.readLine(panel, id)).exp;
+        await save({ status: "submitted", panel_username: data.username, panel_line_id: id, exp_date: before || null });
         line = await pp.panelExtendLine(panel, { id, packageId });
       }
       await save({ status: "done", panel_username: line.username, panel_password: line.password, panel_line_id: line.id, exp_date: line.exp });
