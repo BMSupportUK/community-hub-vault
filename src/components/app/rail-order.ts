@@ -22,6 +22,7 @@ export const RAIL_EDITOR_ITEMS = {
     { id: "portal:admin-orders", label: "Shop Orders" },
     { id: "portal:/send-to-app", label: "Link Device" },
     { id: "/sports-guides", label: "Sports guides" },
+    { id: "staff-referrals", label: "Referrals" },
     { id: "/jobs", label: "BM Support jobs" },
     { id: "/forum", label: "Boro Fan Zone" },
   ],

@@ -31,3 +31,9 @@ test("customer rail puts Shop and Download App & Install guides at the top", () 
   expect(ids.indexOf("portal:/shop")).toBeLessThan(ids.indexOf("portal:/tickets"));
   expect(ids.indexOf("portal:/install-guides")).toBeLessThan(ids.indexOf("portal:/tickets"));
 });
+test("staff rail editor includes Referrals immediately after Sports guides", () => {
+  const { RAIL_EDITOR_ITEMS } = require("./rail-order");
+  const ids = RAIL_EDITOR_ITEMS.staff.map((item) => item.id);
+  expect(ids).toContain("staff-referrals");
+  expect(ids.indexOf("staff-referrals")).toBe(ids.indexOf("/sports-guides") + 1);
+});
