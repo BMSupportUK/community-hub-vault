@@ -188,7 +188,13 @@ export const unlockPlayerAdminWithPin = createServerFn({ method: "POST" })
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: ok } = await supabaseAdmin.rpc("staff_pin_check" as any, { p_user: context.userId, p_pin: data.pin.trim() });
-    return ok ? { ok: true } : { ok: false, error: "Incorrect staff PIN" };
+    if (!ok) return { ok: false, error: "Incorrect staff PIN" };
+    const session = context.claims["session_id"];
+    if (typeof session !== "string") return { ok: false, error: "Please sign in again." };
+    const until = new Date(Date.now() + 10 * 60_000).toISOString();
+    const { error: writeError } = await supabaseAdmin.from("sensitive_gate_sessions").upsert({ user_id: context.userId, session_id: session, gate: "player", unlocked_until: until });
+    if (writeError) return { ok: false, error: "Unable to unlock. Please try again." };
+    return { ok: true, until };
   });
 
 /** BM Player DNS is only shown to an admin after re-entering their account password. */
@@ -202,4 +208,20 @@ export const revealPlayerDnsWithPassword = createServerFn({ method: "POST" })
     if (!email || !(await checkPassword(email, data.password))) return { ok: false as const, error: "Incorrect password" };
     const { data: row } = await context.supabase.from("player_settings").select("dns").eq("id", 1).maybeSingle();
     return { ok: true as const, dns: row?.dns ?? "" };
+  });
+
+/** Activity may extend only a still-valid, server-verified player session. */
+export const refreshPlayerAdminGate = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: open, error: checkError } = await context.supabase.rpc("sensitive_gate_open", { p_gate: "player" });
+    if (checkError || !open) return { until: null };
+    const session = context.claims["session_id"];
+    if (typeof session !== "string") return { until: null };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const until = new Date(Date.now() + 10 * 60_000).toISOString();
+    const { data: updated, error } = await supabaseAdmin.from("sensitive_gate_sessions").update({ unlocked_until: until })
+      .eq("user_id", context.userId).eq("session_id", session).eq("gate", "player")
+      .gt("unlocked_until", new Date().toISOString()).select("unlocked_until").maybeSingle();
+    return { until: error ? null : updated?.unlocked_until ?? null };
   });

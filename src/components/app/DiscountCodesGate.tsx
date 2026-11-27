@@ -1,20 +1,14 @@
 import { useState } from "react";
 import { KeyRound, Loader2, Tag } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { unlockSensitiveGate } from "@/lib/security-gates.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { markDiscountUnlocked } from "@/lib/discount-unlock";
 
-async function sha256Hex(input: string) {
-  const enc = new TextEncoder().encode(input);
-  const buf = await crypto.subtle.digest("SHA-256", enc);
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 export function DiscountCodesGate({ onUnlocked }: { onUnlocked: () => void }) {
   const { user } = useAuth();
+  const verify = useServerFn(unlockSensitiveGate);
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
@@ -24,18 +18,7 @@ export function DiscountCodesGate({ onUnlocked }: { onUnlocked: () => void }) {
     if (!password || !pin) return toast.error("Enter your admin password and PIN");
     setBusy(true);
     try {
-      const { error: signErr } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password,
-      });
-      if (signErr) throw new Error("Incorrect password");
-      const hash = await sha256Hex(`${user.id}:${pin}`);
-      const { data: row } = await supabase
-        .from("vault_pins")
-        .select("pin_hash")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
+      await verify({ data: { gate: "discounts", password, pin } });
       markDiscountUnlocked(user.id);
       toast.success("Discount codes unlocked");
       onUnlocked();

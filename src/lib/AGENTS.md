@@ -40,3 +40,4 @@
 - Provider panel address lives scrambled (AES-GCM keyed from the panel password) in the service-only provider_panel_settings table; only owner-checked server functions save it, and the browser only ever gets a masked hint, so customers and staff can never read it.
 - Customer order totals are recomputed in the database (`reprice_customer_order`, run by an order_items trigger and checkout-link/referral RPCs) from product prices, the discount code and referral spend; client totals are never trusted. Invoice rows are server-written only.
 - Password+PIN admin gates that guard server data record the unlock in service-only `admin_gate_unlocks` and the server function checks it (Members emails use gate `roles`); a browser-storage flag alone never releases data.
+- Shop orders, discount management and player settings use session-bound `sensitive_gate_sessions`; database gates enforce expiry, and player activity renews only an existing unexpired grant.

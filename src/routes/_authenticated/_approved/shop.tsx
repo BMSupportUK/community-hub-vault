@@ -79,6 +79,7 @@ import { isDiscountUnlocked, clearDiscountUnlock } from "@/lib/discount-unlock";
 import { DiscountCodesGate } from "@/components/app/DiscountCodesGate";
 import { ShopOrdersGate } from "@/components/app/ShopOrdersGate";
 import { isShopOrdersUnlocked, clearShopOrdersUnlock } from "@/lib/shop-orders-unlock";
+import { revokeSensitiveGate, sensitiveGateStatus } from "@/lib/security-gates.functions";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
 import { AppDemosView } from "@/components/app/AppDemos";
@@ -288,21 +289,35 @@ function ShopPage() {
   const ownerOrdersView = view === "orders" && scope === "all" && isAdmin;
   const [ordersUnlocked, setOrdersUnlocked] = useState(false);
   useEffect(() => {
-    setOrdersUnlocked(isAdmin && isShopOrdersUnlocked(user?.id));
+    setOrdersUnlocked(false);
+    if (!ownerOrdersView || !user) return;
+    let active = true;
+    const check = () => sensitiveGateStatus({ data: { gate: "shop-orders" } }).then(r => { if (active) setOrdersUnlocked(r.open); }).catch(() => { if (active) setOrdersUnlocked(false); });
+    void check();
+    const timer = window.setInterval(check, 5000);
+    return () => { active = false; window.clearInterval(timer); };
   }, [isAdmin, user?.id, view, scope]);
   useEffect(() => {
     if (!ownerOrdersView) {
       clearShopOrdersUnlock(user?.id);
+      if (user && isAdmin) void revokeSensitiveGate({ data: { gate: "shop-orders" } }).catch(() => {});
       setOrdersUnlocked(false);
     }
   }, [ownerOrdersView, user?.id]);
   useEffect(() => {
-    setDiscountUnlocked(isAdminOnly && isDiscountUnlocked(user?.id));
+    setDiscountUnlocked(false);
+    if (!isAdminOnly || !user || (view !== "admin" && view !== "discounts")) return;
+    let active = true;
+    const check = () => sensitiveGateStatus({ data: { gate: "discounts" } }).then(r => { if (active) setDiscountUnlocked(r.open); }).catch(() => { if (active) setDiscountUnlocked(false); });
+    void check();
+    const timer = window.setInterval(check, 5000);
+    return () => { active = false; window.clearInterval(timer); };
   }, [isAdminOnly, user?.id, view]);
   // Leaving Manage Products / Discount Codes locks the section again.
   useEffect(() => {
     if (view !== "admin" && (view as string) !== "discounts") {
       clearDiscountUnlock(user?.id);
+      if (user && isAdminOnly) void revokeSensitiveGate({ data: { gate: "discounts" } }).catch(() => {});
       setDiscountUnlocked(false);
     }
   }, [view, user?.id]);

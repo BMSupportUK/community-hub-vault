@@ -4702,6 +4702,21 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_push_auth: {
+        Row: {
+          id: number
+          secret: string
+        }
+        Insert: {
+          id: number
+          secret: string
+        }
+        Update: {
+          id?: number
+          secret?: string
+        }
+        Relationships: []
+      }
       invites: {
         Row: {
           code: string
@@ -7907,6 +7922,27 @@ export type Database = {
           must_change?: boolean
           timeout_minutes?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sensitive_gate_sessions: {
+        Row: {
+          gate: string
+          session_id: string
+          unlocked_until: string
+          user_id: string
+        }
+        Insert: {
+          gate: string
+          session_id: string
+          unlocked_until: string
+          user_id: string
+        }
+        Update: {
+          gate?: string
+          session_id?: string
+          unlocked_until?: string
           user_id?: string
         }
         Relationships: []
@@ -11751,6 +11787,7 @@ export type Database = {
         Returns: undefined
       }
       select_customer_profile: { Args: { _credential: string }; Returns: Json }
+      sensitive_gate_open: { Args: { p_gate: string }; Returns: boolean }
       set_my_fan_alias: {
         Args: { _alias: string; _avatar: string }
         Returns: undefined

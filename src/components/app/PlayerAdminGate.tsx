@@ -4,21 +4,22 @@ import { Link } from "@tanstack/react-router";
 import { KeyRound, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { unlockPlayerAdminWithPin } from "@/lib/staff-pin.functions";
-import { clearUnlock, isStillUnlocked, markUnlocked, unlockedUntil } from "@/lib/player-admin-unlock";
+import { refreshPlayerAdminGate, unlockPlayerAdminWithPin } from "@/lib/staff-pin.functions";
+import { clearUnlock, isStillUnlocked, markUnlocked } from "@/lib/player-admin-unlock";
 
 /** Login screen for the BM Player Admin Dashboard: Staff PIN, locks after 10 minutes without activity. */
 export function PlayerAdminGate({ children }: { children: ReactNode }) {
   const unlock = useServerFn(unlockPlayerAdminWithPin);
+  const refresh = useServerFn(refreshPlayerAdminGate);
   const [until, setUntil] = useState(0), [now, setNow] = useState(Date.now());
   const [pin, setPin] = useState(""), [busy, setBusy] = useState(false), [error, setError] = useState("");
-  useEffect(() => { setUntil(unlockedUntil()); const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  useEffect(() => { void refresh().then(r => setUntil(r.until ? Date.parse(r.until) : 0)).catch(() => setUntil(0)); const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
   const open = isStillUnlocked(until, now);
   useEffect(() => { if (until && !open) clearUnlock(); }, [open, until]);
   useEffect(() => {
     if (!open) return;
     let last = 0;
-    const bump = () => { const t = Date.now(); if (t - last > 5000) { last = t; setUntil(markUnlocked(t)); } };
+    const bump = () => { const t = Date.now(); if (t - last > 5000) { last = t; void refresh().then(r => setUntil(r.until ? Date.parse(r.until) : 0)).catch(() => setUntil(0)); } };
     const evs = ["pointerdown", "keydown", "wheel", "touchstart", "mousemove", "scroll"];
     evs.forEach((e) => window.addEventListener(e, bump, { passive: true, capture: true }));
     return () => evs.forEach((e) => window.removeEventListener(e, bump, { capture: true }));
@@ -33,7 +34,7 @@ export function PlayerAdminGate({ children }: { children: ReactNode }) {
       e.preventDefault(); setBusy(true); setError("");
       try {
         const r = await unlock({ data: { pin } });
-        if (r.ok) { setUntil(markUnlocked()); setPin(""); } else setError(r.error ?? "Incorrect staff PIN");
+        if (r.ok && r.until) { markUnlocked(); setUntil(Date.parse(r.until)); setPin(""); } else setError(r.error ?? "Incorrect staff PIN");
       } catch { setError("Couldn't check your PIN. Try again."); } finally { setBusy(false); }
     }}>
       <div className="flex items-baseline gap-x-3">

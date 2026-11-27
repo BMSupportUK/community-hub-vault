@@ -28,3 +28,4 @@
 - BM Player connection investigation reports are device-token submissions of provider-observed counts, admin-readable only; never treat those client observations as verified enforcement or automatic account suspension.
 - BM Player connection counts take the larger of the provider (DNS player_api max_connections with the saved login, via player-connections.server.ts) and the website package, because providers can under-report Multi/Triple Room logins; the app-reported number is only a last resort.
 - Hook routes guard with the `x-cron-secret` header (shared `withCron`/`cronDenied` in cron-auth.server.ts, or an equivalent inline check; jobs send vault `x-cron-secret`); DB-trigger push hooks claim a once-only `scheduled_alert_log` key for fresh items.
+- Staff-notification push uses the service-only `internal_push_auth` key in `x-staff-push-secret`, matching its database trigger; the public website key never authenticates this hook.

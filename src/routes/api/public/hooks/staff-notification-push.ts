@@ -9,7 +9,7 @@ import { broadcastToRoles, broadcastToUser } from "@/lib/push.functions";
 // to the appropriate staff role group so new sales/orders, tickets, signups
 // alert staff even when the app is backgrounded or fully closed.
 //
-// Auth: requires the Supabase anon/publishable key in the `apikey` header.
+// Auth: private database-held key sent only by the notification trigger.
 
 type StaffRole = "admin" | "management" | "staff" | "moderator";
 
@@ -48,10 +48,10 @@ export const Route = createFileRoute("/api/public/hooks/staff-notification-push"
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
-          return new Response("Unauthorized", { status: 401 });
-        }
+        const provided = request.headers.get("x-staff-push-secret");
+        if (!provided) return new Response("Unauthorized", { status: 401 });
+        const { data: auth, error: authError } = await supabaseAdmin.from("internal_push_auth").select("secret").eq("id", 1).maybeSingle();
+        if (authError || !auth?.secret || provided !== auth.secret) return new Response("Unauthorized", { status: 401 });
 
         let body: { id?: string };
         try {
