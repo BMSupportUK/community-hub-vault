@@ -1,4 +1,4 @@
-/** We never sell 3 months, so it has no package. Xtream panel package IDs for footballfantasy26.com. Adult content = the "XXX" package of the same length/rooms. */
+/** We never sell 3 months, so it has no package. Xtream panel package IDs. Adult content = the "XXX" package of the same length/rooms. */
 export type PanelRooms = "single" | "multi" | "triple";
 const PACKAGES: Record<number, Record<PanelRooms, [plain: number, adult: number]>> = {
   1: { single: [68, 69], multi: [70, 71], triple: [72, 73] },

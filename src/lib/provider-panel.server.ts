@@ -2,17 +2,18 @@
 import { normalisePanelUrl } from "./provider-panel-url";
 import { decryptPin, encryptPin } from "./enabler-pin-crypto.server";
 
-const DEFAULT_PANEL_URL = "https://footballfantasy26.com";
 const panelKey = () => process.env["PROVIDER_PANEL_PASSWORD"] ?? "";
 
-/** Saved panel address, unscrambled on the server only; falls back to the built-in address. */
+/** Saved panel address, unscrambled on the server only. No address is kept in the code. */
 export async function panelBase(): Promise<string> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data } = await supabaseAdmin.from("provider_panel_settings").select("url_enc").eq("id", true).maybeSingle();
     const v = data?.url_enc ? await decryptPin(data.url_enc, panelKey()) : null;
-    return (v && normalisePanelUrl(v)) || DEFAULT_PANEL_URL;
-  } catch { return DEFAULT_PANEL_URL; }
+    const url = v && normalisePanelUrl(v);
+    if (url) return url;
+  } catch { /* fall through */ }
+  throw new Error("The provider panel address isn't set. The owner can add it in Owner Tools.");
 }
 export async function savePanelBase(url: string, userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
