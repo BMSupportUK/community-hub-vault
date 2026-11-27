@@ -85,14 +85,29 @@ export async function panelNewUsername(panel: Panel) {
   return name;
 }
 
+/** "name@x.com" -> "name1@x.com" (used when the panel already has the customer's email). */
+export function bumpEmail(email: string) {
+  const at = email.lastIndexOf("@");
+  return at > 0 ? `${email.slice(0, at)}1${email.slice(at)}` : `${email}1`;
+}
+const emailTaken = (msg: string | null) => !!msg && /e-?mail/i.test(msg) && /(already|exist|taken|in use|used)/i.test(msg);
+
 export async function panelCreateLine(panel: Panel, o: { username: string; email: string; packageId: number; note: string }) {
   const { bouquets } = await packageBouquets(panel, o.packageId);
-  const body = new URLSearchParams({ username: o.username, email: o.email, member_id: MEMBER_ID, package: String(o.packageId), bouquets_selected: JSON.stringify(bouquets), reseller_notes: o.note, submit_user: "Purchase" });
-  const r = await panel.req("/user_reseller.php", body);
-  const id = await panelFindLine(panel, o.username);
+  const buy = (email: string) => panel.req("/user_reseller.php", new URLSearchParams({ username: o.username, email, member_id: MEMBER_ID, package: String(o.packageId), bouquets_selected: JSON.stringify(bouquets), reseller_notes: o.note, submit_user: "Purchase" }));
+  let email = o.email;
+  let r = await buy(email);
+  let id = await panelFindLine(panel, o.username);
+  let emailBumped = false;
+  if (!id && emailTaken(panelError(r.text))) {
+    email = bumpEmail(o.email);
+    emailBumped = true;
+    r = await buy(email);
+    id = await panelFindLine(panel, o.username);
+  }
   if (!id) throw new Error(panelError(r.text) ?? "The provider panel didn't create the line (check its credits)");
   const line = await readLine(panel, id);
-  return { id, username: line.username || o.username, password: line.password, exp: line.exp };
+  return { id, username: line.username || o.username, password: line.password, exp: line.exp, email, emailBumped };
 }
 
 export async function panelExtendLine(panel: Panel, o: { id: string; packageId: number }) {

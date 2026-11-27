@@ -5,6 +5,8 @@ import { canCompleteCheckoutSteps } from "@/lib/checkout-access";
 import { deriveOrderTerms } from "@/lib/order-terms";
 import { panelPackageId } from "@/lib/provider-panel-packages";
 
+const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
+
 type Result = { ok: true; username: string; password: string; exp: string; again: boolean } | { ok: false; error: string };
 
 /** Admin/management: create (new customer) or extend (renewal) the provider line for a paid order — once per order. */
@@ -16,7 +18,7 @@ export const providerSetupLine = createServerFn({ method: "POST" })
     if (!canCompleteCheckoutSteps((roles ?? []).map((r) => String(r.role)))) return { ok: false, error: "Only admin and management can do this." };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const [{ data: order }, { data: items }] = await Promise.all([
-      supabaseAdmin.from("orders").select("id, paid_at, status, email, wants_adult_content, order_ref, customer_type").eq("id", data.orderId).maybeSingle(),
+      supabaseAdmin.from("orders").select("id, paid_at, status, email, user_id, wants_adult_content, order_ref, customer_type").eq("id", data.orderId).maybeSingle(),
       supabaseAdmin.from("order_items").select("product_name, quantity").eq("order_id", data.orderId),
     ]);
     if (!order) return { ok: false, error: "Order not found." };
@@ -54,7 +56,18 @@ export const providerSetupLine = createServerFn({ method: "POST" })
         } else {
         const username = prev?.panel_username ? String(prev.panel_username) : await pp.panelNewUsername(panel);
         await save({ status: "submitted", panel_username: username });
-        line = await pp.panelCreateLine(panel, { username, email: order.email || "orders@bmsupport.uk", packageId, note: `BM Support order ${order.order_ref ?? data.orderId}` });
+        // Always the customer's own email: the order's, else their account email.
+        let email = (order.email ?? "").trim();
+        if (!email && order.user_id) {
+          const { data: u } = await supabaseAdmin.auth.admin.getUserById(String(order.user_id));
+          email = (u?.user?.email ?? "").trim();
+        }
+        if (!email) throw new Error("This order has no customer email to put on the provider panel.");
+        const made = await pp.panelCreateLine(panel, { username, email, packageId, note: `BM Support order ${order.order_ref ?? data.orderId}` });
+        line = made;
+        if (made.emailBumped) {
+          await supabaseAdmin.from("user_notifications").insert({ user_id: OWNER_ID, kind: "mention", title: "Provider panel email already in use", body: `${email} was already on the provider panel, so order ${order.order_ref ?? data.orderId} (${made.username}) was created with ${made.email}.`, link_path: "/admin", source_type: "provider_panel" } as never);
+        }
         }
       } else {
         const id = await pp.panelFindLine(panel, data.username!);
