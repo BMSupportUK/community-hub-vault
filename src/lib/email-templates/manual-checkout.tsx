@@ -3,12 +3,13 @@ import { Body, Button, Container, Head, Heading, Html, Link, Preview, Text } fro
 import type { TemplateEntry } from './registry';
 import { CustomerFooter } from './customer-footer';
 
-function ManualCheckout({ name, orderRef, checkoutUrl, password }: { name?: string; orderRef?: string; checkoutUrl?: string; password?: string }) {
+function ManualCheckout({ name, orderRef, checkoutUrl, password, renewal, expiresOn }: { name?: string; orderRef?: string; checkoutUrl?: string; password?: string; renewal?: boolean; expiresOn?: string }) {
   const url = checkoutUrl || 'https://bmsupport.uk';
   return <Html lang="en"><Head /><Preview>{`Your BM Support order${orderRef ? ` ${orderRef}` : ''} is ready to complete`}</Preview><Body style={{ backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif', color: '#222222' }}><Container style={{ padding: '32px', maxWidth: '560px' }}>
     <Heading style={{ fontSize: '22px' }}>Your BM Support order is ready</Heading>
     <Text>Hello {name || 'there'},</Text>
     <Text>Thanks for your order{orderRef ? ` (${orderRef})` : ''} with BM Support. We've set it up for you, and you can finish it on our website whenever you're ready.</Text>
+    {renewal && expiresOn && <Text style={{ backgroundColor: '#f4ecfb', border: '1px solid #d9c2ef', borderRadius: '6px', padding: '12px 14px' }}>This is a renewal. Your current subscription expires on <strong>{expiresOn}</strong> (UK time).</Text>}
     <Text style={{ marginBottom: '4px' }}>Your order code:</Text>
     <Text style={{ fontFamily: 'monospace', fontSize: '20px', marginTop: 0, overflowWrap: 'anywhere' }}>{password || '—'}</Text>
     <Button href={url} style={{ backgroundColor: '#7434b8', color: '#ffffff', padding: '12px 20px', borderRadius: '6px' }}>View my order</Button>
@@ -17,4 +18,4 @@ function ManualCheckout({ name, orderRef, checkoutUrl, password }: { name?: stri
     <CustomerFooter reason="You are receiving this email because BM Support staff created an order for you at your request." />
   </Container></Body></Html>;
 }
-export const template = { component: ManualCheckout, subject: (d: Record<string, any>) => `Your BM Support order${d?.orderRef ? ` ${d.orderRef}` : ''} is ready`, displayName: 'Manual customer secure checkout', previewData: { name: 'Jane', orderRef: 'BM-1234', password: 'Example order code', checkoutUrl: 'https://bmsupport.uk' } } satisfies TemplateEntry;
+export const template = { component: ManualCheckout, subject: (d: Record<string, any>) => `Your BM Support order${d?.orderRef ? ` ${d.orderRef}` : ''} is ready`, displayName: 'Manual customer secure checkout', previewData: { name: 'Jane', orderRef: 'BM-1234', password: 'Example order code', checkoutUrl: 'https://bmsupport.uk', renewal: true, expiresOn: '27 November 2027 at 07:57' } } satisfies TemplateEntry;

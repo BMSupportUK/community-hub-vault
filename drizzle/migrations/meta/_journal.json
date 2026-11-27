@@ -2794,6 +2794,13 @@
       "when": 1795516811773,
       "tag": "0398_player_fault_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 399,
+      "version": "7",
+      "when": 1795768011790,
+      "tag": "0399_manual_checkout_email_expiry",
+      "breakpoints": true
     }
   ]
 }
