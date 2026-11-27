@@ -2435,7 +2435,7 @@ public class MainActivity extends Activity {
             String key = it.kind + ":" + it.id;
             if (key.equals(showing)) return;
             showing = key;
-            title.setText(it.name); meta.setText(ratingText(it)); people.setText(""); plot.setText("");
+            title.setText(it.name); meta.setText(ratingText(it)); people.setText(""); plot.setText(it.kind.equals("film") ? "Loading movie description…" : "");
             loadPoster(backdrop, it.poster);
             if (pending != null) ui.removeCallbacks(pending);
             JSONObject cached = heroInfo.get(key);
@@ -2443,11 +2443,19 @@ public class MainActivity extends Activity {
             pending = () -> posterIo.execute(() -> {
                 try {
                     String url = it.kind.equals("series") ? api("get_series_info") + "&series_id=" + it.id : api("get_vod_info") + "&vod_id=" + it.id;
-                    JSONObject info = new JSONObject(Net.get(url)).optJSONObject("info");
+                    JSONObject response = new JSONObject(Net.get(url));
+                    JSONObject info = response.optJSONObject("info");
+                    if (it.kind.equals("film")) {
+                        if (info == null) info = new JSONObject();
+                        info.put("plot", MovieDescription.fromResponse(response));
+                    }
                     if (info == null) return;
-                    heroInfo.put(key, info);
-                    ui.post(() -> { if (key.equals(showing)) fill(it, info); });
-                } catch (Exception ignored) {}
+                    JSONObject details = info;
+                    heroInfo.put(key, details);
+                    ui.post(() -> { if (key.equals(showing)) fill(it, details); });
+                } catch (Exception ignored) {
+                    ui.post(() -> { if (it.kind.equals("film") && key.equals(showing)) plot.setText("No movie description available."); });
+                }
             });
             ui.postDelayed(pending, 300);
         }
@@ -2461,7 +2469,8 @@ public class MainActivity extends Activity {
             meta.setText(android.text.TextUtils.join("  ·  ", m));
             String cast = i.optString("cast", i.optString("actors", "")), dir = i.optString("director", "");
             people.setText((cast.isEmpty() ? "" : "Cast: " + cast) + (dir.isEmpty() ? "" : (cast.isEmpty() ? "" : "\n") + "Director: " + dir));
-            plot.setText(i.optString("plot", i.optString("description", "")));
+            String description = i.optString("plot", i.optString("description", ""));
+            plot.setText(it.kind.equals("film") && description.isEmpty() ? "No movie description available." : description);
             JSONArray bd = i.optJSONArray("backdrop_path");
             if (bd != null && bd.length() > 0 && !bd.optString(0).isEmpty()) loadPoster(backdrop, bd.optString(0));
         }
@@ -2685,6 +2694,7 @@ public class MainActivity extends Activity {
         h.meta.setSingleLine(false); h.meta.setEllipsize(null);
         h.people.setMaxLines(Integer.MAX_VALUE); h.people.setEllipsize(null);
         h.plot.setMaxLines(Integer.MAX_VALUE); h.plot.setEllipsize(null);
+        h.plot.setFocusable(true); h.plot.setFocusableInTouchMode(true);
         int width = isPhone() ? -1 : (int) (getResources().getDisplayMetrics().widthPixels * 0.65f);
         root.addView(h.view, new LinearLayout.LayoutParams(width, -2));
         h.show(it);

@@ -5,6 +5,7 @@ const path=require('node:path');
 const root=__dirname,stage='/tmp/windows-player-build/app';
 fs.mkdirSync(path.join(stage,'dist'),{recursive:true});fs.mkdirSync(path.join(stage,'electron'),{recursive:true});
 fs.copyFileSync(path.join(root,'vpn.cjs'),path.join(stage,'vpn.cjs'));
+fs.copyFileSync(path.join(root,'movie-description.cjs'),path.join(stage,'movie-description.cjs'));
 fs.copyFileSync(path.join(root,'vpn-native.cjs'),path.join(stage,'vpn-native.cjs'));
 fs.mkdirSync(path.join(stage,'tools/vpn'),{recursive:true});
 execFileSync(process.env.BM_GO||'go',['build','-trimpath','-ldflags=-s -w','-o',path.join(stage,'tools/vpn/bm-vpn.exe'),'.'],{cwd:path.join(root,'vpn-tunnel'),env:{...process.env,CGO_ENABLED:'0',GOOS:'windows',GOARCH:'amd64'},stdio:'inherit'});
