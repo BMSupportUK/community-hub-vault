@@ -260,4 +260,4 @@
 
 - [x] Private DNS home switch released (box 6.31, Windows 0.4.123, Mac 0.1.123)
 - [x] Released Windows 0.4.128 and Mac 0.1.128: Films/Series merged Search+Voice into one Search pill opening a type-or-voice dialog; TV guide opens on UK | Free to air (no All). 208 desktop tests pass; installers verified by extraction; live downloads serve exact new bytes. Physical-device check unavailable.
-- [ ] Referral credit for referrer (new customer first order only), Referrals page with reward table
+- [x] Referral credit for referrer (new customer first order only), Referrals page with reward table

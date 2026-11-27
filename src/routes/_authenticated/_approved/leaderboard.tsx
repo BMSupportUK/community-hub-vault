@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { PortalTabs } from "@/components/app/PortalTabs";
 import { SecureHowToVideo } from "@/components/app/SecureHowToVideo";
 import { toast } from "sonner";
+import { ReferralCreditPanel } from "@/components/app/ReferralCreditPanel";
 
 export const Route = createFileRoute("/_authenticated/_approved/leaderboard")({
   component: LeaderboardPage,
@@ -219,6 +220,7 @@ export function LeaderboardPage({ admin = false }: { admin?: boolean } = {}) {
       </header>
 
       <div className="px-4 py-5 sm:px-8 sm:py-6">
+        <ReferralCreditPanel />
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className={`grid h-auto w-full grid-cols-1 gap-1 bg-purple-950/60 p-1 border border-purple-500/30 min-[360px]:grid-cols-2 sm:gap-0 ${admin ? "sm:grid-cols-2 sm:max-w-md" : "sm:grid-cols-3 sm:max-w-2xl"}`}>
             {!admin && <>

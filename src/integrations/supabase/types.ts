@@ -7665,6 +7665,45 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_credit_ledger: {
+        Row: {
+          amount_pence: number
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          order_id: string | null
+          package_name: string | null
+          reason: string | null
+          referred_name: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_pence: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          order_id?: string | null
+          package_name?: string | null
+          reason?: string | null
+          referred_name?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_pence?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          order_id?: string | null
+          package_name?: string | null
+          reason?: string | null
+          referred_name?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       referral_month_rewards: {
         Row: {
           awarded_at: string
@@ -10259,6 +10298,10 @@ export type Database = {
         Args: { _device: string; _kind: string; _seconds: number }
         Returns: undefined
       }
+      admin_adjust_referral_credit: {
+        Args: { p_amount_pence: number; p_reason: string; p_user: string }
+        Returns: number
+      }
       admin_allocate_customer_account_package: {
         Args: {
           p_account_id: string
@@ -10489,6 +10532,13 @@ export type Database = {
           role: string
         }[]
       }
+      admin_referral_credit_balances: {
+        Args: never
+        Returns: {
+          balance_pence: number
+          user_id: string
+        }[]
+      }
       admin_reset_customer_portal: {
         Args: { p_user_id: string }
         Returns: string
@@ -10608,6 +10658,7 @@ export type Database = {
         Args: { _hash: string; _id: string; _kind: string }
         Returns: string
       }
+      apply_referral_credit: { Args: { p_order_id: string }; Returns: number }
       archive_old_closed_tickets: { Args: never; Returns: number }
       arm_epg_retry: { Args: never; Returns: undefined }
       assign_customer_number: { Args: { _user_id: string }; Returns: number }
@@ -11367,6 +11418,7 @@ export type Database = {
         }[]
       }
       my_profile_access: { Args: never; Returns: Json }
+      my_referral_credit: { Args: never; Returns: number }
       next_free_customer_number: { Args: never; Returns: number }
       order_subscription_months: {
         Args: { p_order_id: string }
@@ -11572,6 +11624,8 @@ export type Database = {
         Args: { _code: string; _ticket_id: string }
         Returns: string
       }
+      referral_credit_balance: { Args: { p_user: string }; Returns: number }
+      referral_credit_for_package: { Args: { p_name: string }; Returns: number }
       referral_reward_cutoff: { Args: never; Returns: string }
       referral_reward_eligible: {
         Args: { p_order_id: string }

@@ -1393,6 +1393,7 @@ function Storefront() {
     owned_logins?: string[];
     pay_method?: "square" | "stripe" | "wise" | "crypto";
     vpn?: boolean;
+    use_credit?: boolean;
   }) => {
 
     if (!user || cartItems.length === 0) return;
@@ -1481,6 +1482,11 @@ function Storefront() {
     if (ie) {
       toast.error(ie.message);
       return;
+    }
+    // Referral credit comes off the order total before the secure checkout is prepared.
+    if (info.use_credit) {
+      const { error: ce } = await supabase.rpc("apply_referral_credit" as never, { p_order_id: order.id } as never);
+      if (ce) toast.error("Order placed, but your referral credit couldn't be applied.");
     }
     // Every order uses its own secure checkout page (no support ticket).
     const { data: link, error: le } = await supabase.rpc("create_my_checkout_link" as never, {
@@ -2364,6 +2370,7 @@ function Checkout({
     owned_logins: string[];
     pay_method: "square" | "stripe" | "wise" | "crypto";
     vpn: boolean;
+    use_credit: boolean;
   }) => void;
   onRemoveItem: (id: string) => void;
 }) {
@@ -2372,6 +2379,13 @@ function Checkout({
   const [email, setEmail] = useState(user?.email ?? "");
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [payMethod, setPayMethod] = useState<"square" | "stripe" | "wise" | "crypto">("square");
+  // Referral credit the customer can put towards this order.
+  const [creditPence, setCreditPence] = useState(0);
+  const [useCredit, setUseCredit] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    void supabase.rpc("my_referral_credit" as never).then(({ data }) => setCreditPence(Number(data ?? 0)));
+  }, [user?.id]);
   const bankOnly = false;
   // Manual bank transfer is staff-only (admins create those orders); customers pay by card, Pay by bank or crypto.
   const [existingUsername, setExistingUsername] = useState("");
@@ -2871,6 +2885,12 @@ function Checkout({
             )}
           </div>
         )}
+          {creditPence > 0 && (
+            <label className="shrink-0 mx-3 sm:mx-5 mt-3 flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm">
+              <input type="checkbox" checked={useCredit} onChange={(e) => setUseCredit(e.target.checked)} className="mt-0.5" />
+              <span>Use my referral credit (<strong>£{(creditPence / 100).toFixed(2)}</strong> available). It comes off the price when the order is placed.</span>
+            </label>
+          )}
           <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
             <div className="text-sm font-medium">Payment method</div>
             <div className={`grid gap-2 ${bankOnly ? "grid-cols-2" : "grid-cols-3"}`}>
@@ -2910,6 +2930,7 @@ function Checkout({
                   .filter(Boolean) as string[],
                 pay_method: payMethod,
                 vpn: vpnChoice === "yes",
+                use_credit: useCredit && creditPence > 0,
               })
             }
             disabled={!canSubmit}

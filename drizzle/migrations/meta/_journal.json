@@ -2801,6 +2801,27 @@
       "when": 1795768011790,
       "tag": "0399_manual_checkout_email_expiry",
       "breakpoints": true
+    },
+    {
+      "idx": 400,
+      "version": "7",
+      "when": 1795772668107,
+      "tag": "0400_referral_credit",
+      "breakpoints": true
+    },
+    {
+      "idx": 401,
+      "version": "7",
+      "when": 1795772709713,
+      "tag": "0401_referral_credit_notify",
+      "breakpoints": true
+    },
+    {
+      "idx": 402,
+      "version": "7",
+      "when": 1795772823644,
+      "tag": "0402_referral_month_ends_for_new_sales",
+      "breakpoints": true
     }
   ]
 }

@@ -64,6 +64,27 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
     });
     return () => { active = false; };
   }, [canSeeEmails]);
+  // Referral credit balances: admin/management only (the database function refuses everyone else).
+  const [credits, setCredits] = useState<Map<string, number>>(new Map());
+  const loadCredits = () => {
+    if (!canSeeEmails) return;
+    void supabase.rpc("admin_referral_credit_balances" as never).then(({ data }) => {
+      setCredits(new Map(((data ?? []) as { user_id: string; balance_pence: number }[]).map((r) => [r.user_id, Number(r.balance_pence)])));
+    });
+  };
+  useEffect(loadCredits, [canSeeEmails]);
+  const adjustCredit = async (userId: string) => {
+    const amount = window.prompt("Add or remove referral credit in pounds (e.g. 5 or -5):");
+    if (!amount) return;
+    const pence = Math.round(Number(amount) * 100);
+    if (!Number.isFinite(pence) || pence === 0) { toast.error("Enter an amount like 5 or -5"); return; }
+    const reason = window.prompt("Reason for this change:");
+    if (!reason?.trim()) { toast.error("A reason is required"); return; }
+    const { error } = await supabase.rpc("admin_adjust_referral_credit" as never, { p_user: userId, p_amount_pence: pence, p_reason: reason } as never);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Referral credit updated");
+    loadCredits();
+  };
   const [rows, setRows] = useState<Customer[]>([]);
   const [discountUserIds, setDiscountUserIds] = useState<Set<string>>(new Set());
   const [bankTransferUserIds, setBankTransferUserIds] = useState<Set<string>>(new Set());
@@ -301,6 +322,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
                 <h3 className="break-words font-semibold">{name}</h3>
                 {!(c as { ownerAccountCount?: number }).ownerAccountCount && <CustomerNumberBadge userId={c.userId} manual={!c.hasSiteAccount} />}
                 {canSeeEmails && c.hasSiteAccount && siteEmails.get(c.userId) && <span className="min-w-0 break-all text-xs text-muted-foreground" title="Site account email (admin and management only)">{siteEmails.get(c.userId)}</span>}
+                {canSeeEmails && c.hasSiteAccount && <button type="button" onClick={() => void adjustCredit(c.userId)} className="rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground" title="Referral credit — click to add or remove">Credit £{((credits.get(c.userId) ?? 0) / 100).toFixed(2)}</button>}
                 {bankTransferUserIds.has(c.userId) && <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-[10px] font-bold leading-none text-primary" title="Bank transfer set up" aria-label="Bank transfer set up">£</span>}
                 {discountUserIds.has(c.userId) && <span className="inline-flex shrink-0" title="Discount code added" aria-label="Discount code added"><BadgeCheck className="size-4 text-success" aria-hidden="true" /></span>}
                 <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
