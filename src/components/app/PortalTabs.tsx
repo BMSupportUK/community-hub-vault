@@ -1,8 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Settings, Home, Timer, ShoppingCart, Wrench } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { Settings, Home, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { useHasSalesAccount } from "@/hooks/use-sales-account";
@@ -21,7 +19,7 @@ import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 
 type Tab = "home" | "shop" | "orders" | "tickets" | "logins" | "guides" | "referrals" | "knowledge" | "settings";
 
-/** Customer Portal tab bar shown above the Shop, My Orders, Tickets, My Logins and Install Guides pages. */
+/** Customer Portal header shown above the portal pages; Shop and Download App & Install guides now live in the side rail. */
 export function PortalTabs({ active }: { active?: Tab }) {
   const location = useLocation();
   const { isStaff } = useAuth();
@@ -36,20 +34,8 @@ export function PortalTabs({ active }: { active?: Tab }) {
     <nav aria-label="Customer Portal" className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-border bg-surface/80 px-3 py-2 backdrop-blur sm:px-6">
       <span className="mr-2 hidden shrink-0 font-display text-sm font-bold text-foreground sm:inline">Customer Portal</span>
       <Link to="/portal" className={cn(item, current === "home" ? on : off)}><Home className="size-4" />Home</Link>
-      {(isStaff || unlocked) && (
-        <TooltipProvider>
-          <Tooltip><TooltipTrigger asChild>
-            <Button asChild variant={current === "shop" || current === "orders" ? "default" : "ghost"} size="icon">
-              <Link to="/shop" aria-label="Shop"><ShoppingCart className="size-4" /></Link>
-            </Button>
-          </TooltipTrigger><TooltipContent>Shop</TooltipContent></Tooltip>
-          <Tooltip><TooltipTrigger asChild>
-            <Button asChild variant={current === "guides" ? "default" : "ghost"} size="icon">
-              <Link to="/install-guides" aria-label="Download App & Install guides"><Wrench className="size-4" /></Link>
-            </Button>
-          </TooltipTrigger><TooltipContent>Download App & Install guides</TooltipContent></Tooltip>
-        </TooltipProvider>
-      )}
+      {/* Shop and Download App & Install guides now sit in the side rail,
+          right under Home, so the header no longer repeats them. */}
       <div className="ml-1 flex shrink-0 items-center gap-1.5 [&_a]:size-9 [&_a]:rounded-lg [&_button]:size-9 [&_button]:rounded-lg">
         <BmInboxBell />
         <MentionsBadge />

@@ -26,6 +26,8 @@ export const RAIL_EDITOR_ITEMS = {
     { id: "/forum", label: "Boro Fan Zone" },
   ],
   member: [
+    { id: "portal:/shop", label: "Shop" },
+    { id: "portal:/install-guides", label: "Download App & Install guides" },
     { id: "portal:/tickets", label: "Tickets" },
     { id: "portal:/home/$channel", label: "Talk" },
     { id: "portal:/knowledge-base", label: "Knowledge Base" },
@@ -47,8 +49,9 @@ const STAFF_GROUPS: Record<string, number> = {
 export function staffRailGroup(id: string): number {
   return STAFF_GROUPS[id] ?? 4;
 }
-/** Customer rail groups: 0 Support, 1 My account, 2 Community. Shop and guides live in the header. */
+/** Customer rail groups: 0 Support, 1 My account, 2 Community. */
 const MEMBER_GROUPS: Record<string, number> = {
+  "portal:/shop": 0, "portal:/install-guides": 0,
   "portal:/tickets": 0, "portal:/home/$channel": 0, "portal:/knowledge-base": 0,
   "portal:/portal/logins": 1, "portal:/send-to-app": 1, "portal:/leaderboard": 1,
 };

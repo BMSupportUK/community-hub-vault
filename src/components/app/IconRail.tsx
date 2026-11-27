@@ -287,7 +287,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: false, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     // Customers reach Tickets through the Customer Portal tabs; staff keep it here.
     { to: "/tickets", label: "Tickets", icon: Ticket, show: false },
-    // Shop, My Orders and Install Guides live inside the Customer Portal tabs.
+    // Shop, My Orders and Install Guides sit in the customer rail under Home.
     { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, resetSportsGuides: true },
     // Staff reach Referrals straight after the Sports Guide; customers have it in their portal pages.
     { to: "/leaderboard", key: "staff-referrals", label: "Referrals", icon: Trophy, show: !!user && isStaff },
@@ -356,7 +356,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/admin", key: "admin-orders", label: "Shop Orders", icon: Receipt, show: isAdmin, search: { tab: "order-status" }, extra: <PendingOrdersBadge rail /> },
     { to: "/send-to-app", label: "Link Device", icon: Tv, show: true },
   ] : portalUnlocked ? [
-    // Shop and Download App & Install guides sit in the Customer Portal header.
+    // Shop and Download App & Install guides sit in the rail, right under Home.
+    { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
+    { to: "/install-guides", label: "Download App & Install guides", icon: Wrench, show: true },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: true },
     { to: "/home/$channel", label: "Talk", icon: MessagesSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     { to: "/portal/logins", label: "Service Credentials", icon: KeyIcon, show: true },

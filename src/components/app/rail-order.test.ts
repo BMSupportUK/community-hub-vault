@@ -19,3 +19,15 @@ test("the stored order is restored instead of the default sequence", () => {
   expect(staffRailGroup("portal:admin-orders")).toBe(3);
   expect(staffRailGroup("/forum")).toBe(4);
 });
+test("customer rail puts Shop and Download App & Install guides at the top", () => {
+  const { memberRailGroup, RAIL_EDITOR_ITEMS } = require("./rail-order");
+  // Both pages sit in the first rail group, so they render straight under Home.
+  expect(memberRailGroup("portal:/shop")).toBe(0);
+  expect(memberRailGroup("portal:/install-guides")).toBe(0);
+  // Owner Tools can reorder them with the rest of the customer rail.
+  const ids = RAIL_EDITOR_ITEMS.member.map((i) => i.id);
+  expect(ids).toContain("portal:/shop");
+  expect(ids).toContain("portal:/install-guides");
+  expect(ids.indexOf("portal:/shop")).toBeLessThan(ids.indexOf("portal:/tickets"));
+  expect(ids.indexOf("portal:/install-guides")).toBeLessThan(ids.indexOf("portal:/tickets"));
+});
