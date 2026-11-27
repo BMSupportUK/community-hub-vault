@@ -159,7 +159,7 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   const isAdminRole = roles.includes("admin") || roles.includes("management");
 
   return (
-    <main className="relative isolate h-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
+    <main className="relative isolate h-full min-h-0 flex-1 overflow-y-auto">
       {!unlocked && (
         <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
           <img src={pinIllustration} alt="" className="h-full w-full object-cover object-center" />

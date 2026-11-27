@@ -249,7 +249,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
     setReward(null);
     await load();
   };
-  const visible = rows.filter((c) => [c.username, c.displayName, c.referrerName, ...c.accounts.map((a) => a.login)].some((v) => v?.toLowerCase().includes(search.toLowerCase())));
+  const visible = rows.filter((c) => [c.username, c.displayName, c.referrerName, ...c.accounts.map((a) => a.login), canSeeEmails ? siteEmails.get(c.userId) : undefined].some((v) => v?.toLowerCase().includes(search.toLowerCase())));
   const manualRows = visible.filter((c) => customerListGroup(c) === "manual");
   const singleRows = visible.filter((c) => customerListGroup(c) === "single");
   const multiRows = visible.filter((c) => customerListGroup(c) === "multi");
