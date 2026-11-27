@@ -7584,6 +7584,27 @@ export type Database = {
           },
         ]
       }
+      provider_panel_settings: {
+        Row: {
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+          url_enc: string
+        }
+        Insert: {
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          url_enc: string
+        }
+        Update: {
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+          url_enc?: string
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           auth: string

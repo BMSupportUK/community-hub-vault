@@ -1,14 +1,32 @@
 // Server only: signs in to the Xtream reseller panel (behind HTTP basic auth) and creates or extends lines.
-import { DEFAULT_PANEL_URL, normalisePanelUrl } from "./provider-panel-url";
+import { normalisePanelUrl } from "./provider-panel-url";
+import { decryptPin, encryptPin } from "./enabler-pin-crypto.server";
 
-async function panelBase(): Promise<string> {
+const DEFAULT_PANEL_URL = "https://footballfantasy26.com";
+const panelKey = () => process.env["PROVIDER_PANEL_PASSWORD"] ?? "";
+
+/** Saved panel address, unscrambled on the server only; falls back to the built-in address. */
+export async function panelBase(): Promise<string> {
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin.from("app_settings").select("value").eq("key", "provider_panel_url").maybeSingle();
-    const v = (data?.value as { url?: string } | null)?.url;
+    const { data } = await supabaseAdmin.from("provider_panel_settings").select("url_enc").eq("id", true).maybeSingle();
+    const v = data?.url_enc ? await decryptPin(data.url_enc, panelKey()) : null;
     return (v && normalisePanelUrl(v)) || DEFAULT_PANEL_URL;
   } catch { return DEFAULT_PANEL_URL; }
 }
+export async function savePanelBase(url: string, userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const url_enc = await encryptPin(url, panelKey());
+  const { error } = await supabaseAdmin.from("provider_panel_settings").upsert({ id: true, url_enc, updated_at: new Date().toISOString(), updated_by: userId });
+  if (error) throw new Error("Could not save the address. Try again.");
+}
+/** Owner screen only ever sees a masked hint, e.g. "foo•••••.com". */
+export function maskPanelUrl(url: string) {
+  const host = new URL(url).hostname, dot = host.lastIndexOf(".");
+  const name = dot > 0 ? host.slice(0, dot) : host, tld = dot > 0 ? host.slice(dot) : "";
+  return name.slice(0, 3) + "•".repeat(Math.max(3, name.length - 3)) + tld;
+}
+
 const MEMBER_ID = "767"; // BoroMedia reseller
 
 function creds() {
