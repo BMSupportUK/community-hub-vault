@@ -1,4 +1,5 @@
 import { vpnAddonMonths, vpnAddonPence, vpnAddonLineName } from "@/lib/vpn-addon";
+import { formatPounds } from "@/lib/referral-credit";
 import { CustomerOrderCard } from "@/components/checkout/CustomerOrderCard";
 import { ProviderInvoicePayment } from "@/components/checkout/ProviderInvoicePayment";
 import { RequestOrderPasswordButton } from "@/components/checkout/RequestOrderPasswordButton";
@@ -1185,16 +1186,27 @@ function BuySteps({
 
 function ShopReferralCreditNotice() {
   const { user } = useAuth();
-  const [pence, setPence] = useState(0);
+  const [balance, setBalance] = useState<{ userId: string; pence: number } | null>(null);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     if (!user) return;
-    void supabase.rpc("my_referral_credit" as never).then(({ data }) => setPence(Number(data ?? 0)));
+    let active = true;
+    setFailed(false);
+    setBalance(null);
+    void supabase.rpc("my_referral_credit" as never).then(({ data, error }) => {
+      if (!active) return;
+      if (error) { setFailed(true); return; }
+      setBalance({ userId: user.id, pence: Number(data ?? 0) });
+    });
+    return () => { active = false; };
   }, [user?.id]);
-  if (pence <= 0) return null;
+  if (!user) return null;
+  const pence = balance?.userId === user.id ? balance.pence : null;
   return (
-    <div className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm">
-      You have <strong>£{(pence / 100).toFixed(2)}</strong> referral credit. You'll be asked if you want to use it when you place your order.
-    </div>
+    <section aria-label="Your referral credit" className="relative z-10 mb-3 flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-1 border border-primary/40 bg-background/95 px-4 py-3 text-sm">
+      <span className="inline-flex items-center gap-2 font-medium"><CreditCard className="size-4 text-primary" />Your referral credit</span>
+      <strong className="text-lg text-primary" aria-live="polite">{failed ? "Balance unavailable" : pence === null ? "Loading…" : formatPounds(pence)}</strong>
+    </section>
   );
 }
 
@@ -1566,6 +1578,7 @@ function Storefront() {
           />
         )}
         <div className="relative z-10 flex w-full min-w-0 min-h-0 flex-col px-3 pt-3 sm:px-5 sm:pt-5 md:h-full">
+          <ShopReferralCreditNotice />
           <Tabs value={tab} onValueChange={setShopTab} className="flex min-h-0 min-w-0 w-full flex-col overflow-visible md:h-full md:overflow-hidden">
             <TabsList className="w-full min-w-0 shrink-0 justify-start overflow-x-auto scrollbar-hide bg-surface-2 border border-border flex flex-nowrap h-auto [&>button]:shrink-0">
               <TabsTrigger
@@ -1733,7 +1746,6 @@ function Storefront() {
 
 
              <TabsContent value="shop" className="mt-3 min-w-0 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-24 md:pb-5">
-               <ShopReferralCreditNotice />
               <div
                 id="products"
                  className="bg-background/80 backdrop-blur border border-border rounded-lg px-3 py-3 flex items-center gap-2 overflow-x-auto scrollbar-hide whitespace-nowrap mb-4 sticky top-0 z-10 sm:flex-wrap sm:whitespace-normal"
