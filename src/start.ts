@@ -19,20 +19,7 @@ const errorMiddleware = createMiddleware().server(async ({ next }) => {
   }
 });
 
-// Any action refused for pending 2FA sends the user to the code screen, then back here.
-const mfaChallengeRedirect = createMiddleware({ type: "function" }).client(async ({ next }) => {
-  try {
-    return await next();
-  } catch (error) {
-    if (typeof window !== "undefined" && error instanceof Error && error.message.includes("Complete two-factor authentication")) {
-      try { sessionStorage.setItem("post-login-next", window.location.pathname + window.location.search); } catch { /* optional */ }
-      window.location.assign("/mfa-challenge");
-    }
-    throw error;
-  }
-});
-
 export const startInstance = createStart(() => ({
   requestMiddleware: [errorMiddleware],
-  functionMiddleware: [mfaChallengeRedirect, attachSupabaseAuth, enforceProfileActions],
+  functionMiddleware: [attachSupabaseAuth, enforceProfileActions],
 }));
