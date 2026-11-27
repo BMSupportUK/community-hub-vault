@@ -289,6 +289,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/tickets", label: "Tickets", icon: Ticket, show: false },
     // Shop, My Orders and Install Guides live inside the Customer Portal tabs.
     { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, resetSportsGuides: true },
+    // Staff reach Referrals straight after the Sports Guide; customers have it in their portal pages.
+    { to: "/leaderboard", key: "staff-referrals", label: "Referrals", icon: Trophy, show: !!user && isStaff },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: false },
     { to: "/new-content", label: "New content", icon: Tv, show: false, badge: unreadNewContent },
     // Members and Staff directories open from the boxes at the bottom of the
