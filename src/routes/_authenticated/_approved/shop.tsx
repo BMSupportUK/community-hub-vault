@@ -1183,6 +1183,21 @@ function BuySteps({
   );
 }
 
+function ShopReferralCreditNotice() {
+  const { user } = useAuth();
+  const [pence, setPence] = useState(0);
+  useEffect(() => {
+    if (!user) return;
+    void supabase.rpc("my_referral_credit" as never).then(({ data }) => setPence(Number(data ?? 0)));
+  }, [user?.id]);
+  if (pence <= 0) return null;
+  return (
+    <div className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm">
+      You have <strong>£{(pence / 100).toFixed(2)}</strong> referral credit. You'll be asked if you want to use it when you place your order.
+    </div>
+  );
+}
+
 function Storefront() {
   const [products, setProducts] = useState<Product[]>([]);
   const [dbCategories, setDbCategories] = useState<ProductCategory[]>([]);
@@ -1718,6 +1733,7 @@ function Storefront() {
 
 
              <TabsContent value="shop" className="mt-3 min-w-0 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-24 md:pb-5">
+               <ShopReferralCreditNotice />
               <div
                 id="products"
                  className="bg-background/80 backdrop-blur border border-border rounded-lg px-3 py-3 flex items-center gap-2 overflow-x-auto scrollbar-hide whitespace-nowrap mb-4 sticky top-0 z-10 sm:flex-wrap sm:whitespace-normal"
@@ -2901,10 +2917,16 @@ function Checkout({
           </div>
         )}
           {creditPence > 0 && (
-            <label className="shrink-0 mx-3 sm:mx-5 mt-3 flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm">
-              <input type="checkbox" checked={useCredit} onChange={(e) => setUseCredit(e.target.checked)} className="mt-0.5" />
-              <span>Use my referral credit (<strong>£{(creditPence / 100).toFixed(2)}</strong> available). It comes off the price when the order is placed.</span>
-            </label>
+            <div className="shrink-0 mx-3 sm:mx-5 mt-3 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm">
+              <p>You have <strong>£{(creditPence / 100).toFixed(2)}</strong> referral credit. Do you want to use it on this order?</p>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button type="button" aria-pressed={useCredit} onClick={() => setUseCredit(true)}
+                  className={`rounded-md border px-3 py-1.5 font-medium ${useCredit ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>Yes, use it</button>
+                <button type="button" aria-pressed={!useCredit} onClick={() => setUseCredit(false)}
+                  className={`rounded-md border px-3 py-1.5 font-medium ${!useCredit ? "border-primary bg-primary/20" : "border-border"}`}>No, save it</button>
+              </div>
+              {useCredit && <p className="mt-2 text-xs text-muted-foreground">It comes off the price when the order is placed.</p>}
+            </div>
           )}
           <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
             <div className="text-sm font-medium">Payment method</div>

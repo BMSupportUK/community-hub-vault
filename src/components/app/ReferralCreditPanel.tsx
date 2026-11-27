@@ -6,7 +6,7 @@ import { REFERRAL_REWARDS, formatPounds } from "@/lib/referral-credit";
 
 type Row = { id: string; amount_pence: number; kind: string; referred_name: string | null; package_name: string | null; reason: string | null; created_at: string };
 
-const KIND_LABEL: Record<string, string> = { referral: "Referral reward", spend: "Used at checkout", refund: "Returned (order cancelled)", adjust: "Adjusted by BM Support" };
+const KIND_LABEL: Record<string, string> = { referral: "Referral reward", spend: "Used on an order", refund: "Returned (order cancelled)", adjust: "Adjusted by BM Support" };
 
 export function ReferralCreditPanel() {
   const { user } = useAuth();
@@ -38,7 +38,7 @@ export function ReferralCreditPanel() {
             <p className="font-display text-3xl font-bold text-purple-50">{balance === null ? "…" : formatPounds(balance)}</p>
           </div>
         </div>
-        <p className="mt-3 text-sm text-purple-200/80">When a new customer you referred pays for their <strong>first order</strong>, credit is added here. Tick "Use my referral credit" when you place an order to take it off the price.</p>
+        <p className="mt-3 text-sm text-purple-200/80">When a new customer you referred pays for their <strong>first order</strong>, credit is added here. When you place an order in the Shop you'll be asked if you want to use it.</p>
         <h3 className="mt-4 text-sm font-semibold text-purple-50">What you get back</h3>
         <table className="mt-2 w-full text-sm">
           <thead><tr className="text-left text-purple-300/80"><th className="py-1 font-medium">Their first order</th><th className="py-1 text-right font-medium">You get</th></tr></thead>
@@ -62,7 +62,7 @@ export function ReferralCreditPanel() {
             {rows.map((r) => (
               <li key={r.id} className="flex items-start justify-between gap-3 py-2 text-sm">
                 <div className="min-w-0">
-                  <p className="text-purple-100">{KIND_LABEL[r.kind] ?? r.kind}{r.referred_name ? ` · ${r.referred_name}` : ""}</p>
+                  <p className="text-purple-100">{r.kind === "spend" && <span className="mr-1 text-emerald-300" aria-label="Used">✓</span>}{KIND_LABEL[r.kind] ?? r.kind}{r.referred_name ? ` · ${r.referred_name}` : ""}</p>
                   <p className="truncate text-xs text-purple-300/70">{new Date(r.created_at).toLocaleDateString("en-GB", { timeZone: "Europe/London" })}{r.package_name ? ` · ${r.package_name}` : r.kind === "adjust" && r.reason ? ` · ${r.reason}` : ""}</p>
                 </div>
                 <span className={`shrink-0 font-semibold ${r.amount_pence >= 0 ? "text-emerald-300" : "text-purple-200"}`}>{r.amount_pence >= 0 ? "+" : "−"}{formatPounds(Math.abs(r.amount_pence))}</span>
