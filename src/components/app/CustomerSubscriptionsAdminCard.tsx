@@ -52,7 +52,18 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
   memberHeader?: (userId: string) => ReactNode;
   memberRoles?: (userId: string) => ReactNode;
 }) {
-  const { user } = useAuth();
+  const { user, hasAny } = useAuth();
+  // Site emails: admin/management only (the database function refuses everyone else).
+  const canSeeEmails = hasAny(["admin", "management"]);
+  const [siteEmails, setSiteEmails] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    if (!canSeeEmails) { setSiteEmails(new Map()); return; }
+    let active = true;
+    void supabase.rpc("admin_order_site_users").then(({ data }) => {
+      if (active) setSiteEmails(new Map((data ?? []).filter((u) => u.email).map((u) => [u.id, u.email as string])));
+    });
+    return () => { active = false; };
+  }, [canSeeEmails]);
   const [rows, setRows] = useState<Customer[]>([]);
   const [discountUserIds, setDiscountUserIds] = useState<Set<string>>(new Set());
   const [bankTransferUserIds, setBankTransferUserIds] = useState<Set<string>>(new Set());
@@ -289,6 +300,7 @@ export function CustomerSubscriptionsAdminCard({ canReward, viewCredentials = fa
               <div className="flex min-w-0 flex-wrap items-center gap-2">
                 <h3 className="break-words font-semibold">{name}</h3>
                 {!(c as { ownerAccountCount?: number }).ownerAccountCount && <CustomerNumberBadge userId={c.userId} manual={!c.hasSiteAccount} />}
+                {canSeeEmails && c.hasSiteAccount && siteEmails.get(c.userId) && <span className="min-w-0 break-all text-xs text-muted-foreground" title="Site account email (admin and management only)">{siteEmails.get(c.userId)}</span>}
                 {bankTransferUserIds.has(c.userId) && <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-[10px] font-bold leading-none text-primary" title="Bank transfer set up" aria-label="Bank transfer set up">£</span>}
                 {discountUserIds.has(c.userId) && <span className="inline-flex shrink-0" title="Discount code added" aria-label="Discount code added"><BadgeCheck className="size-4 text-success" aria-hidden="true" /></span>}
                 <span className={`inline-block w-fit rounded-full border px-2 py-0.5 text-[11px] font-normal ${c.hasSiteAccount ? "border-primary/30 bg-primary/10 text-primary" : "border-border bg-muted text-muted-foreground"}`}>{c.hasSiteAccount ? "Site account" : "No site account"}</span>
