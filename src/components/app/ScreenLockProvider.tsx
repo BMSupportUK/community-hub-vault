@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   DEFAULT_TIMEOUT_MINUTES,
   STAFF_MAX_TIMEOUT_MINUTES,
+  shouldLockScreen,
 } from "@/lib/screen-lock-hash";
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
 import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
@@ -68,7 +69,6 @@ function NormalScreenLockProvider({ children, lockedExtras }: { children: ReactN
   const [settings, setSettings] = useState<ScreenLockSettings | null>(null);
   const [ready, setReady] = useState(false);
   const [locked, setLocked] = useState(true);
-  const [resumeChecking, setResumeChecking] = useState(false);
   const [liveConnections, setLiveConnections] = useState(0);
   const generation = useRef(0);
   const registerLiveConnection = useCallback(() => {
@@ -188,12 +188,14 @@ function NormalScreenLockProvider({ children, lockedExtras }: { children: ReactN
       inFlight = false;
     };
     const check = () => {
-      if (!locked && settings?.enabled && Date.now() - lastActivity >= settings.timeout_minutes * 60_000) doLock();
+      if (!locked && settings && shouldLockScreen(settings.enabled, false, lastActivity, settings.timeout_minutes)) doLock();
       void poll();
     };
     const visible = () => {
-      if (document.visibilityState !== "visible") { setResumeChecking(true); return; }
-      void poll().finally(() => setResumeChecking(false));
+      if (document.visibilityState !== "visible") return;
+      // A short app switch is not a cold start. Keep the page visible while
+      // rechecking server access, but conceal it immediately if idle time expired.
+      check();
     };
     const timer = window.setInterval(check, 5_000);
     ACTIVITY_EVENTS.forEach(e => window.addEventListener(e, mark, { passive: true }));
@@ -242,7 +244,6 @@ function NormalScreenLockProvider({ children, lockedExtras }: { children: ReactN
       </div>
       {showLock && <ScreenLockOverlay onUnlock={() => { void doUnlock(); }} />}
       {showLock && <div data-screen-lock-alerts>{!keepConnection && lockedExtras}</div>}
-      {resumeChecking && <BmSplash />}
     </ScreenLockKeepAliveContext.Provider>
   );
 }
