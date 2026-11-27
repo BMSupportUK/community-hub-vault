@@ -48,7 +48,15 @@ const inputValue = (html: string, name: string) => {
   const tag = new RegExp(`<input[^>]*name="${name}"[^>]*>`).exec(html)?.[0];
   return tag ? attr(tag, "value").replace(/&amp;/g, "&").replace(/&quot;/g, '"') : "";
 };
-const panelError = (html: string) => /\$\.toast\("([^"]{3,200})"\)/.exec(html)?.[1] ?? null;
+const unescape = (v: string) => v.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+const textValue = (html: string, name: string) => unescape(new RegExp(`<textarea[^>]*name="${name}"[^>]*>([\\s\\S]*?)</textarea>`).exec(html)?.[1]?.trim() ?? "");
+export const selectOptions = (html: string, id: string) => {
+  const box = new RegExp(`<select[^>]*id="${id}"[^>]*>([\\s\\S]*?)</select>`).exec(html)?.[1] ?? "";
+  return [...box.matchAll(/<option[^>]*value="([^"]*)"/g)].map((m) => unescape(m[1] ?? "").trim()).filter(Boolean);
+};
+// The form's own script always contains the "add IP / add user-agent" toasts, so those are never the panel's answer.
+const FORM_TOASTS = /^please enter a (valid ip address|user-agent)\.?$/i;
+export const panelError = (html: string) => [...html.matchAll(/\$\.toast\("([^"]{3,200})"\)/g)].map((m) => m[1] ?? "").find((t) => !FORM_TOASTS.test(t.trim())) ?? null;
 
 async function packageBouquets(panel: Panel, packageId: number) {
   const r = await panel.req(`/api.php?action=get_package&package_id=${packageId}`);
@@ -123,7 +131,10 @@ export async function panelCreateLine(panel: Panel, o: { username: string; email
 export async function panelExtendLine(panel: Panel, o: { id: string; packageId: number }) {
   const before = await readLine(panel, o.id);
   const { bouquets } = await packageBouquets(panel, o.packageId);
-  const body = new URLSearchParams({ edit: o.id, username: before.username, password: before.password, email: before.email || "", member_id: MEMBER_ID, package: String(o.packageId), bouquets_selected: JSON.stringify(bouquets), submit_user: "Purchase" });
+  // Send exactly what the panel's own form sends; keep any existing IP / user-agent / MAC locks untouched.
+  const body = new URLSearchParams({ edit: o.id, username: before.username, password: before.password, email: before.email || "", member_id: MEMBER_ID, package: String(o.packageId), bouquets_selected: JSON.stringify(bouquets), mac_address_mag: inputValue(before.html, "mac_address_mag"), mac_address_e2: inputValue(before.html, "mac_address_e2"), reseller_notes: textValue(before.html, "reseller_notes"), submit_user: "Purchase" });
+  for (const ip of selectOptions(before.html, "allowed_ips")) body.append("allowed_ips[]", ip);
+  for (const ua of selectOptions(before.html, "allowed_ua")) body.append("allowed_ua[]", ua);
   const r = await panel.req("/user_reseller.php", body);
   const after = await readLine(panel, o.id);
   if (!after.exp || after.exp === before.exp) throw new Error(panelError(r.text) ?? "The provider panel didn't extend the line (check its credits)");
