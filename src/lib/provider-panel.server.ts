@@ -58,6 +58,11 @@ async function packageBouquets(panel: Panel, packageId: number) {
 }
 
 export async function panelFindLine(panel: Panel, username: string): Promise<string | null> {
+  return (await panelFindRow(panel, username))?.id ?? null;
+}
+
+/** The panel's user list holds the full expiry ("YYYY-MM-DD HH:MM:SS"); the edit form only shows the date. */
+export async function panelFindRow(panel: Panel, username: string): Promise<{ id: string; exp: string } | null> {
   const want = username.trim().toLowerCase();
   for (let start = 0; start < 5000; start += 100) {
     const q = new URLSearchParams({ draw: "1", start: String(start), length: "100", id: "users" });
@@ -65,7 +70,7 @@ export async function panelFindLine(panel: Panel, username: string): Promise<str
     const d = JSON.parse(r.text) as { data?: unknown[][]; recordsFiltered?: number | string };
     for (const row of d.data ?? []) {
       const name = /<strong>([^<]+)<\/strong>/.exec(String(row[1] ?? ""))?.[1] ?? String(row[1] ?? "");
-      if (name.trim().toLowerCase() === want) return String(row[0]);
+      if (name.trim().toLowerCase() === want) return { id: String(row[0]), exp: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(String(row[7] ?? "").trim()) ? String(row[7]).trim() : "" };
     }
     if (!d.data?.length || start + 100 >= Number(d.recordsFiltered ?? 0)) break;
   }
@@ -74,7 +79,12 @@ export async function panelFindLine(panel: Panel, username: string): Promise<str
 
 export async function readLine(panel: Panel, id: string) {
   const r = await panel.req(`/user_reseller.php?id=${encodeURIComponent(id)}`);
-  return { html: r.text, username: inputValue(r.text, "username"), password: inputValue(r.text, "password"), email: inputValue(r.text, "email"), exp: inputValue(r.text, "exp_date") };
+  const username = inputValue(r.text, "username");
+  const dateOnly = inputValue(r.text, "exp_date");
+  // Read the exact expiry time from the user list once the line exists.
+  const row = username ? await panelFindRow(panel, username) : null;
+  const exp = row?.exp && row.exp.startsWith(dateOnly) ? row.exp : row?.exp || dateOnly;
+  return { html: r.text, username, password: inputValue(r.text, "password"), email: inputValue(r.text, "email"), exp };
 }
 
 /** Step 1 of a new line: the panel's own pre-made username. Saved before purchase so a retry never buys twice. */

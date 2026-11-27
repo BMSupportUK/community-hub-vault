@@ -250,7 +250,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, c
       const r = await setupOnPanel({ data: { orderId, kind: renewal ? "renew" : "create", username } });
       if (!r.ok) return void toast.error(r.error);
       if (!renewal) { setLoginName(r.username); setAccountPassword(r.password); }
-      if (r.exp) setExpiryLocal(toLocal(new Date(`${r.exp.slice(0, 10)}T23:59`)));
+      if (r.exp) setExpiryLocal(toLocal(new Date(/\d{2}:\d{2}/.test(r.exp) ? r.exp.trim().replace(" ", "T").slice(0, 16) : `${r.exp.slice(0, 10)}T23:59`)));
       toast.success(r.again ? "Already done on the panel — details filled in" : renewal ? `Renewed on the panel until ${r.exp}` : "Line created on the panel — check the details, then save and send");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Provider panel error");
