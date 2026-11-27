@@ -167,6 +167,24 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_gate_unlocks: {
+        Row: {
+          gate: string
+          unlocked_until: string
+          user_id: string
+        }
+        Insert: {
+          gate: string
+          unlocked_until: string
+          user_id: string
+        }
+        Update: {
+          gate?: string
+          unlocked_until?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_unlock_lockouts: {
         Row: {
           failed_count: number
@@ -1975,6 +1993,7 @@ export type Database = {
           created_at: string
           previous_code: string | null
           reset_at: string | null
+          unlocked_until: string | null
           user_id: string
         }
         Insert: {
@@ -1983,6 +2002,7 @@ export type Database = {
           created_at?: string
           previous_code?: string | null
           reset_at?: string | null
+          unlocked_until?: string | null
           user_id: string
         }
         Update: {
@@ -1991,6 +2011,7 @@ export type Database = {
           created_at?: string
           previous_code?: string | null
           reset_at?: string | null
+          unlocked_until?: string | null
           user_id?: string
         }
         Relationships: []
@@ -11665,6 +11686,10 @@ export type Database = {
       replace_discord_import_queue_item_with_split: {
         Args: { p_original_id: string; p_rows: Json }
         Returns: number
+      }
+      reprice_customer_order: {
+        Args: { p_order_id: string }
+        Returns: undefined
       }
       request_enabler_connection: {
         Args: { _id: string; _kind: string }

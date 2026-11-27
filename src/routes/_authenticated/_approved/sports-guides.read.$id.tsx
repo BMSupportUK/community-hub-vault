@@ -134,6 +134,10 @@ function ReadPage() {
     wrap.querySelectorAll<HTMLElement>("[data-link-preview]").forEach((el) => {
       const url = el.getAttribute("data-link-preview") ?? "";
       if (!url) return;
+      // Only plain web links become clickable; anything else (javascript:, data:) is dropped.
+      let safe = false;
+      try { safe = ["http:", "https:"].includes(new URL(url, window.location.origin).protocol); } catch { safe = false; }
+      if (!safe) { el.removeAttribute("data-link-preview"); return; }
       let label = (el.getAttribute("data-link-title") ?? "").trim();
       if (!label) {
         try {

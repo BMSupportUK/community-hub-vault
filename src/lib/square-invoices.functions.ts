@@ -199,7 +199,7 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
       created_by: userId,
       last_synced_at: new Date().toISOString(),
     };
-    const { data: saved, error: upErr } = await supabase
+    const { data: saved, error: upErr } = await supabaseAdmin
       .from("order_invoices")
       .upsert(row, { onConflict: "order_id" })
       .select()
@@ -223,11 +223,15 @@ export const refreshSquareInvoiceStatus = createServerFn({ method: "POST" })
       .single();
     if (!row) throw new Error("No Square invoice for this order");
 
-    const res = await sqFetch(`/v2/invoices/${row.square_invoice_id}`);
+    const res = await sqFetch(`/v2/invoices/${encodeURIComponent(String(row.square_invoice_id))}`);
     const invoice = res?.invoice;
     if (!invoice) throw new Error("Square invoice not found");
+    // The stored row is server-written, but still confirm the Square invoice belongs to this order.
+    if (row.square_order_id && invoice.order_id && String(invoice.order_id) !== String(row.square_order_id)) {
+      throw new Error("Square invoice does not match this order");
+    }
 
-    const { data: updated, error } = await supabase
+    const { data: updated, error } = await supabaseAdmin
       .from("order_invoices")
       .update({
         status: invoice.status ?? row.status,
@@ -249,7 +253,7 @@ export const refreshSquareInvoiceStatus = createServerFn({ method: "POST" })
         .eq("id", data.orderId)
         .maybeSingle();
       if (order && !order.paid_at) {
-        await supabase
+        await supabaseAdmin
           .from("orders")
           .update({ paid_at: new Date().toISOString() })
           .eq("id", data.orderId);

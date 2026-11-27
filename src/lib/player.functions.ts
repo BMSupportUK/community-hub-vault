@@ -279,8 +279,15 @@ export const testPlayerDns = createServerFn({ method: "POST" })
     if (!dns) throw new Error("Enter a web address first.");
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Only the admin can test the DNS.");
+    // Never let the test reach our own network or cloud metadata addresses.
+    let host = "";
+    try { host = new URL(dns).hostname.toLowerCase().replace(/^\[|\]$/g, ""); } catch { throw new Error("Enter a valid web address."); }
+    const privateHost = host === "localhost" || host.endsWith(".localhost") || host.endsWith(".internal") || host.endsWith(".local")
+      || /^(0|10|127)\./.test(host) || /^169\.254\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)
+      || /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./.test(host) || host === "::1" || /^f[cd]/.test(host) || /^fe80/.test(host) || host.includes("::ffff:");
+    if (privateHost) throw new Error("That address can't be tested.");
     try {
-      const r = await fetch(`${dns}/player_api.php`, { signal: AbortSignal.timeout(8000) });
+      const r = await fetch(`${dns}/player_api.php`, { signal: AbortSignal.timeout(8000), redirect: "manual" });
       return { reachable: true, status: r.status };
     } catch {
       return { reachable: false, status: 0 };

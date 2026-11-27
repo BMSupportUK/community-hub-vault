@@ -1,41 +1,25 @@
 import { useState } from "react";
 import { KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { unlockRolesGate } from "@/lib/admin-users.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { markRolesUnlocked } from "@/lib/roles-unlock";
-
-async function sha256Hex(input: string) {
-  const enc = new TextEncoder().encode(input);
-  const buf = await crypto.subtle.digest("SHA-256", enc);
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
 
 export function RolesGate({ onUnlocked }: { onUnlocked: () => void }) {
   const { user } = useAuth();
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
   const [busy, setBusy] = useState(false);
+  const unlockFn = useServerFn(unlockRolesGate);
 
   const unlock = async () => {
-    if (!user?.email || !user.id) return;
+    if (!user?.id) return;
     if (!password || !pin) return toast.error("Enter your password and PIN");
     setBusy(true);
     try {
-      const { error: signErr } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password,
-      });
-      if (signErr) throw new Error("Incorrect password");
-      const hash = await sha256Hex(`${user.id}:${pin}`);
-      const { data: row } = await supabase
-        .from("vault_pins")
-        .select("pin_hash")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
+      const res = await unlockFn({ data: { password, pin } });
+      if (!res.ok) throw new Error(res.error);
       markRolesUnlocked(user.id);
       toast.success("Members & Role Management unlocked");
       onUnlocked();

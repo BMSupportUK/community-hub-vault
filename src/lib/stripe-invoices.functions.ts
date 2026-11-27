@@ -219,7 +219,7 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
         created_by: userId,
         last_synced_at: new Date().toISOString(),
       };
-      const { data: saved, error: upErr } = await supabase
+      const { data: saved, error: upErr } = await supabaseAdmin
         .from("order_invoices")
         .upsert(row, { onConflict: "order_id" })
         .select()
@@ -273,7 +273,7 @@ export const refreshStripeInvoiceStatus = createServerFn({ method: "POST" })
         throw new Error("Stripe invoice amount mismatch — please generate a fresh invoice");
       }
 
-      const { data: updated, error } = await supabase
+      const { data: updated, error } = await supabaseAdmin
         .from("order_invoices")
         .update({
           status: invoice.status ?? row.status,

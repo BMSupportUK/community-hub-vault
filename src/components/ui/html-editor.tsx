@@ -387,6 +387,9 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
     if (!url) return;
     const trimmed = url.trim();
     if (!trimmed) return;
+    let okScheme = false;
+    try { okScheme = ["http:", "https:"].includes(new URL(trimmed).protocol); } catch { okScheme = false; }
+    if (!okScheme) { window.alert("Links must start with http:// or https://"); return; }
     const title = window.prompt("Link title (shown on the preview card)", "")?.trim();
     ref.current?.focus();
     const esc = (s: string) => s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);

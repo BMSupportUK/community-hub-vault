@@ -62,7 +62,7 @@ export const requestManualCredentialsAccess = createServerFn({ method: 'POST' })
     if (error) throw new Error('Secure access is temporarily unavailable. Please try again.');
     if (!Array.isArray(rows) || rows.length === 0) return { requested: true };
     const password = randomPassword();
-    const { error: saveError } = await supabaseAdmin.from('manual_credential_access').upsert({ email_key: key, code_hash: await hash(`${key}:${password}`), code_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(), attempts: 0, session_hash: null, session_expires_at: null });
+    const { error: saveError } = await supabaseAdmin.from('manual_credential_access').upsert({ email_key: key, code_hash: await hash(`${key}:${password}`), code_expires_at: new Date(Date.now() + 15 * 60_000).toISOString(), attempts: 0 });
     if (saveError) throw new Error('Secure access is temporarily unavailable. Please try again.');
     const { sendTemplateEmail } = await import('@/lib/email-templates/send-email');
     try {

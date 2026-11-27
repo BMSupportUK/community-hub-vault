@@ -126,6 +126,13 @@ export async function vpnFinish(orderId: string): Promise<{ paid: boolean; compl
   if (loc) { try { const { syncSquareCheckout } = await import("./square-checkout.server"); await syncSquareCheckout(supabaseAdmin, orderId, loc); } catch { /* ignore */ } }
   const { data: o } = await supabaseAdmin.from("orders").select("paid_at, completed_at, customer_type, status").eq("id", orderId).maybeSingle();
   if (!o || o.customer_type !== "vpn" || !o.paid_at) return { paid: false, completed: false };
+  // Switch the VPN on only for the server-priced purchase; a changed order total never completes.
+  const { data: vp } = await supabaseAdmin.from("vpn_purchases").select("pence").eq("order_id", orderId).maybeSingle();
+  const { data: tot } = await supabaseAdmin.from("orders").select("total_cents").eq("id", orderId).maybeSingle();
+  if (!vp || Number((tot as { total_cents?: number } | null)?.total_cents ?? -1) !== Number((vp as { pence: number }).pence)) {
+    console.error("[vpn] order total does not match purchase", orderId);
+    return { paid: true, completed: false };
+  }
   if (!o.completed_at) {
     const { error } = await supabaseAdmin.from("orders").update({ status: "completed", completed_at: new Date().toISOString() } as never).eq("id", orderId).is("completed_at", null);
     if (error) { console.error("[vpn] could not complete", orderId, error.message); return { paid: true, completed: false }; }

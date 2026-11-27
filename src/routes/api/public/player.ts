@@ -257,7 +257,17 @@ export const Route = createFileRoute("/api/public/player")({
             rulesExempt = !!exemptProfile?.player_rules_exempt;
           }
           const clash = rulesExempt ? [] : streamClash(others ?? [], device.id, pkgMax ?? body.max, Date.now(), body.screens ?? 1);
-          if (clash.length && !body.takeover) {
+          // Only a linked box may stop other devices, and only on a login that belongs to its own account.
+          let mayTakeOver = false;
+          if (device.user_id || device.offsite_customer_id) {
+            if (device.iptv_username && device.iptv_username === body.login) mayTakeOver = true;
+            else if (device.user_id) {
+              const { data: own } = await supabaseAdmin.schema("private" as never).from("app_credentials" as never).select("id")
+                .eq("owner_id", device.user_id).ilike("app_login_name", body.login).limit(1);
+              mayTakeOver = Array.isArray(own) && own.length > 0;
+            }
+          }
+          if (clash.length && (!body.takeover || !mayTakeOver)) {
             return json({ busy: true, message: maxedMessage(clash, pkgMax ?? body.max), devices: clash.slice(0, 5).map((d) => ({ name: d.name || "BM Player", platform: d.platform, title: d.watching_title, screens: d.watching_screens ?? 1 })) });
           }
           if (clash.length) {
@@ -310,7 +320,7 @@ export const Route = createFileRoute("/api/public/player")({
                   }
                 }
                 if (v.kind === "second_mobile") await report("household_mobile", "is a second phone trying to watch on mobile data");
-                if (v.refuse || (v.stopIds.length && !body.takeover)) {
+                if (v.refuse || (v.stopIds.length && (!body.takeover || !mayTakeOver))) {
                   return json({ busy: true, refused: v.refuse, message: v.message, devices: v.refuse ? [] : (peers ?? []).filter((d) => v.stopIds.includes(d.id)).map(() => ({ name: "BM Player", platform: null, title: null })) });
                 }
                 if (v.stopIds.length) await supabaseAdmin.from("player_devices").update({ stream_stop_at: nowIso, watching_kind: null, watching_title: null, watching_category: null, watching_player: null, watching_since: null, watching_preview: false, private_dns_used: null }).in("id", v.stopIds);

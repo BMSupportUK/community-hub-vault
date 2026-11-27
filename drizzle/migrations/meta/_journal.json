@@ -2829,6 +2829,27 @@
       "when": 1795790020585,
       "tag": "0403_provider_panel_settings_locked",
       "breakpoints": true
+    },
+    {
+      "idx": 404,
+      "version": "7",
+      "when": 1795793953649,
+      "tag": "0404_harden_payments_and_breaks",
+      "breakpoints": true
+    },
+    {
+      "idx": 405,
+      "version": "7",
+      "when": 1795794153183,
+      "tag": "0405_portal_unlock_server_record",
+      "breakpoints": true
+    },
+    {
+      "idx": 406,
+      "version": "7",
+      "when": 1795794322459,
+      "tag": "0406_admin_gate_unlocks",
+      "breakpoints": true
     }
   ]
 }

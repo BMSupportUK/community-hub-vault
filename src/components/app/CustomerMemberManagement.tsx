@@ -344,7 +344,7 @@ export function CustomerMemberManagement({ children }: { children: (slots: Membe
 
   if (!isAdmin) return <Navigate to="/home" />;
   if (!rolesUnlocked) {
-    return <RolesGate onUnlocked={() => setRolesUnlocked(true)} />;
+    return <RolesGate onUnlocked={() => { setRolesUnlocked(true); void loadAll(true); }} />;
   }
 
   if (share) return <section className="min-w-0 w-full space-y-4">

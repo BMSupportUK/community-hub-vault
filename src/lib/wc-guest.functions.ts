@@ -290,7 +290,7 @@ export const requestGuestPinReset = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: entrant } = await admin
       .from("wc_guest_entrants")
-      .select("id, display_name, email")
+      .select("id, display_name, email, pin_reset_expires_at")
       .eq("email", data.email)
       .maybeSingle();
 
@@ -300,6 +300,10 @@ export const requestGuestPinReset = createServerFn({ method: "POST" })
     }
 
     // 6-digit code, valid 30 min. Store only a hash.
+    // One reset email every 2 minutes per guest, so the inbox can't be flooded.
+    const lastExpiry = (entrant as any).pin_reset_expires_at ? new Date((entrant as any).pin_reset_expires_at).getTime() : 0;
+    if (lastExpiry - Date.now() > 28 * 60 * 1000) return { ok: true };
+
     const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
     const codeSalt = randomBytes(8).toString("hex");
     const codeHash = `${codeSalt}:${hashPin(code, codeSalt)}`;
@@ -361,7 +365,9 @@ export const resetGuestPin = createServerFn({ method: "POST" })
     const computed = Buffer.from(hashPin(data.code, codeSalt), "hex");
     const target = Buffer.from(codeHash, "hex");
     if (computed.length !== target.length || !timingSafeEqual(computed, target)) {
-      throw new Error("Incorrect reset code.");
+      // A wrong guess retires the code, so codes can't be guessed.
+      await admin.from("wc_guest_entrants").update({ pin_reset_hash: null, pin_reset_expires_at: null }).eq("id", (entrant as any).id);
+      throw new Error("Incorrect reset code. Please request a new one.");
     }
 
     const salt = randomBytes(16).toString("hex");

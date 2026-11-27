@@ -119,6 +119,15 @@ export const readPortalCredentials = createServerFn({ method: "POST" })
     return { pinRequired: false as const, mustChange: false as const, accounts, qdCodes, created, expiresAt: new Date(Date.now() + 10 * 60_000).toISOString() };
   });
 
+/** Email ownership is proven only by entering the code emailed to the account address (portal unlock). */
+async function assertPortalEmailProven(admin: any, userId: string) {
+  const { data } = await admin.from("customer_portals").select("unlocked_until").eq("user_id", userId).maybeSingle();
+  const until = (data as { unlocked_until?: string | null } | null)?.unlocked_until;
+  if (!until || new Date(until).getTime() <= Date.now()) {
+    throw new Error("Please open your customer portal with the emailed login code first.");
+  }
+}
+
 /** Signed-in customer: reset their own app-logins PIN and alert staff. The next PIN they enter becomes the new one. */
 export const requestPortalPinReset = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -132,6 +141,7 @@ export const requestPortalPinReset = createServerFn({ method: "POST" })
     if (!email) throw new Error("Your account has no email saved. Please contact support.");
     // The PIN row is matched by email, so only a proven (confirmed) address may reset it.
     if (!user.user?.email_confirmed_at) throw new Error("Please confirm your email address before resetting your PIN.");
+    await assertPortalEmailProven(supabaseAdmin, context.userId);
     const key = await hash(email);
     const { data: cleared } = await supabaseAdmin
       .from("manual_credential_access")
@@ -199,6 +209,7 @@ export const sendTicketTempPin = createServerFn({ method: "POST" })
     const { data: user } = await supabaseAdmin.auth.admin.getUserById(context.userId);
     const email = user.user?.email?.trim().toLowerCase();
     if (!email) throw new Error("Your account has no email saved. Please wait for our team.");
+    await assertPortalEmailProven(supabaseAdmin, context.userId);
     const key = await hash(email);
     const pin = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
     const salt = hex(crypto.getRandomValues(new Uint8Array(24)));

@@ -196,10 +196,14 @@ export const requestFantasyGuestPinReset = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: entrant } = await admin
       .from("fantasy_guest_entrants")
-      .select("id, display_name, email")
+      .select("id, display_name, email, pin_reset_expires_at")
       .eq("email", data.email)
       .maybeSingle();
     if (!entrant) return { ok: true };
+
+    // One reset email every 2 minutes per guest, so the inbox can't be flooded.
+    const lastExpiry = (entrant as any).pin_reset_expires_at ? new Date((entrant as any).pin_reset_expires_at).getTime() : 0;
+    if (lastExpiry - Date.now() > 28 * 60 * 1000) return { ok: true };
 
     const code = String(100000 + (crypto.getRandomValues(new Uint32Array(1))[0] % 900000));
     const codeSalt = makeSalt(8);
@@ -256,7 +260,9 @@ export const resetFantasyGuestPin = createServerFn({ method: "POST" })
     const [codeSalt, codeHash] = ((entrant as any).pin_reset_hash as string).split(":");
     if (!codeSalt || !codeHash) throw new Error("Invalid reset state.");
     if (!verifyPin(data.code, codeSalt, codeHash)) {
-      throw new Error("Incorrect reset code.");
+      // A wrong guess retires the code, so codes can't be guessed.
+      await admin.from("fantasy_guest_entrants").update({ pin_reset_hash: null, pin_reset_expires_at: null }).eq("id", (entrant as any).id);
+      throw new Error("Incorrect reset code. Please request a new one.");
     }
     const salt = makeSalt();
     const hash = hashPin(data.newPin, salt);
