@@ -8,7 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useHasSalesAccount } from "@/hooks/use-sales-account";
 import { usePortalUnlocked } from "@/components/app/PortalLock";
 import { PortalUnlockButton } from "@/components/app/PortalUnlockButton";
-import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
+import { useApplicationAccess } from "@/lib/admin-unlock";
+import { portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
 import { BmInboxBell } from "@/components/app/BmInboxBell";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
@@ -72,15 +73,16 @@ export function PortalTabs({ active }: { active?: Tab }) {
 }
 
 function PortalCountdown() {
-  const { isStaff } = useAuth();
+  const { isStaff, user } = useAuth();
   const hasSales = useHasSalesAccount();
+  const access = useApplicationAccess(user?.id);
   const [left, setLeft] = useState<number | null>(null);
   useEffect(() => {
-    const tick = () => { try { setLeft(portalSecondsRemaining(window.localStorage.getItem(PORTAL_EXPIRY_KEY))); } catch { setLeft(0); } };
+    const tick = () => { try { setLeft(portalSecondsRemaining(access.portal ? access.portalUntil : null)); } catch { setLeft(0); } };
     tick();
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [access.portal, access.portalUntil]);
   if (isStaff || hasSales || !left) return null;
   const low = left <= 300;
   return (

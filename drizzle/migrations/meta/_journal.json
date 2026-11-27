@@ -2871,6 +2871,20 @@
       "when": 1795801329290,
       "tag": "0409_deny_browser_access_private_gate_records",
       "breakpoints": true
+    },
+    {
+      "idx": 410,
+      "version": "7",
+      "when": 1795801663065,
+      "tag": "0410_session_verified_application_locks",
+      "breakpoints": true
+    },
+    {
+      "idx": 411,
+      "version": "7",
+      "when": 1795802409868,
+      "tag": "0411_portal_profile_reads_require_session_code",
+      "breakpoints": true
     }
   ]
 }

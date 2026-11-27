@@ -4,18 +4,22 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PortalLock, usePortalUnlocked } from "@/components/app/PortalLock";
 import { UnlockedDone } from "@/components/app/PortalUnlockButton";
-import { PORTAL_EXPIRY_KEY, portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
+import { useAuth } from "@/hooks/use-auth";
+import { useApplicationAccess } from "@/lib/admin-unlock";
+import { portalCountdown, portalSecondsRemaining } from "@/lib/customer-portal";
 import { cn } from "@/lib/utils";
 
 /** Side-rail unlock control that sits beside the Home button. */
 export function PortalRailUnlock() {
   const unlocked = usePortalUnlocked();
+  const { user } = useAuth();
+  const access = useApplicationAccess(user?.id);
   const [open, setOpen] = useState(false);
   const [left, setLeft] = useState(0);
   useEffect(() => {
     const tick = () => {
       try {
-        setLeft(portalSecondsRemaining(window.localStorage.getItem(PORTAL_EXPIRY_KEY)));
+        setLeft(portalSecondsRemaining(access.portal ? access.portalUntil : null));
       } catch {
         setLeft(0);
       }
@@ -23,7 +27,7 @@ export function PortalRailUnlock() {
     tick();
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [access.portal, access.portalUntil]);
   const label = unlocked ? `Portal unlocked · locks in ${portalCountdown(left)}` : "Unlock portal";
   return (
     <TooltipProvider delayDuration={150}>

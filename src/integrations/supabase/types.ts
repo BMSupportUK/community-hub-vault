@@ -538,6 +538,36 @@ export type Database = {
           },
         ]
       }
+      application_access_sessions: {
+        Row: {
+          expires_at: string
+          granted_at: string
+          last_activity_at: string
+          locked: boolean
+          scope: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          expires_at: string
+          granted_at?: string
+          last_activity_at?: string
+          locked?: boolean
+          scope: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          expires_at?: string
+          granted_at?: string
+          last_activity_at?: string
+          locked?: boolean
+          scope?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       automated_messages: {
         Row: {
           body: string
@@ -10727,6 +10757,20 @@ export type Database = {
       }
       app_encrypt: { Args: { p: string }; Returns: string }
       app_login_name_exists: { Args: { _name: string }; Returns: boolean }
+      application_access_status: { Args: never; Returns: Json }
+      application_consume_backup: {
+        Args: { p_hash: string; p_user: string }
+        Returns: boolean
+      }
+      application_portal_required: { Args: never; Returns: boolean }
+      application_request_guard: { Args: never; Returns: undefined }
+      application_revoke_dashboard: { Args: never; Returns: undefined }
+      application_scope_open: { Args: { p_scope: string }; Returns: boolean }
+      application_screen_open: { Args: never; Returns: boolean }
+      application_screen_status: {
+        Args: { p_activity?: boolean; p_lock?: boolean }
+        Returns: Json
+      }
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
       apply_customer_nameplate: {
         Args: { _user_id: string }

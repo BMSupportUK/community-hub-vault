@@ -51,7 +51,12 @@ export const unlockWithStaffPin = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: ok } = await supabaseAdmin.rpc("staff_pin_check" as any, { p_user: context.userId, p_pin: data.pin.trim() });
     if (!ok) return { ok: false, error: "Incorrect staff PIN" };
-    return { ok: true };
+    const { data: roles, error: roleError } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    if (roleError || !(roles ?? []).some(r => ["admin", "management", "staff", "moderator", "fan_zone_admin", "fan_zone_moderator"].includes(r.role))) throw new Error("Not allowed");
+    const { grantApplicationAccess } = await import("./application-access.server");
+    const until = new Date(Date.now() + 60 * 60_000).toISOString();
+    await grantApplicationAccess(supabaseAdmin, context.userId, context.claims["session_id"], "dashboard", until);
+    return { ok: true, until };
   });
 
 export const revealMyStaffPin = createServerFn({ method: "POST" })

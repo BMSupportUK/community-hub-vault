@@ -1,0 +1,2 @@
+CREATE POLICY "portal profile requires verified session" ON public.profiles AS RESTRICTIVE FOR ALL TO authenticated USING (id IS DISTINCT FROM auth.uid() OR NOT public.application_portal_required() OR public.application_scope_open('portal')) WITH CHECK (id IS DISTINCT FROM auth.uid() OR NOT public.application_portal_required() OR public.application_scope_open('portal'));
+NOTIFY pgrst,'reload schema';

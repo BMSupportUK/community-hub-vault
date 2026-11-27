@@ -30,5 +30,10 @@ export const verifyScreenLockPassword = createServerFn({ method: "POST" })
     if (error && error.code !== "invalid_credentials") {
       throw new Error("Couldn't check your password. Please try again shortly.");
     }
+    if (verified) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { grantApplicationAccess } = await import("./application-access.server");
+      await grantApplicationAccess(supabaseAdmin, context.userId, context.claims["session_id"], "screen", new Date(Date.now() + 60 * 60_000).toISOString());
+    }
     return { verified };
   });

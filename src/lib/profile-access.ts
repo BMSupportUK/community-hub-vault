@@ -1,6 +1,6 @@
 /** Explicit customer action allowlist. Unknown actions fail closed in customer scope. */
 const CUSTOMER_ACTIONS = new Set(`
-getProfileAccess selectAccountProfile restoreStaffProfile
+getProfileAccess selectAccountProfile restoreStaffProfile getApplicationAccess screenAccess
 verifyScreenLockPassword getScreenLockAdminAccess requestMyPortalCode unlockMyPortalCode readPortalCredentials
 requestPortalCode redeemPortalCode requestPortalPinReset
 isDemoAccount logMyIp recordMyGpsLocation checkMyVpnOnLogin

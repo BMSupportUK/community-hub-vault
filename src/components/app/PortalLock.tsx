@@ -1,45 +1,22 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Lock, Timer } from "lucide-react";
+import { Lock } from "lucide-react";
 import { PortalCodeForm } from "@/components/app/PortalCodeForm";
 import { useAuth } from "@/hooks/use-auth";
-import { useHasSalesAccount } from "@/hooks/use-sales-account";
 import { requestMyPortalCode, unlockMyPortalCode } from "@/lib/customer-portal.functions";
-import { PORTAL_EXPIRY_KEY, PORTAL_USER_KEY, portalAccessValid, portalSecondsRemaining, portalCountdown } from "@/lib/customer-portal";
+import { PORTAL_EXPIRY_KEY, PORTAL_USER_KEY } from "@/lib/customer-portal";
+import { useApplicationAccess } from "@/lib/admin-unlock";
 
 export const PORTAL_LOCK_EVENT = "bm-portal-lock-change";
 
-function unlocked(userId: string) {
-  try {
-    return portalAccessValid(window.localStorage.getItem(PORTAL_EXPIRY_KEY), window.localStorage.getItem(PORTAL_USER_KEY), userId);
-  } catch { return false; }
-}
-
 /** Customer content stays unmounted until the entered email code is verified. */
 export function PortalLock({ children }: { children: ReactNode }) {
-  const { isStaff, user } = useAuth();
-  const hasSales = useHasSalesAccount();
+  const { user } = useAuth();
   const send = useServerFn(requestMyPortalCode);
   const verify = useServerFn(unlockMyPortalCode);
-  const [grant, setGrant] = useState<{ userId: string; open: boolean } | null>(null);
-  const [remaining, setRemaining] = useState(0);
-  useEffect(() => {
-    const check = () => {
-      const open = user ? unlocked(user.id) : false;
-      setGrant(user ? { userId: user.id, open } : null);
-      try { setRemaining(open ? portalSecondsRemaining(window.localStorage.getItem(PORTAL_EXPIRY_KEY)) : 0); } catch { setRemaining(0); }
-    };
-    check();
-    const id = window.setInterval(check, 1_000);
-    window.addEventListener(PORTAL_LOCK_EVENT, check);
-    window.addEventListener("storage", check);
-    window.addEventListener("focus", check);
-    document.addEventListener("visibilitychange", check);
-    return () => { window.clearInterval(id); window.removeEventListener(PORTAL_LOCK_EVENT, check); window.removeEventListener("storage", check); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", check); };
-  }, [user?.id]);
-  if (isStaff || hasSales) return <>{children}</>;
-  if (user && grant?.userId === user.id && grant.open) return <>{children}</>;
+  const access = useApplicationAccess(user?.id);
+  if (access.portal) return <>{children}</>;
   async function unlock(code: string) {
     if (!user) throw new Error("Please sign in again.");
     const result = await verify({ data: { loginCode: code } });
@@ -52,7 +29,7 @@ export function PortalLock({ children }: { children: ReactNode }) {
       <div className="w-full max-w-md py-8 text-center">
         <div className="mx-auto mb-4 grid size-12 place-items-center rounded-xl bg-primary/15 text-primary"><Lock className="size-6" /></div>
         <h2 className="font-display text-xl font-bold">Customer Portal locked</h2>
-        <p className="mt-2 text-sm text-muted-foreground">Enter the login code emailed to you. Your code lasts 24 hours; portal access lasts until midnight (UK time).</p>
+        <p className="mt-2 text-sm text-muted-foreground">Enter the login code emailed to you. Your code lasts 24 hours; portal access locks again after one hour.</p>
         <PortalCodeForm onSend={() => send()} onUnlock={unlock} />
         <Link to="/portal" className="mt-4 inline-block text-sm text-muted-foreground underline">Back to portal home</Link>
       </div>
@@ -63,15 +40,6 @@ export function PortalLock({ children }: { children: ReactNode }) {
 /** True while the signed-in customer's portal is unlocked. */
 export function usePortalUnlocked() {
   const { user } = useAuth();
-  const hasSales = useHasSalesAccount();
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    const check = () => setOpen(user ? unlocked(user.id) : false);
-    check();
-    const id = window.setInterval(check, 1_000);
-    window.addEventListener(PORTAL_LOCK_EVENT, check);
-    window.addEventListener("storage", check);
-    return () => { window.clearInterval(id); window.removeEventListener(PORTAL_LOCK_EVENT, check); window.removeEventListener("storage", check); };
-  }, [user?.id]);
-  return open || hasSales;
+  const access = useApplicationAccess(user?.id);
+  return access.portal;
 }

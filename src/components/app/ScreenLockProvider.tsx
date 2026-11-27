@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { flushSync } from "react-dom";
 import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
   DEFAULT_TIMEOUT_MINUTES,
   STAFF_MAX_TIMEOUT_MINUTES,
-  screenLockMayBeLocked,
-  shouldLockScreen,
 } from "@/lib/screen-lock-hash";
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
 import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
@@ -15,6 +12,7 @@ import { BmSplash } from "@/components/app/BmSplash";
 import { ScreenLockKeepAliveContext } from "@/components/app/ScreenLockKeepAlive";
 import { useServerFn } from "@tanstack/react-start";
 import { getScreenLockAdminAccess } from "@/lib/screen-lock-admin.functions";
+import { screenAccess } from "@/lib/application-access.functions";
 import { screenLockAdminBypass } from "@/lib/screen-lock-admin";
 
 
@@ -65,27 +63,32 @@ export function ScreenLockProvider({ children, lockedExtras }: { children: React
 
 function NormalScreenLockProvider({ children, lockedExtras }: { children: ReactNode; lockedExtras?: ReactNode }) {
   const { user, hasAny } = useAuth();
+  const verifyScreen = useServerFn(screenAccess);
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const [settings, setSettings] = useState<ScreenLockSettings | null>(null);
   const [ready, setReady] = useState(false);
+  const [locked, setLocked] = useState(true);
   const [resumeChecking, setResumeChecking] = useState(false);
   const [liveConnections, setLiveConnections] = useState(0);
+  const generation = useRef(0);
   const registerLiveConnection = useCallback(() => {
-    setLiveConnections((count) => count + 1);
-    return () => setLiveConnections((count) => Math.max(0, count - 1));
+    setLiveConnections(count => count + 1);
+    return () => setLiveConnections(count => Math.max(0, count - 1));
   }, []);
-  const [locked, setLocked] = useState(() => {
-    if (typeof window === "undefined" || !user) return false;
+  const refresh = useCallback(async (activity = false) => {
+    const request = generation.current;
     try {
-      return localStorage.getItem(`screenlock:locked:${user.id}`) === "1";
+      const result = await verifyScreen({ data: { activity, lock: false } });
+      if (request !== generation.current) return false;
+      setSettings({ enabled: result.enabled, timeout_minutes: result.timeout_minutes });
+      setLocked(!result.open);
+      window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: !result.open } }));
+      return result.open;
     } catch {
+      if (request === generation.current) setLocked(true);
       return false;
     }
-  });
-  const timerRef = useRef<number | null>(null);
-  const channelRef = useRef<BroadcastChannel | null>(null);
-  const wasBackgroundedRef = useRef(false);
-  const storageKey = user ? `screenlock:locked:${user.id}` : null;
+  }, [verifyScreen]);
 
   // Safety net: never let a stale overlay leftover kill clicks.
   //
@@ -138,363 +141,106 @@ function NormalScreenLockProvider({ children, lockedExtras }: { children: ReactN
   }, []);
 
 
-  // Load (or create) this user's lock settings.
   useEffect(() => {
-    if (!user) {
-      setSettings(null);
-      setLocked(false);
-      setReady(false);
-      // Never leave a persisted lock flag behind after a sign-out: otherwise the
-      // next sign-in locks instantly and the overlay looks permanently stuck.
-      if (typeof window !== "undefined") {
-        try {
-          Object.keys(localStorage)
-            .filter((k) => k.startsWith("screenlock:"))
-            .forEach((k) => localStorage.removeItem(k));
-
-        } catch {}
-      }
-      return;
-    }
-    let cancelled = false;
+    let active = true;
+    if (!user) { setReady(true); setLocked(false); return; }
+    setReady(false);
     void (async () => {
-      let data: ScreenLockSettings | null = null;
-      let loadError: { message: string } | null = null;
-
-      // A session can still be hydrating when this provider first mounts. Never
-      // mistake a failed read for a user who has not configured a lock code.
-      for (let attempt = 0; attempt < 3; attempt += 1) {
-        const result = await supabase
-          .from("screen_lock_settings")
-          .select("enabled, timeout_minutes")
-          .eq("user_id", user.id)
-          .maybeSingle();
-        data = result.data as ScreenLockSettings | null;
-        loadError = result.error;
-        if (!loadError) break;
-        await new Promise((resolve) => window.setTimeout(resolve, 250 * (attempt + 1)));
+      const { data, error } = await supabase.from("screen_lock_settings").select("enabled,timeout_minutes").eq("user_id", user.id).maybeSingle();
+      if (!active) return;
+      if (!error && !data) {
+        await supabase.from("screen_lock_settings").insert({ user_id: user.id, enabled: true, timeout_minutes: isStaff ? STAFF_MAX_TIMEOUT_MINUTES : DEFAULT_TIMEOUT_MINUTES });
       }
-      if (cancelled) return;
-      if (loadError) {
-        console.error("Could not load screen lock settings", loadError);
-        setReady(true);
-        return;
-      }
-      let active: ScreenLockSettings | null = null;
-      if (data) {
-        active = data;
-      } else {
-        const row = {
-          user_id: user.id,
-          enabled: true,
-          timeout_minutes: isStaff ? STAFF_MAX_TIMEOUT_MINUTES : DEFAULT_TIMEOUT_MINUTES,
-        };
-        const { data: created, error: createError } = await supabase
-          .from("screen_lock_settings")
-          .insert(row)
-          .select("enabled, timeout_minutes")
-          .single();
-        if (cancelled) return;
-        if (createError || !created) {
-          console.error("Could not create screen lock settings", createError);
-          setReady(true);
-          return;
-        }
-        active = created as ScreenLockSettings;
-      }
-      // Decide the initial lock state before allowing the protected page to
-      // render. This covers both a persisted lock and inactivity while the app
-      // was closed/backgrounded, without exposing one frame of page content.
-      const flagKey = `screenlock:locked:${user.id}`;
-      const activityKey = `screenlock:last-activity:${user.id}`;
-      let savedLocked = false;
-      let lastActivity = 0;
-      if (typeof window !== "undefined") {
-        try {
-          savedLocked = localStorage.getItem(flagKey) === "1";
-          lastActivity = Number(localStorage.getItem(activityKey));
-        } catch {}
-      }
-      const shouldLock = shouldLockScreen(active.enabled, savedLocked, lastActivity, active.timeout_minutes);
-      setLocked(shouldLock);
-      window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: shouldLock } }));
-      setSettings(active);
-      setReady(true);
-      // Remember the timeout locally so a future cold start can tell, before any
-      // network call, whether a lock could be due.
-      try {
-        if (active?.enabled) {
-          localStorage.setItem(
-            "screenlock:timeout-minutes",
-            String(active.timeout_minutes || DEFAULT_TIMEOUT_MINUTES),
-          );
-        } else {
-          localStorage.removeItem("screenlock:timeout-minutes");
-          localStorage.removeItem(activityKey);
-        }
-      } catch {}
-      if (shouldLock) {
-        try {
-          localStorage.setItem(flagKey, "1");
-        } catch {}
-        void suspendTalkPresence(user.id);
-      } else if (!active?.enabled) {
-        try {
-          localStorage.removeItem(flagKey);
-        } catch {}
-      }
-
+      await refresh();
+      if (active) setReady(true);
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id, isStaff]);
+    return () => { active = false; generation.current += 1; };
+  }, [user?.id, isStaff, refresh]);
 
-  // Live-update when settings change elsewhere (settings page, admin reset).
-  useEffect(() => {
-    if (!user) return;
-    const ch = supabase
-      .channel(`screen-lock-settings-${user.id}-${Math.random().toString(36).slice(2)}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "screen_lock_settings", filter: `user_id=eq.${user.id}` },
-        (p) => {
-          const row = p.new as Partial<ScreenLockSettings> | null;
-          if (
-            row &&
-            typeof row.enabled === "boolean" &&
-            typeof row.timeout_minutes === "number"
-          ) {
-            setSettings(row as ScreenLockSettings);
-            // Turning the lock off elsewhere must release a currently locked screen.
-            if (!row.enabled) {
-              setLocked(false);
-              try {
-                localStorage.removeItem(`screenlock:locked:${user.id}`);
-              } catch {}
-              resumeTalkPresence();
-            }
-          }
-        },
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [user?.id]);
-
-  const doLock = useCallback(
-    (broadcast = true) => {
-      setLocked(true);
-      window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: true } }));
-      if (storageKey) localStorage.setItem(storageKey, "1");
-      // A locked screen means the person is away from the PC: drop them out of
-      // the Talk channel presence so member counters/lists don't count them.
-      if (user) void suspendTalkPresence(user.id);
-      if (broadcast) channelRef.current?.postMessage({ type: "lock" });
-    },
-    [storageKey, user?.id],
-  );
-
-  const doUnlock = useCallback(
-    (broadcast = true) => {
-      setLocked(false);
-      window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: false } }));
-      if (storageKey) localStorage.removeItem(storageKey);
-      // Restart the idle clock, otherwise the stale timestamp re-locks instantly.
-      if (user) {
-        try {
-          localStorage.setItem(`screenlock:last-activity:${user.id}`, String(Date.now()));
-        } catch {}
-      }
+  const doLock = useCallback(() => {
+    generation.current += 1;
+    setLocked(true);
+    window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: true } }));
+    if (user) void suspendTalkPresence(user.id);
+    void verifyScreen({ data: { activity: false, lock: true } }).catch(() => {});
+    window.dispatchEvent(new Event("bm-access-change"));
+  }, [user?.id, verifyScreen]);
+  const doUnlock = useCallback(async () => {
+    // A callback, storage write or broadcast is not proof of password verification.
+    if (await refresh()) {
       resumeTalkPresence();
-      if (broadcast) channelRef.current?.postMessage({ type: "unlock" });
-    },
-    [storageKey, user?.id],
-  );
+      window.dispatchEvent(new Event("bm-access-change"));
+    }
+  }, [refresh]);
 
-  // Cover the mounted page rather than rebuilding home on every return.
-  // Commit the local lock decision before the returning WebView frame paints.
   useEffect(() => {
     if (!user || !ready) return;
-    const hide = () => {
-      wasBackgroundedRef.current = true;
-      if (settings?.enabled && !locked) {
-        flushSync(() => setResumeChecking(true));
-      }
+    let inFlight = false;
+    let activity = false;
+    let lastActivity = Date.now();
+    const mark = (event: Event) => { if (event.isTrusted && !locked) { activity = true; lastActivity = Date.now(); } };
+    const poll = async () => {
+      if (inFlight || document.visibilityState !== "visible") return;
+      inFlight = true;
+      const touched = activity;
+      activity = false;
+      await refresh(touched);
+      inFlight = false;
     };
-    const checkResume = () => {
-      if (document.visibilityState !== "visible") {
-        hide();
-        return;
-      }
-      if (!wasBackgroundedRef.current) {
-        return;
-      }
-      wasBackgroundedRef.current = false;
-
-      flushSync(() => {
-        if (settings?.enabled && !locked) {
-          let savedLocked = false;
-          let lastActivity = 0;
-          try {
-            savedLocked = localStorage.getItem(`screenlock:locked:${user.id}`) === "1";
-            lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
-          } catch {}
-          if (shouldLockScreen(settings.enabled, savedLocked, lastActivity, settings.timeout_minutes)) doLock();
-        }
-        setResumeChecking(false);
-      });
-    };
-    document.addEventListener("visibilitychange", checkResume);
-    window.addEventListener("pageshow", checkResume);
-    window.addEventListener("pagehide", hide);
-    return () => {
-      document.removeEventListener("visibilitychange", checkResume);
-      window.removeEventListener("pageshow", checkResume);
-      window.removeEventListener("pagehide", hide);
-    };
-  }, [user?.id, ready, settings?.enabled, settings?.timeout_minutes, locked, doLock]);
-
-
-
-
-  // Cross-tab sync
-  useEffect(() => {
-    if (!user || typeof window === "undefined" || typeof BroadcastChannel === "undefined") return;
-    const ch = new BroadcastChannel(`screenlock-${user.id}`);
-    channelRef.current = ch;
-    ch.onmessage = (ev: MessageEvent<{ type: string }>) => {
-      if (ev.data?.type === "lock") doLock(false);
-      if (ev.data?.type === "unlock") doUnlock(false);
-    };
-    return () => {
-      ch.close();
-      channelRef.current = null;
-    };
-  }, [user?.id, doLock, doUnlock]);
-
-  // Idle timer.
-  //
-  // A plain setTimeout is not enough: background tabs get their timers throttled
-  // or frozen, and the machine can sleep. So we track the wall-clock time of the
-  // last real interaction (persisted, so a reload keeps counting) and poll it.
-  useEffect(() => {
-    if (!user || !settings?.enabled || locked) return;
-    const minutes = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES);
-    const ms = minutes * 60_000;
-    const activityKey = `screenlock:last-activity:${user.id}`;
-
-    const readLast = (): number => {
-      try {
-        const raw = localStorage.getItem(activityKey);
-        const n = raw ? Number(raw) : NaN;
-        if (Number.isFinite(n) && n > 0 && n <= Date.now()) return n;
-      } catch {}
-      return Date.now();
-    };
-
-    let lastActivity = readLast();
-    // If the app was already idle past the limit before this mount (reload, or
-    // the tab was frozen while the person was away), lock straight away.
-    if (Date.now() - lastActivity >= ms) {
-      doLock();
-      return;
-    }
-
-    const markActivity = () => {
-      lastActivity = Date.now();
-      try {
-        localStorage.setItem(activityKey, String(lastActivity));
-      } catch {}
-    };
-    markActivity();
-
     const check = () => {
-      // Re-read so activity in another tab of the same session counts too.
-      const stored = readLast();
-      if (stored > lastActivity) lastActivity = stored;
-      if (Date.now() - lastActivity >= ms) doLock();
+      if (!locked && settings?.enabled && Date.now() - lastActivity >= settings.timeout_minutes * 60_000) doLock();
+      void poll();
     };
-
-    ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, markActivity, { passive: true }));
-    const onVisible = () => check();
-    document.addEventListener("visibilitychange", onVisible);
-    window.addEventListener("focus", onVisible);
-
-    // Poll (wall-clock based, so throttling only delays detection slightly) and
-    // keep a timeout as the precise trigger for a foreground tab.
-    const interval = window.setInterval(check, 5_000);
-    timerRef.current = window.setTimeout(check, ms + 250);
-
+    const visible = () => {
+      if (document.visibilityState !== "visible") { setResumeChecking(true); return; }
+      void poll().finally(() => setResumeChecking(false));
+    };
+    const timer = window.setInterval(check, 5_000);
+    ACTIVITY_EVENTS.forEach(e => window.addEventListener(e, mark, { passive: true }));
+    window.addEventListener("focus", visible);
+    window.addEventListener("pageshow", visible);
+    document.addEventListener("visibilitychange", visible);
     return () => {
-      if (timerRef.current) window.clearTimeout(timerRef.current);
-      window.clearInterval(interval);
-      ACTIVITY_EVENTS.forEach((e) => window.removeEventListener(e, markActivity));
-      document.removeEventListener("visibilitychange", onVisible);
-      window.removeEventListener("focus", onVisible);
+      window.clearInterval(timer);
+      ACTIVITY_EVENTS.forEach(e => window.removeEventListener(e, mark));
+      window.removeEventListener("focus", visible); window.removeEventListener("pageshow", visible);
+      document.removeEventListener("visibilitychange", visible);
     };
-  }, [user?.id, settings?.enabled, settings?.timeout_minutes, locked, doLock]);
+  }, [user?.id, ready, locked, settings?.enabled, settings?.timeout_minutes, refresh, doLock]);
 
-
-  // Manual "Lock screen"
   useEffect(() => {
+    if (!user) return;
     const handler = () => doLock();
     window.addEventListener(LOCK_NOW_EVENT, handler);
-    return () => window.removeEventListener(LOCK_NOW_EVENT, handler);
-  }, [doLock]);
+    const channel = typeof BroadcastChannel === "undefined" ? null : new BroadcastChannel(`screenlock-${user.id}`);
+    if (channel) channel.onmessage = () => { void refresh(); };
+    // Broadcasts request an authoritative recheck; they never unlock anything.
+    const settingsChannel = supabase.channel(`screen-lock-settings-${user.id}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "screen_lock_settings", filter: `user_id=eq.${user.id}` }, () => { void refresh(); }).subscribe();
+    return () => { window.removeEventListener(LOCK_NOW_EVENT, handler); channel?.close(); void supabase.removeChannel(settingsChannel); };
+  }, [user?.id, doLock, refresh]);
 
-  // The lock screen renders directly alongside any concealed live TV relay.
-  // Keeping it in the React tree avoids a portal
-  // host being detached during WebView resume, which cleared the entered code
-  // and left the Unlock button disabled.
   useEffect(() => {
-    if (typeof document === "undefined" || !locked) return;
-
+    if (!locked) return;
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    const body = document.body;
     const html = document.documentElement;
-    const prev = {
-      bodyOverflow: document.body.style.overflow,
-      bodyPointer: document.body.style.pointerEvents,
-      htmlPointer: html.style.pointerEvents,
-    };
-
-    const unblock = () => {
-      if (document.body.style.pointerEvents === "none") document.body.style.pointerEvents = "auto";
-      if (html.style.pointerEvents === "none") html.style.pointerEvents = "auto";
-      document.body.removeAttribute("data-scroll-locked");
-      document.body.style.overflow = "hidden";
-      Array.from(document.body.children).forEach((child) => {
-        if (child.hasAttribute("data-screen-lock-content")) return;
-        if (child.hasAttribute("inert")) child.removeAttribute("inert");
-        if (child.getAttribute("aria-hidden") === "true") {
-          child.removeAttribute("aria-hidden");
-          child.removeAttribute("data-aria-hidden");
-        }
-      });
-    };
-    unblock();
-
-    return () => {
-      document.body.style.overflow = prev.bodyOverflow;
-      document.body.style.pointerEvents = prev.bodyPointer;
-      html.style.pointerEvents = prev.htmlPointer;
-    };
+    const previous = { overflow: body.style.overflow, pointer: body.style.pointerEvents, htmlPointer: html.style.pointerEvents };
+    body.style.pointerEvents = "auto"; html.style.pointerEvents = "auto";
+    body.removeAttribute("data-scroll-locked"); body.style.overflow = "hidden";
+    return () => { body.style.overflow = previous.overflow; body.style.pointerEvents = previous.pointer; html.style.pointerEvents = previous.htmlPointer; };
   }, [locked]);
 
-  // Initial settings gate mounting; resume only covers the existing tree.
   if (user && !ready) return <BmSplash />;
-  if (!user && screenLockMayBeLocked()) return <BmSplash />;
-  const showLock = Boolean(user && ready && settings && locked);
+  const showLock = Boolean(user && ready && locked);
   const keepConnection = liveConnections > 0;
   return (
     <ScreenLockKeepAliveContext.Provider value={registerLiveConnection}>
-      {/* Stable position preserves the TV peer and staff relays across locking.
-          hidden + inert conceal protected content and prevent keyboard access. */}
+      {/* Keep transport peers stable; fresh protected reads remain blocked on the server. */}
       <div data-screen-lock-content className={showLock ? "hidden" : "contents"} hidden={showLock} inert={showLock} aria-hidden={showLock ? true : undefined}>
         {(!showLock || keepConnection) && children}
       </div>
-      {showLock && settings && <ScreenLockOverlay onUnlock={() => doUnlock()} />}
+      {showLock && <ScreenLockOverlay onUnlock={() => { void doUnlock(); }} />}
       {showLock && <div data-screen-lock-alerts>{!keepConnection && lockedExtras}</div>}
       {resumeChecking && <BmSplash />}
     </ScreenLockKeepAliveContext.Provider>

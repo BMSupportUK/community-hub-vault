@@ -24,7 +24,7 @@ function PortalEntry() {
   async function unlock(loginCode: string) {
     const r = await redeem({ data: { code, loginCode } });
     await supabase.auth.signOut({ scope: "local" });
-    const { data, error } = await supabase.auth.verifyOtp({ token_hash: r.tokenHash, type: "magiclink" });
+    const { data, error } = await supabase.auth.setSession({ access_token: r.accessToken, refresh_token: r.refreshToken });
     if (error || !data.user) throw new Error("We couldn't sign you in. Request a new code.");
     window.localStorage.setItem(PORTAL_USER_KEY, data.user.id);
     window.localStorage.setItem(PORTAL_EXPIRY_KEY, r.expiresAt);

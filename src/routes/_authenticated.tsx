@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense, type Reac
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { isAdminUnlocked } from "@/lib/admin-unlock";
+import { isAdminUnlocked, useApplicationAccess } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers, setPresencePage } from "@/hooks/use-online-users";
@@ -125,6 +125,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthLayout() {
   const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user, isFanZoneOnly, roles } = useAuth();
+  useApplicationAccess(user?.id);
   // Fan Zone applicants wait on the Fan Zone screen, never the BM Support gate.
   const { info: fanZoneInfo } = useFanZoneMembershipState(user?.id);
   const fanZoneApplicant = fanZoneInfo?.status === "pending";

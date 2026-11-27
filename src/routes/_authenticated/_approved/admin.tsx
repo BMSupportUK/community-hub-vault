@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { vpnCredits, panelCreditsFn } from "@/lib/vpn-admin.functions";
+import { useApplicationAccess } from "@/lib/admin-unlock";
+import { revokeDashboardAccess, unlockDashboardFactor } from "@/lib/application-access.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
 import { ADMIN_CUSTOMERS_LINK, adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
@@ -96,13 +98,9 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   const { user, roles } = useAuth();
   const isFz = zone === "fanzone";
   const [hasPin, setHasPin] = useState<boolean | null>(null);
-  // Read the saved unlock synchronously so an unlocked admin never sees the PIN screen flash.
-  const initialUntil = (() => {
-    if (!user || typeof window === "undefined") return 0;
-    try { const v = parseInt(localStorage.getItem(UNLOCK_KEY(user.id)) ?? "0", 10); return v > Date.now() ? v : 0; } catch { return 0; }
-  })();
-  const [unlocked, setUnlocked] = useState(initialUntil > 0);
-  const [unlockedUntil, setUnlockedUntil] = useState(initialUntil);
+  const access = useApplicationAccess(user?.id);
+  const revoke = useServerFn(revokeDashboardAccess);
+  const unlocked = access.dashboard && !!access.dashboardUntil && Date.parse(access.dashboardUntil) > Date.now();
   const { next, chat } = useSearch({ strict: false }) as { next?: string; chat?: string };
   const navigate = useNavigate();
   // Old chat alerts link here with ?chat=<orderId> — send them to the full secure page.
@@ -116,36 +114,18 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
     (async () => {
       const { data } = await supabase.from("vault_pins").select("user_id").eq("user_id", user.id).maybeSingle();
       setHasPin(!!data);
-      // Restore an unexpired unlock from this browser session
-      try {
-        const raw = localStorage.getItem(UNLOCK_KEY(user.id));
-        const until = raw ? parseInt(raw, 10) : 0;
-        if (until > Date.now()) {
-          setUnlocked(true);
-          setUnlockedUntil(until);
-        } else if (raw) {
-          localStorage.removeItem(UNLOCK_KEY(user.id));
-        }
-      } catch {}
     })();
   }, [user]);
 
-  useEffect(() => {
-    if (!unlocked) return;
-    const t = setTimeout(() => setUnlocked(false), Math.max(0, unlockedUntil - Date.now()));
-    return () => clearTimeout(t);
-  }, [unlocked, unlockedUntil]);
-
   const lockNow = () => {
-    setUnlocked(false);
-    if (user) { try { localStorage.removeItem(UNLOCK_KEY(user.id)); } catch {} }
+    void revoke().finally(() => window.dispatchEvent(new Event("bm-access-change")));
   };
 
   const isAdminOrManagement = roles.includes("admin") || roles.includes("management");
   const [vpnBalance, setVpnBalance] = useState<string | null>(null);
   const [panelBalance, setPanelBalance] = useState<string | null>(null);
   useEffect(() => {
-    if (isFz || !isAdminOrManagement) return;
+    if (isFz || !isAdminOrManagement || !unlocked) return;
     let on = true;
     const load = () => {
       vpnCredits().then((r) => { if (on) setVpnBalance(r.balance); }).catch(() => {});
@@ -154,7 +134,7 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
     load();
     const t = window.setInterval(load, 30_000);
     return () => { on = false; window.clearInterval(t); };
-  }, [isFz, isAdminOrManagement]);
+  }, [isFz, isAdminOrManagement, unlocked]);
 
   if (!(isFz ? canOpenFanZoneAdminPanel(roles) : canOpenAdminPanel(roles))) return <Navigate to="/home" />;
   const isAdminRole = roles.includes("admin") || roles.includes("management");
@@ -211,11 +191,8 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
           <SecurityGate
             hasPin={hasPin}
             onUnlocked={() => {
-              const until = Date.now() + UNLOCK_TTL_MS;
-              setUnlocked(true);
-              setUnlockedUntil(until);
               setHasPin(true);
-              if (user) { try { localStorage.setItem(UNLOCK_KEY(user.id), String(until)); } catch {} }
+              window.dispatchEvent(new Event("bm-access-change"));
               if (next && next.startsWith("/")) {
                 const [to, query = ""] = next.split("?");
                 const search = Object.fromEntries(new URLSearchParams(query));
@@ -234,6 +211,7 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
 function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () => void }) {
   const { user } = useAuth();
   const unlockFn = useServerFn(unlockWithStaffPin);
+  const factorUnlock = useServerFn(unlockDashboardFactor);
   const requestResetFn = useServerFn(requestStaffPinReset);
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
@@ -313,6 +291,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         code: totpCode,
       });
       if (vErr) throw new Error("Incorrect 2FA code");
+      await factorUnlock({ data: {} });
       await clearFailures();
       toast.success("Owner unlocked");
       onUnlocked();
@@ -329,21 +308,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
     if (normalized.length < 8) return toast.error("Enter a valid backup code");
     setBusy(true);
     try {
-      const hash = await sha256Hex(`${user.id}:${normalized}`);
-      const { data: row, error } = await supabase
-        .from("admin_backup_codes")
-        .select("id, used_at")
-        .eq("user_id", user.id)
-        .eq("code_hash", hash)
-        .maybeSingle();
-      if (error) throw error;
-      if (!row) throw new Error("Invalid backup code");
-      if (row.used_at) throw new Error("This backup code has already been used");
-      const { error: upErr } = await supabase
-        .from("admin_backup_codes")
-        .update({ used_at: new Date().toISOString() })
-        .eq("id", row.id);
-      if (upErr) throw upErr;
+      await factorUnlock({ data: { backupCode: normalized } });
       await clearFailures();
       toast.success("Owner unlocked with backup code");
       onUnlocked();

@@ -37,6 +37,7 @@
 - Manual subscription groups use explicit checkout-link customer/account IDs, never site-profile or email matching; admin RPCs validate grouping and renewal targets to keep manual accounts independent.
 - Manual credential access verifies email codes plus a salted PBKDF2 PIN atomically; initial enrollment checks an existing paid manual TV login so mailbox access alone cannot enroll or reset a PIN.
 - Manual registration exceptions persist on checkout links, enforced by admin-only RPCs and a write trigger; creation saves atomically and PIN access remains independent.
+- Application locks use private session-bound grants, a direct-data request guard and server action checks; browser state is presentation only so forged unlocks cannot fetch protected data.
 <!-- LOVABLE:END -->
 - playSound resolves uploaded overrides for all web callers; closed-app Android tones require an APK rebuild.
 - Tests: `bun run test` (isolated; e2e separate); no Vitest; restore globals.
