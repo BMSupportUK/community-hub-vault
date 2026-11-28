@@ -1,4 +1,5 @@
 # tv-player activity rules
+- 📻 Radio has a home pill and station preview; radio stays out of TV EPG/drawers.
 - Movie selections use showFilm with cached MediaHero metadata and existing playback commands; Back restores the retained poster view so category and scroll selection are not reset.
 - VPN Settings and playback use VpnServerList for lowest-raw-traffic-first rows with numeric readings and relative bars; bars compare listed servers, never imply an undocumented capacity percentage.
 - Upcoming programme selections and their reminder icons confirm reminder changes before preview routing; current programmes/channel labels retain normal playback behaviour.

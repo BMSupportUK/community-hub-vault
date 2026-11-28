@@ -35,7 +35,7 @@ const GuideRow=memo(function GuideRow({ch,n,on,rows,listed,start,now,axisWidth,g
    </div>;
 });
 
-export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg,cache,feedLabel}){
+export function LiveGuide({radioMode=false,onFull,maxScreens=1,onMulti,channels,categories,category,onCategory,allCount,selected,onPreview,onChoose,onReminder,onCatchup,reminders,isFavourite,onFavourite,playing,hidden,query,onQuery,onVoice,toast,epg,cache,feedLabel}){
  const [start,setStart]=useState(slotOf(Date.now()));
  const [focus,setFocus]=useState(null); // {channel, programme}
  const [catOpen,setCatOpen]=useState(false);
@@ -54,7 +54,7 @@ export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,categ
  const onAt=(id,t)=>list(id).find(p=>p.start<=t&&p.end>t);
  const nextAfter=(id,p)=>list(id).find(q=>q.start>=p.end);
  const shownCh=focus?.channel||selected;
- const shownProg=(focus?.programme&&shownCh?list(shownCh.id).find(p=>p.id===focus.programme.id):null)||(shownCh?onAt(shownCh.id,now):null);
+ const shownProg=radioMode?null:(focus?.programme&&shownCh?list(shownCh.id).find(p=>p.id===focus.programme.id):null)||(shownCh?onAt(shownCh.id,now):null);
  const catName=id=>categories.find(c=>c.id===id)?.name||'';
  const currentCat=category==='all'?'All':catName(category);
  function pick(ch,p){
@@ -72,39 +72,45 @@ export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,categ
  const axis=guideAxis.guideAxis(start,start+WINDOW,[],gridWidth);
  const live$=useRef({});live$.current={pick,setFocus,onAt,onReminder,onCatchup,reminders};
  const handlers=useRef({pick:(c,p)=>live$.current.pick(c,p),focusCh:c=>live$.current.setFocus({channel:c,programme:live$.current.onAt(c.id,Date.now())}),focus:(c,p)=>live$.current.setFocus({channel:c,programme:p}),reminder:(c,p)=>live$.current.onReminder(c,p),catchup:c=>live$.current.onCatchup(c),isSet:(c,p)=>live$.current.reminders.some(r=>r.id===c.id+':'+p.start)}).current;
- return <div className="lg">
+ return <div className={'lg'+(radioMode?' lg-radio':'')}>
   <div className="lg-top">
    <div className="lg-preview" role="button" title={selected?'Click for full screen':undefined} onClick={()=>{if(!selected){toast('Click a channel to preview it');return;}onFull(selected);}}>
-    {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen} audioOnly={isRadio(playing[0].item)}/>:<div className="preview-placeholder"><img src={isRadio(shownCh)?'radio_studio.jpg':'preview_family.jpg'} alt={isRadio(shownCh)?'Radio station DJ mixing songs in the studio':'Family on a sofa watching TV, one pointing a remote at the screen'}/></div>}
+    {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen} audioOnly={isRadio(playing[0].item)}/>:<div className="preview-placeholder"><img src={radioMode||isRadio(shownCh)?'radio_studio.jpg':'preview_family.jpg'} alt={radioMode||isRadio(shownCh)?'Radio station DJ mixing songs in the studio':'Family on a sofa watching TV, one pointing a remote at the screen'}/></div>}
     {guideActions.previewFullScreen(playing)&&<button className="lg-full" aria-label="Full screen" title="Full screen" onClick={e=>{e.stopPropagation();onFull(guideActions.previewFullScreen(playing));}}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>}
    </div>
    <div className="lg-info">
     {feedLabel&&<div role="status" className="feed-pill preview-feed">{feedLabel}</div>}
     <div className="lg-pills">
      {searchOpen&&<input autoFocus aria-label="Search TV" placeholder="Search channels" value={query} onChange={e=>onQuery(e.target.value)}/>}
-     <button className="pill" onClick={()=>{setSearchOpen(o=>!o);if(searchOpen)onQuery('');}}>🔍 Search TV</button>
+     <button className="pill" onClick={()=>{setSearchOpen(o=>!o);if(searchOpen)onQuery('');}}>🔍 {radioMode?'Search radio':'Search TV'}</button>
      <VoiceButton onText={onVoice} onError={toast}/>
     </div>
-    <h2 className="lg-title">{shownProg?.title||shownCh?.name||'Click a channel to preview'}</h2>
+    <h2 className="lg-title">{shownProg?.title||shownCh?.name||(radioMode?'Choose a radio station':'Click a channel to preview')}</h2>
     {shownProg&&<div className="lg-time">{clock(shownProg.start)} – {clock(shownProg.end)}{left&&<>  ·  {left}</>}</div>}
     {live&&<div className="lg-bar"><i style={{width:Math.min(100,Math.round((now-shownProg.start)/(shownProg.end-shownProg.start)*100))+'%'}}/></div>}
     {shownProg?.desc&&<p className="lg-desc">{shownProg.desc}</p>}
     <div className="lg-next"><span>{nx?<>Next:  {clock(nx.start)}  {nx.title}</>:''}</span>{shownCh&&<button className="lg-star" aria-label={(isFavourite(shownCh)?'Remove favourite: ':'Add favourite: ')+shownCh.name} aria-pressed={isFavourite(shownCh)} onClick={()=>onFavourite(shownCh)}>{isFavourite(shownCh)?'★':'☆'}</button>}<span className="lg-cat">{shownCh?catName(shownCh.category):''}</span></div>
    </div>
   </div>
-  <div className="lg-dates">
+  {radioMode?<div className="lg-dates">
+   <strong>📻 Radio stations</strong>
+   <button className="mini" aria-label="Choose a radio category" onClick={()=>setCatOpen(true)}>☰ Radio category: {currentCat}</button>
+  </div>:<div className="lg-dates">
    <strong>{dateLabel}</strong>
    <button className="mini" aria-label="Back 24 hours" onClick={()=>setStart(s=>s-86400000)}>📅 ◀ 24h</button>
    <button className="mini" aria-label="Back to now" onClick={()=>setStart(slotOf(Date.now()))}>Now</button>
    <button className="mini" aria-label="Forward 24 hours" onClick={()=>setStart(s=>s+86400000)}>24h ▶</button>
    <button className="mini" aria-label="Choose a category" onClick={()=>setCatOpen(true)}>☰ Category: {currentCat}</button>
    <span className="lg-step"><button className="mini" aria-label="Earlier" onClick={()=>setStart(s=>s-SLOT)}>◀</button><button className="mini" aria-label="Later" onClick={()=>setStart(s=>s+SLOT)}>▶</button></span>
-  </div>
-  <div className="lg-grid" ref={grid}>
+  </div>}
+  {radioMode?<div className="lg-radio-list" ref={grid}>
+   {channels.map(ch=><button key={ch.id} className={selected?.id===ch.id?'selected':''} onFocus={()=>setFocus({channel:ch,programme:null})} onClick={()=>pick(ch,null)}><ChannelLogo channel={ch}/><span>{ch.name}<small>{catName(ch.category)}</small></span></button>)}
+   {!channels.length&&<p className="empty">No radio stations in {currentCat}.</p>}
+  </div>:<div className="lg-grid" ref={grid}>
    <div className="lg-row lg-head" style={{width:axis.width+240}}><div className="lg-ch">{new Date(start).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</div><div className="lg-times">{axis.times.slice(0,-1).map(t=><span key={t} style={{left:axis.x(t)}}>{clock(t)}</span>)}</div></div>
    {channels.map((ch,n)=><GuideRow key={ch.id} ch={ch} n={n} on={selected?.id===ch.id} rows={guide[ch.id]} listed={list(ch.id)} start={start} now={now} axisWidth={axis.width} gridWidth={gridWidth} query={query} category={catName(ch.category)} reminderKey={reminderKeyFor(reminders,ch.id)} h={handlers}/>)}
    {!channels.length&&<p className="empty">No channels in {currentCat}.</p>}
-  </div>
+  </div>}
   {catOpen&&<div className="lg-scrim" onClick={()=>setCatOpen(false)}><div className="lg-cats" role="dialog" aria-label="Categories" onClick={e=>e.stopPropagation()}>
    <h3>Categories</h3>
    <div className="lg-cat-list">

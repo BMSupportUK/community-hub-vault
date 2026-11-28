@@ -24,6 +24,12 @@ public class RadioChannelTest {
         assertFalse(RadioChannel.is("Sky Sports Main Event", "Sports"));
     }
 
+    @Test public void radioStationsStayOutOfTheTelevisionGuide() {
+        assertFalse(RadioChannel.inTvGuide("BBC Radio 1", "UK | Music"));
+        assertFalse(RadioChannel.inTvGuide("Capital FM", "UK | Radio Stations"));
+        assertTrue(RadioChannel.inTvGuide("BBC One", "UK | Free to air"));
+    }
+
     @Test public void advancingAudioWithoutPicturesIsNotAStall() {
         LiveReconnect recovery = new LiveReconnect();
         recovery.opened(0);

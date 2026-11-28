@@ -1546,6 +1546,7 @@ public class MainActivity extends Activity {
         LinearLayout small = row();
         small.addView(smallButton("🏆 Sports guide", v -> askSportsMode()), smallWeight("🏆 Sports guide"));
         small.addView(smallButton("⏰ Catch up", v -> pickCatchupChannel()), smallWeight("⏰ Catch up"));
+        small.addView(smallButton("📻 Radio", v -> showRadio()), smallWeight("📻 Radio"));
         small.addView(smallButton("★ Favourites", v -> showSaved("fav", "Favourites")), smallWeight("★ Favourites"));
         small.addView(smallButton("⟲ Recently watched", v -> showSaved("recent", "Recently watched")), smallWeight("⟲ Recently watched"));
         small.addView(smallButton("⚙ Settings", v -> showSettings()), smallWeight("⚙ Settings"));
@@ -4972,12 +4973,12 @@ public class MainActivity extends Activity {
             try {
                 JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
                 List<String[]> rows = new ArrayList<>();
-                for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); if (!hideAdult(o.optString("category_name"))) rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
+                for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); if (!hideAdult(o.optString("category_name")) && RadioChannel.inTvGuide("", o.optString("category_name"))) rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
                 String[] start = CategoryOrder.liveDefault(CategoryOrder.liveNavigation(rows), null);
                 if (start == null) return;
                 int n = 0;
                 for (Item it : liveList()) {
-                    if (!start[0].equals(it.category)) continue;
+                    if (!start[0].equals(it.category) || !RadioChannel.inTvGuide(it.name, start[1])) continue;
                     if (n++ >= 40) break;
                     guideIo.execute(() -> {
                         long now = System.currentTimeMillis() / 1000;
@@ -5000,6 +5001,107 @@ public class MainActivity extends Activity {
         });
     }
     private long guideWindowSecs() { return getResources().getConfiguration().smallestScreenWidthDp < 600 ? 10800 : 7200; }
+
+    /** Dedicated radio browser: stations and a preview, with no television programme grid. */
+    private void showRadio() {
+        screen = "radio"; back = this::showHome;
+        stopPreview(); boxPreviewFrame = null; restoreGuide();
+        LinearLayout root = column();
+        LinearLayout head = row(); head.setGravity(Gravity.CENTER_VERTICAL);
+        head.addView(text("📻 Radio", 26, TEXT, true));
+        head.addView(new View(this), new LinearLayout.LayoutParams(0, 1, 1));
+        head.addView(headerPill("⌂ Home", v -> showHome()));
+        root.addView(head);
+        LinearLayout body = row(); body.setBaselineAligned(false);
+        LinearLayout previewColumn = column();
+        FrameLayout frame = new FrameLayout(this);
+        androidx.media3.ui.PlayerView pv = new androidx.media3.ui.PlayerView(this);
+        pv.setUseController(false); pv.setBackgroundColor(Color.BLACK); pv.setFocusable(false);
+        frame.addView(pv, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        RadioChannel.installArt(this, frame);
+        previewPoster = frame; previewItem = null;
+        frame.setFocusable(true); frame.setClickable(true); frame.setBackground(focusBg(8));
+        frame.setContentDescription("Radio preview · choose a station, then press OK again for full screen");
+        frame.setOnClickListener(v -> openPreviewFullScreen());
+        addPreviewFullIcon(frame, this::openPreviewFullScreen);
+        previewColumn.addView(frame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        TextView status = text("Choose a radio station to preview it", 15, MUTED, false);
+        previewColumn.addView(status);
+        body.addView(previewColumn, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+        LinearLayout browser = column();
+        Button category = button("☰ Radio categories", v -> {});
+        browser.addView(category);
+        TextView station = text("Loading radio stations…", 20, TEXT, true);
+        browser.addView(station);
+        ListView stations = list();
+        browser.addView(stations, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        body.addView(browser, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f));
+        root.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        setContentView(root);
+
+        final List<String[]> cats = new ArrayList<>();
+        final List<Item> all = new ArrayList<>(), shown = new ArrayList<>();
+        final String[] selected = { null };
+        final java.util.Map<String, String> names = new java.util.HashMap<>();
+        final Runnable[] apply = { null };
+        apply[0] = () -> {
+            shown.clear();
+            for (Item it : all) if (selected[0] == null || selected[0].equals(it.category)) shown.add(it);
+            List<String> labels = new ArrayList<>();
+            for (Item it : shown) labels.add(it.name);
+            stations.setAdapter(adapter(labels));
+            station.setText(shown.isEmpty() ? "No radio stations in this category" : "Choose a station · OK again for full screen");
+            stations.requestFocus();
+        };
+        stations.setOnItemClickListener((parent, view, position, id) -> {
+            if (position < 0 || position >= shown.size()) return;
+            Item it = shown.get(position);
+            if (previewItem != null && previewItem.id.equals(it.id) && previewPlaying) open(it);
+            else schedulePreview(it, pv, status);
+        });
+        category.setOnClickListener(v -> {
+            if (cats.isEmpty()) return;
+            String[] labels = new String[cats.size() + 1]; labels[0] = "All radio stations";
+            for (int i = 0; i < cats.size(); i++) labels[i + 1] = cats.get(i)[1];
+            new AlertDialog.Builder(this).setTitle("Radio categories").setItems(labels, (dialog, which) -> {
+                selected[0] = which == 0 ? null : cats.get(which - 1)[0];
+                category.setText("☰ " + labels[which]);
+                apply[0].run();
+            }).show();
+        });
+        openIo.execute(() -> {
+            try {
+                JSONArray ca = orderedCategories("live", new JSONArray(cachedGet("live", "get_live_categories", "")));
+                liveChannels = liveList();
+                for (int i = 0; i < ca.length(); i++) {
+                    JSONObject o = ca.getJSONObject(i);
+                    if (!hideAdult(o.optString("category_name"))) names.put(o.optString("category_id"), o.optString("category_name"));
+                }
+                List<Item> found = new ArrayList<>();
+                for (Item it : liveChannels) {
+                    String cat = names.get(it.category);
+                    if (cat != null && RadioChannel.is(it.name, cat)) found.add(it);
+                }
+                List<String[]> rows = new ArrayList<>();
+                for (int i = 0; i < ca.length(); i++) {
+                    JSONObject o = ca.getJSONObject(i); String id = o.optString("category_id");
+                    for (Item it : found) if (id.equals(it.category)) { rows.add(new String[]{id, o.optString("category_name")}); break; }
+                }
+                List<String[]> ordered = CategoryOrder.liveNavigation(rows);
+                List<LiveDrawerData.Channel> drawer = new ArrayList<>();
+                for (Item it : found) drawer.add(new LiveDrawerData.Channel(it.id, it.name, it.category, names.get(it.category), null));
+                ui.post(() -> {
+                    if (!"radio".equals(screen)) return;
+                    all.clear(); all.addAll(found); cats.clear(); cats.addAll(ordered);
+                    LiveDrawerData.set(ordered, drawer);
+                    apply[0].run();
+                    if (found.isEmpty()) station.setText("No radio stations found");
+                });
+            } catch (Exception ex) {
+                ui.post(() -> { if ("radio".equals(screen)) station.setText("Couldn't load radio stations – check your login in Settings"); });
+            }
+        });
+    }
 
     /** Channels down the left, time across the top; OK on a programme on now watches it, on a future one sets/removes a reminder. */
     private void showTvGuide() { showTvGuide(null); }
@@ -5293,6 +5395,7 @@ public class MainActivity extends Activity {
         btns.getChildAt(3).setOnClickListener(v -> grid.shiftDay(1));
 
         final List<String[]> catRows = new ArrayList<>();
+        final java.util.Map<String, String> guideCategoryNames = new java.util.HashMap<>();
         final java.util.Set<String> requested = new java.util.HashSet<>();
         final int[] gen = { 0 };
         final String[] previewPending = { null };
@@ -5303,7 +5406,7 @@ public class MainActivity extends Activity {
             shownCh.clear(); requested.clear(); gen[0]++;
             java.util.Set<String> allowed = new java.util.HashSet<>(); for (String[] c : catRows) allowed.add(c[0]);
             boolean favTab = PhoneLiveRow.FAVOURITES.equals(cat[0]);
-            for (Item it : liveChannels) if (allowed.contains(it.category) && (favTab ? isSaved("fav", it) : (cat[0].equals("*") || cat[0].equals(it.category)))) shownCh.add(it);
+            for (Item it : liveChannels) if (allowed.contains(it.category) && RadioChannel.inTvGuide(it.name, guideCategoryNames.get(it.category)) && (favTab ? isSaved("fav", it) : (cat[0].equals("*") || cat[0].equals(it.category)))) shownCh.add(it);
             // Stable sort: Womens Football rows sit above FA Player ones; everything else keeps provider order.
             java.util.Collections.sort(shownCh, (a, b) -> ChannelListOrder.compare(a.name, b.name));
             catBtn.setText((live ? "☰ Categories: " : "Category: ") + cat[1]);
@@ -5475,7 +5578,7 @@ public class MainActivity extends Activity {
                 liveChannels = liveList(); // cached per saved list, so a refreshed list is picked up
                 List<String[]> rows = new ArrayList<>();
                 java.util.Set<String> adultIds = new java.util.HashSet<>();
-                for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); if (hideAdult(o.optString("category_name"))) { adultIds.add(o.optString("category_id")); continue; } rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
+                for (int i = 0; i < ca.length(); i++) { JSONObject o = ca.getJSONObject(i); if (hideAdult(o.optString("category_name"))) { adultIds.add(o.optString("category_id")); continue; } if (!RadioChannel.inTvGuide("", o.optString("category_name"))) continue; rows.add(new String[]{o.optString("category_id"), o.optString("category_name")}); }
                 List<String[]> liveRows = CategoryOrder.liveNavigation(rows);
                 ui.post(() -> {
                     if (!"tvguide".equals(screen)) return;
@@ -5484,7 +5587,8 @@ public class MainActivity extends Activity {
                     List<LiveDrawerData.Channel> drawerChannels = new ArrayList<>();
                     java.util.Map<String, String> catNames = new java.util.HashMap<>();
                     for (String[] r : liveRows) catNames.put(r[0], r[1]);
-                    for (Item it : liveChannels) if (!adultIds.contains(it.category)) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, catNames.get(it.category), null));
+                    guideCategoryNames.clear(); guideCategoryNames.putAll(catNames);
+                    for (Item it : liveChannels) if (!adultIds.contains(it.category) && RadioChannel.inTvGuide(it.name, catNames.get(it.category))) drawerChannels.add(new LiveDrawerData.Channel(it.id, it.name, it.category, catNames.get(it.category), null));
                     LiveDrawerData.set(liveRows, drawerChannels);
                     String[] start = CategoryOrder.liveDefault(liveRows, startCat);
                     if (start == null) { progTitle.setText("No Live TV categories available"); return; }

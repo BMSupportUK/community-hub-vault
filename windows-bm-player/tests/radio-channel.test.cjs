@@ -1,5 +1,5 @@
 const {test,expect}=require('bun:test');
-const {isRadio}=require('../radio-channel.cjs');
+const {isRadio,splitRadioChannels}=require('../radio-channel.cjs');
 const recovery=require('../stream-recovery.cjs');
 const {feedStatus}=require('../feed-status.cjs');
 
@@ -7,6 +7,14 @@ test('radio categories and station names are audio-only, ordinary TV is unchange
  expect(isRadio({name:'BBC Radio 1',categoryName:'UK | Music'})).toBe(true);
  expect(isRadio({name:'Capital FM',categoryName:'UK | Radio Stations'})).toBe(true);
  expect(isRadio({name:'BBC One',categoryName:'UK | Free to air'})).toBe(false);
+});
+
+test('radio and television channels have separate browsers and EPG categories',()=>{
+ const data={categories:[{id:'1',name:'UK | Free to air'},{id:'2',name:'UK | Radio Stations'}],items:[{id:'tv',name:'BBC One',category:'1'},{id:'radio',name:'Capital FM',category:'2'}]};
+ expect(splitRadioChannels(data,false).items.map(item=>item.id)).toEqual(['tv']);
+ expect(splitRadioChannels(data,false).categories.map(category=>category.id)).toEqual(['1']);
+ expect(splitRadioChannels(data,true).items.map(item=>item.id)).toEqual(['radio']);
+ expect(splitRadioChannels(data,true).categories.map(category=>category.id)).toEqual(['2']);
 });
 
 test('radio never reconnects for an absent video picture',()=>{

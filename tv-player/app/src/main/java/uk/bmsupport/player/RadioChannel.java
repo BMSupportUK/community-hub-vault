@@ -16,6 +16,11 @@ final class RadioChannel {
         return mentionsRadio(name) || mentionsRadio(category);
     }
 
+    /** Radio has its own home-screen browser; it never occupies a television EPG row. */
+    static boolean inTvGuide(String name, String category) {
+        return !is(name, category);
+    }
+
     private static boolean mentionsRadio(String value) {
         if (value == null) return false;
         String normal = Normalizer.normalize(value, Normalizer.Form.NFKC).toLowerCase(Locale.ROOT);

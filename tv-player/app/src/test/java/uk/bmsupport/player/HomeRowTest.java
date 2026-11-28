@@ -31,10 +31,10 @@ import static org.robolectric.Shadows.shadowOf;
 public class HomeRowTest {
 
     private static final String[] PLAIN = {
-            "\uD83D\uDCC5 TV guide", "\uD83C\uDFC6 Sports guide", "\u2605 Favourites",
+            "\uD83C\uDFC6 Sports guide", "⏰ Catch up", "\uD83D\uDCFB Radio", "\u2605 Favourites",
             "\u27F2 Recently watched", "\u2699 Settings"};
     private static final String[] WITH_MULTI = {
-            "\uD83D\uDCC5 TV guide", "\uD83D\uDDA5 Multi-screen (3)", "\uD83C\uDFC6 Sports guide",
+            "\uD83D\uDDA5 Multi-screen (3)", "\uD83C\uDFC6 Sports guide", "⏰ Catch up", "\uD83D\uDCFB Radio",
             "\u2605 Favourites", "\u27F2 Recently watched", "\u2699 Settings"};
 
     private LinearLayout buildRow(MainActivity activity, String[] labels, int widthDp, boolean newWay)
