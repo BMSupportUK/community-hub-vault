@@ -19,9 +19,13 @@ final class VlcPreview {
         final SoundBoost.Vlc boost;
         final String[] urls;
         final int index;
+        final boolean radio;
         VlcStage stage;
         Session(LibVLC vlc, MediaPlayer player, SoundBoost.Vlc boost, String[] urls, int index) {
-            this.vlc = vlc; this.player = player; this.boost = boost; this.urls = urls; this.index = index;
+            this(vlc, player, boost, urls, index, false);
+        }
+        Session(LibVLC vlc, MediaPlayer player, SoundBoost.Vlc boost, String[] urls, int index, boolean radio) {
+            this.vlc = vlc; this.player = player; this.boost = boost; this.urls = urls; this.index = index; this.radio = radio;
         }
         @Override public void close() {
             player.setEventListener(null);
@@ -37,7 +41,7 @@ final class VlcPreview {
         released = true;
         ui.removeCallbacksAndMessages(null);
         mp.setEventListener(null);
-        Session session = new Session(vlc, mp, boost, urls, at);
+        Session session = new Session(vlc, mp, boost, urls, at, radio);
         session.stage = stage;
         if (stage != null) { stage.player = mp; stage.full(true); }
         else {
@@ -57,7 +61,7 @@ final class VlcPreview {
     private VlcStage stage;
     private String[] urls;
     private int at, errors;
-    private boolean released, playing, muted;
+    private boolean released, playing, muted, radio;
     private final Context ctx;
     private final LiveRideThrough ride = new LiveRideThrough();
     private final LiveReconnect reconnect = new LiveReconnect();
@@ -82,7 +86,11 @@ final class VlcPreview {
                     org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
                     media.release();
                     if (st != null && !retryQueued) {
-                        if (reconnect.stalled(st.displayedPictures, st.decodedAudio, now)) reconnect();
+                        if (radio) {
+                            // Radio has no video frames by design. Only advancing sound/data proves it is healthy.
+                            boolean noData = reconnect.noData(st.readBytes, -1, now);
+                            if (reconnect.stalled(0, st.decodedAudio, now) || noData) reconnect();
+                        } else if (reconnect.stalled(st.displayedPictures, st.decodedAudio, now)) reconnect();
                         else if (playing && ride.frozen(st.displayedPictures, st.decodedAudio, now) && ride.allowFreezeReopen()) open();
                     }
                 }
@@ -106,19 +114,24 @@ final class VlcPreview {
         } catch (Exception ignored) {}
     }
 
-    VlcPreview(Context c, ViewGroup host, String[] urls, Listener l) { this(c, host, -1, urls, l); }
+    VlcPreview(Context c, ViewGroup host, String[] urls, Listener l) { this(c, host, -1, urls, false, l, null); }
+    VlcPreview(Context c, ViewGroup host, String[] urls, boolean radio, Listener l) { this(c, host, -1, urls, radio, l, null); }
 
     /** index: where the picture goes in host (-1 = on top), so Multi-screen labels stay above it. */
     VlcPreview(Context c, ViewGroup host, int index, String[] urls, Listener l) {
-        this(c, host, index, urls, l, null);
+        this(c, host, index, urls, false, l, null);
+    }
+    VlcPreview(Context c, ViewGroup host, int index, String[] urls, boolean radio, Listener l) {
+        this(c, host, index, urls, radio, l, null);
     }
 
     VlcPreview(Context c, ViewGroup host, String[] urls, Listener l, Session carried) {
-        this(c, host, -1, urls, l, carried);
+        this(c, host, -1, urls, carried != null && carried.radio, l, carried);
     }
 
-    private VlcPreview(Context c, ViewGroup host, int index, String[] urls, Listener l, Session carried) {
+    private VlcPreview(Context c, ViewGroup host, int index, String[] urls, boolean radio, Listener l, Session carried) {
         this.ctx = c.getApplicationContext(); this.host = host; this.urls = urls; this.listener = l;
+        this.radio = radio || (carried != null && carried.radio);
         if (carried != null) {
             vlc = carried.vlc; mp = carried.player; boost = carried.boost;
             this.urls = carried.urls; at = carried.index;
@@ -141,6 +154,7 @@ final class VlcPreview {
             else host.addView(layout, index, new FrameLayout.LayoutParams(-1, -1));
             mp.attachViews(layout, null, false, false);
         }
+        if (this.radio) RadioChannel.installArt(c, layout);
         mp.setEventListener(ev -> {
             if (released) return;
             if (ev.type == MediaPlayer.Event.Playing) ui.post(() -> { if (!released && !failed) { ui.removeCallbacks(retry); retryQueued = false; reconnect.recovered(); applyVolume(); applyBoost(); playing = true; ride.playing(android.os.SystemClock.elapsedRealtime()); l.playing(); } });

@@ -2,6 +2,7 @@ import React,{memo,useEffect,useRef,useState} from 'react';
 import {VideoSurface} from './video-surface';
 import {VoiceButton} from './voice';
 import guideActions from '../guide-action.cjs';
+import {isRadio} from '../radio-channel.cjs';
 import {ChannelName} from './channel-name';
 import {ChannelLogo} from './channel-logo';
 import guideAxis from '../guide-axis.cjs';
@@ -74,7 +75,7 @@ export function LiveGuide({onFull,maxScreens=1,onMulti,channels,categories,categ
  return <div className="lg">
   <div className="lg-top">
    <div className="lg-preview" role="button" title={selected?'Click for full screen':undefined} onClick={()=>{if(!selected){toast('Click a channel to preview it');return;}onFull(selected);}}>
-    {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen}/>:<div className="preview-placeholder"><img src="preview_family.jpg" alt="Family on a sofa watching TV, one pointing a remote at the screen"/></div>}
+    {playing.length>0?<VideoSurface key={playing[0].item.id} index={0} visible={!hidden&&!catOpen} audioOnly={isRadio(playing[0].item)}/>:<div className="preview-placeholder"><img src={isRadio(shownCh)?'radio_studio.jpg':'preview_family.jpg'} alt={isRadio(shownCh)?'Radio station DJ mixing songs in the studio':'Family on a sofa watching TV, one pointing a remote at the screen'}/></div>}
     {guideActions.previewFullScreen(playing)&&<button className="lg-full" aria-label="Full screen" title="Full screen" onClick={e=>{e.stopPropagation();onFull(guideActions.previewFullScreen(playing));}}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>}
    </div>
    <div className="lg-info">

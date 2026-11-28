@@ -3,6 +3,8 @@
 // Engine states: 2 buffering, 3 playing, 5 ended, 7 error.
 function feedStatus(session, s) {
   if (!session || !s || session.item?.kind !== 'live') return null;
+  // Radio is healthy without a picture; never report it as black or permanently loading.
+  if (session.radio) return null;
   const now = Date.now();
   if (!session.backup && s.state === 3 && now - session.since > 10000 && !(Number(s.w) > 0)) return 'black';
   if (s.state === 2 && session.ready) return 'buffering';

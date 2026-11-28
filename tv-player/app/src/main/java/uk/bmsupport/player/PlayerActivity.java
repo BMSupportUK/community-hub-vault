@@ -486,6 +486,7 @@ public class PlayerActivity extends Activity {
         view.setShowFastForwardButton(jumps);
         view.setShowRewindButton(jumps);
         root.addView(view);
+        if (radioStream()) RadioChannel.installArt(this, root);
         TextView banner = new TextView(this);
         banner.setText("Non 4K Device");
         banner.setTextSize(22);
@@ -684,8 +685,11 @@ public class PlayerActivity extends Activity {
         if (uncovered || !firstFrame) return;
         ui.post(uncover);
     }
+    private boolean radioStream() { return "live".equals(kind()) && getIntent().getBooleanExtra("radio_stream", false); }
+
     private void coverUntilFirstFrame(FrameLayout root) {
-        if (carried != null) { uncovered = true; return; }
+        // Radio has no first video frame: keep its sound on and show the studio artwork instead.
+        if (radioStream() || carried != null) { uncovered = true; return; }
         // Plain black until the first picture: no loading image, sound held off underneath.
         FrameLayout cover = new FrameLayout(this);
         cover.setBackgroundColor(0xFF000000);
@@ -805,7 +809,7 @@ public class PlayerActivity extends Activity {
     // Sports Guide crosses: a live channel with no picture 10s after opening, or 2 clean minutes to clear a cross.
     private boolean blackArmed, cleanSent, blackSent;
     private final Runnable blackCheck = () -> {
-        if (player == null || blackSent) return;
+        if (player == null || blackSent || radioStream()) return;
         androidx.media3.exoplayer.DecoderCounters c = player.getVideoDecoderCounters();
         if (c == null || c.renderedOutputBufferCount == 0) { blackSent = true; showFeed(FeedStatus.NO_PICTURE); ChannelHealth.report(this, getIntent().getStringExtra("content_name"), "black"); }
     };
@@ -840,11 +844,11 @@ public class PlayerActivity extends Activity {
             // The short black/still gap between programme and adverts is not a freeze.
             if (playing && frames >= 0 && frames == afLastFrames && !advertGrace()) afTicks++; else afTicks = 0;
             afLastFrames = frames;
-            if (StreamRecovery.frozen(afTicks, recoveryName())) {
+            if (!radioStream() && StreamRecovery.frozen(afTicks, recoveryName())) {
                 afTicks = 0; afLastFrames = -1;
                 reportBuffer(StreamRecovery.FREEZE_TICKS * 1000L, true, true, null);
                 if ("live".equals(kind())) { recoverFrozenLive(); return; } else reconnect();
-            } else if (playing && "live".equals(kind()) && !advertGrace() && frames > 0 && soundWatch.soundLost(frames, audioOut(), android.os.SystemClock.elapsedRealtime(),
+            } else if (!radioStream() && playing && "live".equals(kind()) && !advertGrace() && frames > 0 && soundWatch.soundLost(frames, audioOut(), android.os.SystemClock.elapsedRealtime(),
                     player.getCurrentTracks().containsType(androidx.media3.common.C.TRACK_TYPE_AUDIO))) {
                 // Picture running but no sound for 5s: reopen the channel to pick the audio back up.
                 reportBuffer(LiveReconnect.SILENT_MS, true, false, "audio_drop");

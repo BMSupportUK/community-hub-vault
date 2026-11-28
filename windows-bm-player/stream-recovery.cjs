@@ -37,6 +37,8 @@ function liveBufferMs(setting, name) { return Math.max(profile(name).live, buffe
 
 /** Play position not moving for 4s while "playing" means the picture froze. */
 function frozen(session, state, position, now, status = {}) {
+  // Audio-only radio has no moving picture or useful video clock to monitor.
+  if (session.radio) { session.stillSince = 0; session.pictureStillSince = 0; return false; }
   if (status.nativeVideo && session.item?.kind === 'live') {
     const frames = status.videoFrames;
     if (state !== 3 || !Number.isFinite(frames) || frames <= 0) { session.pictureStillSince = 0; session.lastVideoFrames = undefined; return false; }

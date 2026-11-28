@@ -452,7 +452,7 @@ public class MainActivity extends Activity {
         label.setText("Channel Loading…");
         // Picture sits just above the idle Media3 view and below the label.
         VlcPreview[] self = new VlcPreview[1];
-        self[0] = new VlcPreview(this, multiPanes[n], 1, streamUrls(it), new VlcPreview.Listener() {
+        self[0] = new VlcPreview(this, multiPanes[n], 1, streamUrls(it), RadioChannel.is(it.name, categoryName(it)), new VlcPreview.Listener() {
             private boolean current() { return multiCurrent(n, session) && multiSelections[n] == selection && multiVlc[n] == self[0]; }
             @Override public void playing() { if (current()) { label.setText(""); updateKeepScreenOn(); } }
             @Override public void failed() { if (current()) label.setText(it.name + "\nCouldn't play – press OK to pick another"); }
@@ -1826,7 +1826,10 @@ public class MainActivity extends Activity {
         if (!stageCarried) { hideStage(); freshStage(); }
         if (previewWatch != null) { ui.removeCallbacks(previewWatch); previewWatch = null; }
         previewFrozen = false;
-        if (previewPoster != null) previewPoster.setVisibility(View.VISIBLE);
+        if (previewPoster != null) {
+            if (previewItem != null) RadioChannel.poster(previewPoster, previewItem.name, categoryName(previewItem));
+            previewPoster.setVisibility(View.VISIBLE);
+        }
         // A preview that was actually playing counts as Live TV viewing; stop counting when it ends.
         // Only clear the note while it still belongs to the preview: real playback (or VLC) started
         // from a preview replaces it first (np_preview=false), and onPause runs stopPreview after
@@ -1996,7 +1999,11 @@ public class MainActivity extends Activity {
         if (previewItem == null || !it.id.equals(previewItem.id)) previewRestarts = 0;
         stopPreview();
         previewItem = it; previewStatus = status;
-        if (previewPoster != null) previewPoster.setVisibility(View.GONE);
+        boolean radioPreview = RadioChannel.is(it.name, categoryName(it));
+        if (previewPoster != null) {
+            RadioChannel.poster(previewPoster, it.name, categoryName(it));
+            previewPoster.setVisibility(radioPreview ? View.VISIBLE : View.GONE);
+        }
         status.setText("Loading preview…");
         previewTask = () -> {
             if (!previewClaimed) {
@@ -2014,7 +2021,7 @@ public class MainActivity extends Activity {
             previewView = view;
             String[] previewUrls = streamUrls(it);
             noteStreamHost(previewUrls[0]);
-            vlcPreview = new VlcPreview(this, view, previewUrls, new VlcPreview.Listener() {
+            vlcPreview = new VlcPreview(this, view, previewUrls, radioPreview, new VlcPreview.Listener() {
                 @Override public void playing() {
                     status.setText(fullScreenHint());
                     if (!previewCounted) { previewCounted = true; setNowPlaying(it, false, true); }
@@ -3035,6 +3042,7 @@ public class MainActivity extends Activity {
                 .putExtra("report_kind", savedKind(it)).putExtra("report_category", categoryName(it))
                 .putExtra("report_device", deviceLabel()).putExtra("report_version", appVersion());
         intent.putExtra("recovery_name", it.name + " " + categoryName(it));
+        intent.putExtra("radio_stream", RadioChannel.is(it.name, categoryName(it)));
         if ("live".equals(it.kind) && retryEvent != null && liveChannels != null) {
             List<String> labels = new ArrayList<>(); List<Item> targets = new ArrayList<>();
             buildSportsRows(retryEvent, retryAliases == null ? new ArrayList<>() : retryAliases, liveChannels, labels, targets);

@@ -205,6 +205,7 @@ public class BackupPlayerActivity extends Activity {
             root.removeView(layout);
             layout = (VLCVideoLayout) carriedStage.picture;
         } else mp.attachViews(layout, null, false, false);
+        if (radioStream()) RadioChannel.installArt(this, layout);
         // Films and series show the whole picture (best fit, like the main player); zoom cropped wide films.
         if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind"))) mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_BEST_FIT);
         else {
@@ -492,6 +493,7 @@ public class BackupPlayerActivity extends Activity {
     }
 
     private boolean isLive() { return "live".equals(getIntent().getStringExtra("content_kind")) || getIntent().getStringExtra("content_kind") == null; }
+    private boolean radioStream() { return isLive() && getIntent().getBooleanExtra("radio_stream", false); }
 
     private String recoveryName() {
         String name = getIntent().getStringExtra("recovery_name");
@@ -547,6 +549,18 @@ public class BackupPlayerActivity extends Activity {
             org.videolan.libvlc.interfaces.IMedia.Stats st = media.getStats();
             media.release();
             if (st != null) { link.bytes(st.readBytes, st.demuxReadBytes, now); BufferBlame.pingMs = link.pingMs(); BufferBlame.channelKbps = link.kbps(); }
+            if (radioStream() && st != null) {
+                // Audio-only radio never produces video frames; do not reopen it for a missing/frozen picture.
+                boolean noData = reconnect.noData(st.readBytes, -1, now);
+                if (reconnect.stalled(0, st.decodedAudio, now) || noData) {
+                    link.stalled(now);
+                    BufferReporter.record(this, "live", getIntent().getStringExtra("content_id"), getIntent().getStringExtra("content_name"),
+                            noData ? reconnect.noDataMs() : reconnect.stallMs(), true, false, "network_drop", "direct", activeDecoder,
+                            StreamRecovery.providerTag(recoveryName()), getIntent().getStringExtra("event_name"));
+                    next();
+                }
+                return;
+            }
             reconnect.patient(UhdChannel.is(getIntent().getStringExtra("content_name")));
             boolean noData = st != null && isLive() && started && reconnect.noData(st.readBytes, st.displayedPictures, now);
             boolean mute = st != null && isLive() && started && !noData && reconnect.soundLost(st.displayedPictures, st.playedAbuffers, now, mp.getAudioTracksCount() > 1);

@@ -16,6 +16,7 @@ const {surfaceRows}=require('../playback-core.cjs');
 const boost=require('../sound-boost.cjs');
 const recovery=require('../stream-recovery.cjs');
 const feedst=require('../feed-status.cjs');
+const {isRadio}=require('../radio-channel.cjs');
 const checkin=require('../checkin.cjs');
 const broadband=require('../network-test.cjs');
 const categoryOrder=require('../category-order.cjs');
@@ -223,7 +224,7 @@ async function play({item,resume=false,screens=1,subtitles=null,eventKey=null,ta
  try{engine.play(index,urls[0],{kind:item.kind,name:item.name,multi:screens>1,steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),live:item.kind!=='catchup',subtitles:['film','episode'].includes(item.kind)?subtitles!==false:null,resume:startAt});}
  catch{let ok=false;try{ok=engine.useBackup(index,urls[0],{steady:recovery.cushioned(recoveryName),buffer:item.kind==='live'?recovery.liveBufferMs(store.settings?.buffer,recoveryName):recovery.bufferMs(store.settings?.buffer),resume:item.kind==='live'?0:startAt,live:item.kind==='live'});}catch{}if(!ok){engine.stop(index);throw new Error('In-app playback could not start. Reinstall BM Player using the '+PLATFORM.name+' download and try again.');}}
  const onBackup=engine.usingBackup(index);
- const session={link:channelLink.createLink(),index,item,event,recoveryName,catchupBase:catchupMinutes*60,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
+ const session={link:channelLink.createLink(),index,item,event,recoveryName,radio:item.kind==='live'&&isRadio(item),catchupBase:catchupMinutes*60,position:0,duration:0,since:Date.now(),urls,urlIndex:0,paused:false,backup:onBackup,subCheck:!onBackup&&['film','episode'].includes(item.kind)&&subtitles!==false};sessions.push(session);
  if(index===0)audible=0;applyAudio();send({type:"audible",index:audible});
  if(awake===null)awake=powerSaveBlocker.start('prevent-display-sleep');
  if(item.kind!=='catchup'&&!core.adult(item.categoryName)){store.recent=[item,...(store.recent||[]).filter(i=>i.id!==item.id||i.kind!==item.kind)].slice(0,100);save();}
@@ -268,7 +269,7 @@ async function updatePlayback(){for(const session of [...sessions]){try{const s=
 function healthTick(session,s){if(session.item.kind!=='live')return;const now=Date.now(),name=String(session.item.name||'').slice(0,200);if(!name)return;
  const report=status=>site({action:'channel_health',name,status}).catch(()=>{});
  if(session.failed&&!session.hFailed){session.hFailed=true;report('failed');return;}
- if(!session.hBlack&&!session.backup&&s.state===3&&now-session.since>10000&&!(Number(s.w)>0)){session.hBlack=true;report('black');}
+ if(!session.radio&&!session.hBlack&&!session.backup&&s.state===3&&now-session.since>10000&&!(Number(s.w)>0)){session.hBlack=true;report('black');}
  if(s.state===3){if(!session.cleanSince)session.cleanSince=now;}else if(s.state===2||s.state===7)session.cleanSince=0;
  if(!session.hOk&&!session.hBlack&&session.cleanSince&&now-session.cleanSince>=120000){session.hOk=true;report('ok');}
  // Live feed status pill: tell the renderer when Buffering…/No picture starts or clears.
