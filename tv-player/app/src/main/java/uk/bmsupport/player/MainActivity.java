@@ -1898,6 +1898,7 @@ public class MainActivity extends Activity {
     private Button boxCatPill; // TV box Live TV: category pill after the day jumps
     private Button previewMenuButton; // phone Live TV: the button under the selected category
     private boolean previewPlaying;
+    private String returnPreviewId;
     private android.widget.PopupWindow previewIcon; // the ⛶ over the preview box, in its own window
     private View previewIconBox;
     private final View.OnLayoutChangeListener previewIconFollow = (v, l, t, r, b, ol, ot, or, ob) -> placePreviewIcon();
@@ -3025,6 +3026,8 @@ public class MainActivity extends Activity {
     }
 
     private void beginPlayback(Item it, boolean vlc, long position, boolean subtitles) {
+        // Remember the previewed live channel so Back can bring its preview back even when no hand-back arrives.
+        returnPreviewId = "live".equals(it.kind) && previewItem != null && previewView != null && it.id.equals(previewItem.id) ? it.id : null;
         if (!vlc && !claimPass) {
             StreamClaim.check(this, it.kind, it.name, false, (busy, who) -> {
                 if (!busy) { claimPass = true; beginPlayback(it, false, position, subtitles); return; }
@@ -6394,6 +6397,14 @@ public class MainActivity extends Activity {
                 }, returned);
                 if (previewPoster != null) previewPoster.setVisibility(View.GONE);
             }
+        }
+        // Back from full screen with no player handed back (stream opened fresh, backup engine
+        // fallback, expired hand-off): restart the same channel's preview instead of leaving the picture.
+        final String back = returnPreviewId; returnPreviewId = null;
+        if (back != null && preview == null && vlcPreview == null && previewTask == null && LiveDrawerData.pendingPick == null
+                && previewItem != null && back.equals(previewItem.id) && previewView != null && previewStatus != null && previewView.isAttachedToWindow()) {
+            final Item again = previewItem; final androidx.media3.ui.PlayerView pv = previewView; final TextView st = previewStatus;
+            schedulePreview(again, pv, st);
         }
         resetShiftAfterClockChange();
         super.onResume();
