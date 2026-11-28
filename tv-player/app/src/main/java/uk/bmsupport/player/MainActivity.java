@@ -5043,8 +5043,6 @@ public class MainActivity extends Activity {
         });
         body.addView(previewColumn, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f));
         LinearLayout browser = column();
-        Button category = button("☰ Radio categories", v -> {});
-        browser.addView(category);
         TextView station = text("Loading radio stations…", 20, TEXT, true);
         browser.addView(station);
         ListView stations = list();
@@ -5053,18 +5051,16 @@ public class MainActivity extends Activity {
         root.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
 
-        final List<String[]> cats = new ArrayList<>();
         final List<Item> all = new ArrayList<>(), shown = new ArrayList<>();
-        final String[] selected = { null };
         final java.util.Map<String, String> names = new java.util.HashMap<>();
         final Runnable[] apply = { null };
         apply[0] = () -> {
             shown.clear();
-            for (Item it : all) if (selected[0] == null || selected[0].equals(it.category)) shown.add(it);
+            shown.addAll(all);
             List<String> labels = new ArrayList<>();
             for (Item it : shown) labels.add(it.name);
             stations.setAdapter(adapter(labels));
-            station.setText(shown.isEmpty() ? "No radio stations in this category" : "Choose a station · OK again for full screen");
+            station.setText(shown.isEmpty() ? "No radio stations found" : "Choose a station · OK again for full screen");
             stations.requestFocus();
         };
         stations.setOnItemClickListener((parent, view, position, id) -> {
@@ -5072,16 +5068,6 @@ public class MainActivity extends Activity {
             Item it = shown.get(position);
             if (previewItem != null && previewItem.id.equals(it.id) && previewPlaying) open(it);
             else schedulePreview(it, pv, status);
-        });
-        category.setOnClickListener(v -> {
-            if (cats.isEmpty()) return;
-            String[] labels = new String[cats.size() + 1]; labels[0] = "All radio stations";
-            for (int i = 0; i < cats.size(); i++) labels[i + 1] = cats.get(i)[1];
-            new AlertDialog.Builder(this).setTitle("Radio categories").setItems(labels, (dialog, which) -> {
-                selected[0] = which == 0 ? null : cats.get(which - 1)[0];
-                category.setText("☰ " + labels[which]);
-                apply[0].run();
-            }).show();
         });
         openIo.execute(() -> {
             try {
@@ -5106,7 +5092,7 @@ public class MainActivity extends Activity {
                 for (Item it : found) drawer.add(new LiveDrawerData.Channel(it.id, it.name, it.category, names.get(it.category), null));
                 ui.post(() -> {
                     if (!"radio".equals(screen)) return;
-                    all.clear(); all.addAll(found); cats.clear(); cats.addAll(ordered);
+                    all.clear(); all.addAll(found);
                     LiveDrawerData.set(ordered, drawer);
                     apply[0].run();
                     if (found.isEmpty()) station.setText("No radio stations found");
