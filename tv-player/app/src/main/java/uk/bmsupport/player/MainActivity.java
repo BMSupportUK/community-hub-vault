@@ -5027,7 +5027,18 @@ public class MainActivity extends Activity {
         previewColumn.addView(frame, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         TextView status = text("Choose a radio station to preview it", 15, MUTED, false);
         previewColumn.addView(status);
-        body.addView(previewColumn, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
+        // Give the studio picture a proper widescreen frame rather than a tall, cropped side panel.
+        // Radio has no programme grid beneath it, so let the picture use most of the available width.
+        frame.addOnLayoutChangeListener((v, l, t, r, b2, ol, ot, or, ob) -> {
+            int h = (r - l) * 9 / 16;
+            int available = previewColumn.getHeight() - status.getHeight();
+            if (available > 0) h = Math.min(h, available);
+            if (h > 0 && Math.abs(v.getHeight() - h) > 2) {
+                ViewGroup.LayoutParams lp = v.getLayoutParams(); lp.height = h;
+                v.post(() -> v.setLayoutParams(lp));
+            }
+        });
+        body.addView(previewColumn, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f));
         LinearLayout browser = column();
         Button category = button("☰ Radio categories", v -> {});
         browser.addView(category);
@@ -5035,7 +5046,7 @@ public class MainActivity extends Activity {
         browser.addView(station);
         ListView stations = list();
         browser.addView(stations, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        body.addView(browser, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1.5f));
+        body.addView(browser, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1));
         root.addView(body, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
         setContentView(root);
 

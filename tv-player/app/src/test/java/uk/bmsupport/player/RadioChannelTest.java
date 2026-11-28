@@ -50,6 +50,16 @@ public class RadioChannelTest {
         assertNull(loadingCover.get(activity));
     }
 
+    @Test public void returningFromFullScreenKeepsTheRadioArtworkAndAudioOnlyRecovery() {
+        VlcPreview.Session returned = BackupPlayerActivity.returnSession(null, null, null,
+                new String[]{"https://example.invalid/radio.aac"}, 0, true);
+        assertTrue(returned.radio);
+        FrameLayout preview = new FrameLayout(RuntimeEnvironment.getApplication());
+        ImageView art = RadioChannel.installArt(RuntimeEnvironment.getApplication(), preview);
+        assertEquals(FrameLayout.LayoutParams.MATCH_PARENT, art.getLayoutParams().width);
+        assertEquals(FrameLayout.LayoutParams.MATCH_PARENT, art.getLayoutParams().height);
+    }
+
     @Test public void studioArtworkIsReusedAcrossPreviewAndFullScreenLayouts() {
         FrameLayout host = new FrameLayout(RuntimeEnvironment.getApplication());
         ImageView first = RadioChannel.installArt(RuntimeEnvironment.getApplication(), host);

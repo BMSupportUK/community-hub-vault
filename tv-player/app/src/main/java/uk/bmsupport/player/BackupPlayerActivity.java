@@ -682,6 +682,11 @@ public class BackupPlayerActivity extends Activity {
         super.onUserInteraction(); if (seek != null) seek.wake(); lastPressAt = android.os.SystemClock.elapsedRealtime(); PlayerApplication.interaction(this);
     }
 
+    static VlcPreview.Session returnSession(LibVLC vlc, MediaPlayer mp, SoundBoost.Vlc boost,
+                                             String[] urls, int index, boolean radio) {
+        return new VlcPreview.Session(vlc, mp, boost, urls, index, radio);
+    }
+
     @Override protected void onPause() {
         super.onPause();
         saveProgress();
@@ -690,7 +695,9 @@ public class BackupPlayerActivity extends Activity {
             mp.setEventListener(null);
             if (carriedStage == null) mp.detachViews();
             if (paused) mp.play();
-            VlcPreview.Session session = new VlcPreview.Session(vlc, mp, vlcBoost, urls, at);
+            // Preserve the audio-only flag: the guide preview needs it to restore the studio artwork
+            // and to keep watching sound/data rather than waiting for video frames that never exist.
+            VlcPreview.Session session = returnSession(vlc, mp, vlcBoost, urls, at, radioStream());
             session.stage = carriedStage;
             if (carriedStage != null) carriedStage.full(false);
             carriedStage = null;
