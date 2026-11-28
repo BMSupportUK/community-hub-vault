@@ -2,11 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { passwordUnlockMatches } from "@/lib/screen-lock-password";
+import { passwordUnlockMatches, screenUnlockAwaitingMfa } from "@/lib/screen-lock-password";
 
 export const verifyScreenLockPassword = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ password: z.string().min(1).max(4096) }).parse(input))
+  .inputValidator((input) => z.object({
+    password: z.string().min(1).max(4096),
+    secondFactor: z.boolean().default(false),
+  }).strict().parse(input))
   .handler(async ({ data, context }) => {
     // Resolve identity from the verified bearer, never from caller-supplied email.
     const { data: current, error: identityError } = await context.supabase.auth.getUser();
@@ -30,10 +33,16 @@ export const verifyScreenLockPassword = createServerFn({ method: "POST" })
     if (error && error.code !== "invalid_credentials") {
       throw new Error("Couldn't check your password. Please try again shortly.");
     }
-    if (verified) {
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { grantApplicationAccess } = await import("./application-access.server");
-      await grantApplicationAccess(supabaseAdmin, context.userId, context.claims["session_id"], "screen", new Date(Date.now() + 60 * 60_000).toISOString());
+    if (!verified) return { verified: false, requiresTwoFactor: false };
+    const { data: roleRows, error: roleError } = await context.supabase
+      .from("user_roles").select("role").eq("user_id", context.userId);
+    if (roleError) throw new Error("Couldn't verify your account role. Please try again.");
+    const roles = (roleRows ?? []).map((row) => String(row.role));
+    if (screenUnlockAwaitingMfa(roles, data.secondFactor, context.claims)) {
+      return { verified: true, requiresTwoFactor: true };
     }
-    return { verified };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { grantApplicationAccess } = await import("./application-access.server");
+    await grantApplicationAccess(supabaseAdmin, context.userId, context.claims["session_id"], "screen", new Date(Date.now() + 60 * 60_000).toISOString());
+    return { verified: true, requiresTwoFactor: false };
   });

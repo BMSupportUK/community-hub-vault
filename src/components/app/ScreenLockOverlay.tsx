@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Lock, Loader2, LogOut } from "lucide-react";
+import { ArrowLeft, Lock, Loader2, LogOut, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -23,7 +23,11 @@ interface Props {
 
 export function ScreenLockOverlay({ onUnlock }: Props) {
   const { user, signOut } = useAuth();
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [step, setStep] = useState<"password" | "mfa">("password");
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [mfaError, setMfaError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const submitting = useRef(false);
@@ -44,7 +48,6 @@ export function ScreenLockOverlay({ onUnlock }: Props) {
     }
     await signOut();
   };
-
 
   useEffect(() => {
     if (!user) return;
@@ -73,28 +76,59 @@ export function ScreenLockOverlay({ onUnlock }: Props) {
     ? forcedAvatar || fanInfo?.fanAvatarUrl || BORO_DEFAULT_AVATAR_URL
     : profile?.avatar_url || null;
 
+  const failedPassword = async () => {
+    const next = attempts + 1;
+    setAttempts(next);
+    setStep("password");
+    setMfaCode("");
+    setFactorId(null);
+    if (next >= MAX_ATTEMPTS) {
+      toast.error("Too many attempts — signing you out");
+      await leaveLock();
+      return;
+    }
+    toast.error(`Incorrect account password (${MAX_ATTEMPTS - next} attempts left)`);
+  };
+
   const tryUnlock = async () => {
-    if (!user || submitting.current || !code) return;
+    if (!user || submitting.current || !password || (step === "mfa" && (!factorId || mfaCode.length < 6))) return;
     submitting.current = true;
     setBusy(true);
+    setMfaError(null);
     try {
-      const result = await verifyPassword({ data: { password: code } });
-      if (!mounted.current) return;
-      setCode("");
-      if (!result.verified) {
-        const next = attempts + 1;
-        setAttempts(next);
-        if (next >= MAX_ATTEMPTS) {
-          toast.error("Too many attempts — signing you out");
-          await leaveLock();
+      if (step === "mfa" && factorId) {
+        const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: mfaCode.trim() });
+        if (error) {
+          toast.error(error.message || "Incorrect two-factor code. Please try again.");
           return;
         }
-        toast.error(`Incorrect account password (${MAX_ATTEMPTS - next} attempts left)`);
+      }
+
+      const result = await verifyPassword({ data: { password, secondFactor: step === "mfa" } });
+      if (!mounted.current) return;
+      if (!result.verified) {
+        await failedPassword();
         return;
       }
+      if (result.requiresTwoFactor) {
+        if (step === "mfa") {
+          toast.error("Couldn't confirm a fresh two-factor code. Please go back and try again.");
+          return;
+        }
+        const { data, error } = await supabase.auth.mfa.listFactors();
+        if (error) throw error;
+        const factor = (data?.totp ?? []).find((item) => item.status === "verified");
+        setFactorId(factor?.id ?? null);
+        setMfaCode("");
+        setStep("mfa");
+        if (!factor) setMfaError("Admin and Staff need a verified authenticator. Sign out and set up 2FA in Security settings before unlocking.");
+        return;
+      }
+      setPassword("");
+      setMfaCode("");
       onUnlock();
-    } catch {
-      if (mounted.current) toast.error("Couldn't check your password. Please try again shortly.");
+    } catch (error) {
+      if (mounted.current) toast.error(error instanceof Error ? error.message : "Couldn't unlock your screen. Please try again shortly.");
     } finally {
       submitting.current = false;
       if (mounted.current) setBusy(false);
@@ -129,22 +163,58 @@ export function ScreenLockOverlay({ onUnlock }: Props) {
           </div>
 
           <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void tryUnlock(); }}>
-            <label htmlFor="screen-lock-password" className="text-sm text-muted-foreground">Account password</label>
-            <Input
-              id="screen-lock-password"
-              type="password"
-              autoComplete="current-password"
-              autoFocus
-              enterKeyHint="done"
-              placeholder="Account password"
-              value={code}
-              disabled={busy}
-              className="pointer-events-auto touch-auto text-base"
-              onChange={(e) => setCode(e.target.value)}
-            />
-            <Button type="submit" className="w-full" disabled={busy || !code}>
-              {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Unlock
+            {step === "password" ? (
+              <>
+                <label htmlFor="screen-lock-password" className="text-sm text-muted-foreground">Account password</label>
+                <Input
+                  id="screen-lock-password"
+                  type="password"
+                  autoComplete="current-password"
+                  autoFocus
+                  enterKeyHint="done"
+                  placeholder="Account password"
+                  value={password}
+                  disabled={busy}
+                  className="pointer-events-auto touch-auto text-base"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <ShieldCheck className="size-4 text-primary" /> Two-factor authentication
+                </div>
+                <p className="text-sm text-muted-foreground">Password accepted. Enter the 6-digit code from your authenticator app to finish unlocking.</p>
+                {factorId && (
+                  <Input
+                    id="screen-lock-mfa"
+                    aria-label="6-digit authenticator code"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]*"
+                    maxLength={6}
+                    autoFocus
+                    enterKeyHint="done"
+                    placeholder="123456"
+                    value={mfaCode}
+                    disabled={busy}
+                    className="pointer-events-auto touch-auto text-center text-xl tracking-[0.4em] font-mono"
+                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                  />
+                )}
+                {mfaError && <p role="alert" className="text-sm text-destructive">{mfaError}</p>}
+              </>
+            )}
+            <Button type="submit" className="w-full" disabled={busy || !password || (step === "mfa" && (!factorId || mfaCode.length < 6))}>
+              {busy ? <Loader2 className="size-4 animate-spin" /> : step === "mfa" ? <ShieldCheck className="size-4" /> : <Lock className="size-4" />}
+              {step === "mfa" ? "Verify & unlock" : "Unlock"}
             </Button>
+            {step === "mfa" && (
+              <Button type="button" variant="ghost" className="w-full" disabled={busy} onClick={() => { setStep("password"); setMfaCode(""); setFactorId(null); setMfaError(null); }}>
+                <ArrowLeft className="size-4" /> Back to password
+              </Button>
+            )}
           </form>
           <div className="pt-2 border-t border-border space-y-2">
             <p className="text-xs text-muted-foreground">Forgot your password? Sign out to reset it.</p>
