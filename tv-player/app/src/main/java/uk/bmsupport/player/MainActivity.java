@@ -5094,7 +5094,7 @@ public class MainActivity extends Activity {
                 List<Item> found = new ArrayList<>();
                 for (Item it : liveChannels) {
                     String cat = names.get(it.category);
-                    if (cat != null && RadioChannel.is(it.name, cat)) found.add(it);
+                    if (cat != null && RadioChannel.radioCategory(cat)) found.add(it);
                 }
                 List<String[]> rows = new ArrayList<>();
                 for (int i = 0; i < ca.length(); i++) {

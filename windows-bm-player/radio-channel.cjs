@@ -12,7 +12,9 @@ function splitRadioChannels(data, radio) {
   const items = Array.isArray(data?.items) ? data.items : [];
   const names = new Map(categories.map(category => [String(category.id), category.name || '']));
   const matches = item => isRadio({ ...item, categoryName: item.categoryName || names.get(String(item.category)) || '' });
-  const visibleItems = items.filter(item => matches(item) === radio);
+  // The Radio page lists only stations stored in a radio category, never radio-named channels elsewhere.
+  const inRadioCategory = item => /\bradio\b/i.test(String(item.categoryName || names.get(String(item.category)) || '').normalize('NFKC'));
+  const visibleItems = items.filter(item => radio ? inRadioCategory(item) : !matches(item));
   const ids = new Set(visibleItems.map(item => String(item.category)));
   return {
     ...data,

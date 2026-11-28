@@ -17,6 +17,9 @@ final class RadioChannel {
         return mentionsRadio(name) || mentionsRadio(category);
     }
 
+    /** The Radio page lists only stations stored in a radio category, never radio-named channels elsewhere. */
+    static boolean radioCategory(String category) { return mentionsRadio(category); }
+
     /** Radio has its own home-screen browser; it never occupies a television EPG row. */
     static boolean inTvGuide(String name, String category) {
         return !is(name, category);
