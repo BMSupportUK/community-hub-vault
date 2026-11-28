@@ -6,8 +6,11 @@ test("restored password-only session cannot bypass required 2FA", () => {
   expect(mfaAccessState("aal1", "aal2", null)).toBe("challenge");
   expect(mfaAccessState(null, "aal2", null)).toBe("challenge");
 });
-test("completed 2FA remains accepted after refresh", () => {
-  expect(mfaAccessState("aal2", "aal2", null)).toBe("allowed");
+test("completed 2FA remains accepted during the same app launch", () => {
+  expect(mfaAccessState("aal2", "aal2", null, true)).toBe("allowed");
+});
+test("a fresh app opening challenges again even when the saved session is AAL2", () => {
+  expect(mfaAccessState("aal2", "aal2", null, false)).toBe("challenge");
 });
 test("accounts without an enrolled factor retain their existing access", () => {
   expect(mfaAccessState("aal1", "aal1", null)).toBe("allowed");

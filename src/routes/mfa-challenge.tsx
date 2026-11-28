@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { requestMfaReset } from "@/lib/mfa-reset-request.functions";
 import mfaBg from "@/assets/mfa-security-bg.jpg";
 import { mfaAccessState } from "@/lib/mfa-access";
+import { completeMfaLaunch, mfaLaunchComplete } from "@/lib/mfa-launch";
 
 export const Route = createFileRoute("/mfa-challenge")({
   head: () => ({ meta: [
@@ -50,7 +51,7 @@ function MfaChallengePage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate({ to: "/login", replace: true }); return; }
       const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(session.access_token);
-      const access = mfaAccessState(aal.data?.currentLevel, aal.data?.nextLevel, aal.error);
+      const access = mfaAccessState(aal.data?.currentLevel, aal.data?.nextLevel, aal.error, mfaLaunchComplete());
       if (access === "error") { toast.error("Couldn't verify two-factor authentication. Please try again."); setLoading(false); return; }
       if (access === "allowed") {
         navigate({ to: "/home", replace: true });
@@ -77,6 +78,7 @@ function MfaChallengePage() {
     const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
     setBusy(false);
     if (error) return toast.error(error.message);
+    completeMfaLaunch();
     toast.success("Verified");
     navigate({ to: (popPostLoginNext() ?? "/home") as never, replace: true });
   };

@@ -28,6 +28,7 @@ import { ANDROID_RELEASE } from "@/lib/android-release";
 import { SupportNotificationScope } from "@/components/app/SupportNotificationScope";
 import { PlayerLoginApproval } from "@/components/app/PlayerLoginApproval";
 import { mfaAccessState } from "@/lib/mfa-access";
+import { mfaLaunchComplete } from "@/lib/mfa-launch";
 
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
@@ -105,7 +106,12 @@ export const Route = createFileRoute("/_authenticated")({
     if (!session) throw redirect({ to: "/login", search: { redirect: location.href } as never });
     // Revalidate enrolled factors with Auth, not the saved session's user snapshot.
     const assurance = await supabase.auth.mfa.getAuthenticatorAssuranceLevel(session.access_token);
-    const access = mfaAccessState(assurance.data?.currentLevel, assurance.data?.nextLevel, assurance.error);
+    const access = mfaAccessState(
+      assurance.data?.currentLevel,
+      assurance.data?.nextLevel,
+      assurance.error,
+      mfaLaunchComplete(),
+    );
     if (access === "error") throw new Error("Couldn't verify two-factor authentication. Please try again.");
     if (access === "challenge") {
       try { sessionStorage.setItem("post-login-next", location.href); } catch { /* destination is optional */ }
