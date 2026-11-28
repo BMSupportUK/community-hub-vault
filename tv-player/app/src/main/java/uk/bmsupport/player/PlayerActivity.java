@@ -487,6 +487,7 @@ public class PlayerActivity extends Activity {
         view.setShowRewindButton(jumps);
         root.addView(view);
         if (radioStream()) RadioChannel.installArt(this, root);
+        if (radioStream()) RadioChannel.installStationName(this, root, getIntent().getStringExtra("content_name"));
         TextView banner = new TextView(this);
         banner.setText("Non 4K Device");
         banner.setTextSize(22);

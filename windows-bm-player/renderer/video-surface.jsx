@@ -1,5 +1,5 @@
 import React,{useEffect,useRef} from 'react';
-export function VideoSurface({index,visible=true,still=null,audioOnly=false}){
+export function VideoSurface({index,visible=true,still=null,audioOnly=false,stationName=''}){
  const ref=useRef(null);
  useEffect(()=>{
   let frame,last='';
@@ -18,5 +18,6 @@ export function VideoSurface({index,visible=true,still=null,audioOnly=false}){
   {still&&<img className="video-still" src={still} alt=""/>}
   {MacVideo&&<MacVideo index={index}/>}
   {audioOnly&&<img className="radio-studio-art" src="radio_studio.jpg" alt="Radio station DJ mixing songs in the studio"/>}
+  {audioOnly&&stationName.trim()&&<div className="radio-station-name">{stationName}</div>}
  </div>;
 }

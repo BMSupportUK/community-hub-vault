@@ -5,6 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 import java.text.Normalizer;
 import java.util.Locale;
 
@@ -43,6 +44,31 @@ final class RadioChannel {
         art.setContentDescription("Radio station DJ mixing songs in the studio");
         host.addView(art, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
         return art;
+    }
+
+    /** A persistent station caption belongs to the full-screen activity, not its carried preview. */
+    static void installStationName(Context context, FrameLayout host, String name) {
+        if (name == null || name.trim().isEmpty()) return;
+        float density = context.getResources().getDisplayMetrics().density;
+        int inset = Math.round(32 * density);
+        TextView station = new TextView(context);
+        station.setText(name.trim());
+        station.setTextSize(22);
+        station.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        station.setTextColor(android.graphics.Color.WHITE);
+        station.setBackgroundColor(android.graphics.Color.argb(204, 16, 18, 25));
+        station.setPadding(Math.round(16 * density), Math.round(10 * density),
+                Math.round(16 * density), Math.round(10 * density));
+        station.setMaxLines(2);
+        station.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        station.setFocusable(false);
+        station.setClickable(false);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2,
+                android.view.Gravity.TOP | android.view.Gravity.START);
+        lp.leftMargin = inset;
+        lp.rightMargin = inset;
+        lp.topMargin = Math.round(72 * density);
+        host.addView(station, lp);
     }
 
     /** The selected station's artwork also covers the short wait before the preview engine opens. */

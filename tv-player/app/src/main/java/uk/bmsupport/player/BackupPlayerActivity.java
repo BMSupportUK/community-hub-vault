@@ -206,6 +206,7 @@ public class BackupPlayerActivity extends Activity {
             layout = (VLCVideoLayout) carriedStage.picture;
         } else mp.attachViews(layout, null, false, false);
         if (radioStream()) RadioChannel.installArt(this, layout);
+        if (radioStream()) RadioChannel.installStationName(this, root, getIntent().getStringExtra("content_name"));
         // Films and series show the whole picture (best fit, like the main player); zoom cropped wide films.
         if (PlayerControls.canSkip(getIntent().getStringExtra("content_kind"))) mp.setVideoScale(MediaPlayer.ScaleType.SURFACE_BEST_FIT);
         else {
