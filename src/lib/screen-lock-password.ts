@@ -5,10 +5,10 @@ export function passwordUnlockMatches(expectedUserId: string, verifiedUserId: st
   return Boolean(expectedUserId) && !error && verifiedUserId === expectedUserId;
 }
 
-/** Management keeps password-only unlock; Admin and Staff always use 2FA. */
+/** Management keeps password-only unlock; Admin, Staff and Moderators always use 2FA. */
 export function screenUnlockRequiresMfa(roles: readonly string[]): boolean {
   if (roles.includes("management")) return false;
-  return roles.some((role) => role === "admin" || role === "staff");
+  return roles.some((role) => role === "admin" || role === "staff" || role === "moderator");
 }
 
 /** The password step never unlocks these roles without a newly submitted TOTP. */
