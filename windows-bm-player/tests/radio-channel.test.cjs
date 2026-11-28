@@ -34,3 +34,9 @@ test('a genuine radio network stall still reconnects',()=>{
  recovery.tick(session,2,2000,true);
  expect(recovery.tick(session,2,14000,true).reconnect).toBe(1000);
 });
+
+test('the Radio page lists only stations stored in a radio category',()=>{
+ const data={categories:[{id:'1',name:'UK | Music'},{id:'2',name:'UK | Radio'}],items:[{id:'named',name:'BBC Radio 1',category:'1'},{id:'stored',name:'Capital FM',category:'2'}]};
+ expect(splitRadioChannels(data,true).items.map(item=>item.id)).toEqual(['stored']);
+ expect(splitRadioChannels(data,true).categories.map(category=>category.id)).toEqual(['2']);
+});
