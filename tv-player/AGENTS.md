@@ -30,3 +30,4 @@
 - Live TV splits the provider's Premier League Hub category into per-broadcaster categories (Android HubSplit.java inside cachedGet, desktop hub-split.cjs in catalogue); split ids are "<providerId>~<slug>" and map back to the provider id for per-category fetches.
 
 - Saved-list film/episode openings await ProgressSync.beforeOpen before reading resume positions; its completion runs even offline to preserve local playback.
+- Radio page (Android RadioChannel.radioCategory, desktop splitRadioChannels) lists only stations stored in a provider radio category; radio-named channels in other categories never appear there.
