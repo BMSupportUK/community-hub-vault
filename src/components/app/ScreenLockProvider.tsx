@@ -85,7 +85,7 @@ function NormalScreenLockProvider({ children, lockedExtras }: { children: ReactN
       window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: !result.open } }));
       return result.open;
     } catch {
-      if (request === generation.current) setLocked(true);
+      // A failed check (offline, token refreshing) keeps the current state; only a real server answer locks.
       return false;
     }
   }, [verifyScreen]);

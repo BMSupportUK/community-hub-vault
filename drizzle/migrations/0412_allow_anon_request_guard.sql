@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.application_request_guard() TO anon;
