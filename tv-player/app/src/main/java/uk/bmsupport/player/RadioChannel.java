@@ -56,18 +56,38 @@ final class RadioChannel {
         station.setTextSize(22);
         station.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         station.setTextColor(android.graphics.Color.WHITE);
-        station.setBackgroundColor(android.graphics.Color.argb(204, 16, 18, 25));
         station.setPadding(Math.round(16 * density), Math.round(10 * density),
                 Math.round(16 * density), Math.round(10 * density));
         station.setMaxLines(2);
         station.setEllipsize(android.text.TextUtils.TruncateAt.END);
         station.setFocusable(false);
         station.setClickable(false);
+        android.graphics.drawable.GradientDrawable pill = new android.graphics.drawable.GradientDrawable();
+        pill.setColor(android.graphics.Color.argb(204, 16, 18, 25));
+        pill.setCornerRadius(8 * density);
+        pill.setStroke(Math.round(2 * density), android.graphics.Color.rgb(235, 49, 84));
+        station.setBackground(pill);
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(-2, -2,
                 android.view.Gravity.TOP | android.view.Gravity.START);
         lp.leftMargin = inset;
         lp.rightMargin = inset;
         lp.topMargin = Math.round(72 * density);
+        // Sit beside the artwork's ON AIR sign (right edge x≈440, centre y≈95 of the 1672x941 picture, centre-cropped).
+        host.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            int w = r - l, h = b - t;
+            if (w <= 0 || h <= 0) return;
+            float scale = Math.max(w / 1672f, h / 941f);
+            float offX = (w - 1672f * scale) / 2f, offY = (h - 941f * scale) / 2f;
+            int left = Math.max(inset, Math.round(offX + 470f * scale));
+            int top = Math.max(Math.round(16 * density), Math.round(offY + 95f * scale - station.getHeight() / 2f));
+            station.setMaxWidth(Math.max(Math.round(120 * density), w - left - inset));
+            FrameLayout.LayoutParams cur = (FrameLayout.LayoutParams) station.getLayoutParams();
+            if (cur.leftMargin != left || cur.topMargin != top) {
+                cur.leftMargin = left;
+                cur.topMargin = top;
+                station.post(() -> station.setLayoutParams(cur));
+            }
+        });
         host.addView(station, lp);
     }
 
